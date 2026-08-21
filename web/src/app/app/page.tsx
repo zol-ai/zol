@@ -57,7 +57,11 @@ export default async function TodayPage(props: PageProps<"/app">) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Customers" value={counts.customers} href="/app/customers" />
-        <Stat label="Open repair orders" value={counts.open_ros} />
+        <Stat
+          label="Open repair orders"
+          value={counts.open_ros}
+          href="/app/repair-orders"
+        />
         <Stat label="Calls, last 24h" value={counts.calls_today} />
         <Stat label="People" value={counts.staff} />
       </div>

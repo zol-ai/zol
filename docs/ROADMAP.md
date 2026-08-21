@@ -28,6 +28,9 @@ build against it.
 - [x] Customers and vehicles: one search box over name, phone, plate, VIN
       and make; the phone number is the identity and a re-entry folds into
       the record that already exists
+- [x] Repair orders: the board, the ticket, labour/part/fee/discount lines,
+      totals derived from the lines, and the quote cap enforced on screen
+      with a named human approving anything above it
 - [ ] Pick a query layer and generate types from the schema
 - [ ] Run `diagnose.ts` against the real API with ten transcripts from actual
       shop calls, and check the quotes against what the shop would have charged

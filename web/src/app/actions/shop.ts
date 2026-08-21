@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth";
 import { query, tx } from "@/lib/db";
+import { recalculateOpen } from "@/lib/ro-totals";
 import type { FormState } from "./auth";
 
 /**
@@ -72,14 +73,33 @@ export async function saveShop(
 
   if (Object.keys(fields).length > 0) return { fields };
 
-  await query(
-    `UPDATE shops
+  /*
+    The CTE captures the rate as it was before the UPDATE — RETURNING alone
+    would report the value just written and the comparison would never be
+    true. FOR UPDATE takes the row lock the write needs anyway, so nothing
+    else can move the rate between the read and the write.
+  */
+  const changed = await query<{ tax_changed: boolean }>(
+    `WITH before AS (
+       SELECT tax_rate_pct FROM shops WHERE id = $1 FOR UPDATE
+     )
+     UPDATE shops
         SET name = $2, timezone = $3, bay_count = $4,
             labor_rate_cents = $5, parts_margin_pct = $6,
             tax_rate_pct = $7, auto_quote_cap_cents = $8
-      WHERE id = $1`,
+       FROM before
+      WHERE shops.id = $1
+      RETURNING before.tax_rate_pct <> $7 AS tax_changed`,
     [user.shopId, name, timezone, bays, labor, margin, tax, cap],
   );
+
+  /*
+    A moved tax rate makes every open ticket's stored total wrong by the
+    difference — and that total is the number an advisor reads down the phone.
+    Restate them. Closed tickets are left alone: they record what was actually
+    charged at the time.
+  */
+  if (changed[0]?.tax_changed) await recalculateOpen(user.shopId);
 
   redirect("/app/settings?saved=shop");
 }
