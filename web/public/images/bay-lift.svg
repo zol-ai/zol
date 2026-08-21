@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="A car raised on a two-post lift with a technician working underneath in a dark service bay">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#0d1a16"/>
+      <stop offset="1" stop-color="#060b09"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.62" cy="0.2" r="0.62">
+      <stop offset="0" stop-color="#1db87a" stop-opacity="0.34"/>
+      <stop offset="0.45" stop-color="#0d3a31" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#0d3a31" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pool" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#c6f06b" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#c6f06b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c6f06b" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#c6f06b" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#16241f"/>
+      <stop offset="0.5" stop-color="#22352e"/>
+      <stop offset="1" stop-color="#101b17"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <rect width="1200" height="800" fill="url(#lamp)"/>
+
+  <!-- back wall: bay grid + roller door ribs -->
+  <g opacity="0.5">
+    <g stroke="#16231e" stroke-width="2">
+      <path d="M0 120h1200M0 210h1200M0 300h1200"/>
+    </g>
+    <g fill="#101c18">
+      <rect x="60" y="120" width="300" height="182" rx="3"/>
+      <rect x="840" y="120" width="300" height="182" rx="3"/>
+    </g>
+    <g stroke="#1a2a24" stroke-width="2">
+      <path d="M60 150h300M60 180h300M60 210h300M60 240h300M60 270h300"/>
+      <path d="M840 150h300M840 180h300M840 210h300M840 240h300M840 270h300"/>
+    </g>
+  </g>
+
+  <!-- hanging work lamp -->
+  <g>
+    <path d="M700 0v96" stroke="#22352e" stroke-width="3"/>
+    <path d="M676 96h48l16 34h-80z" fill="#2b3f37"/>
+    <circle cx="700" cy="132" r="7" fill="#c6f06b" opacity="0.9"/>
+    <path d="M700 132 L 540 470 L 860 470 Z" fill="url(#beam)"/>
+  </g>
+
+  <!-- floor -->
+  <rect x="0" y="686" width="1200" height="114" fill="#080f0c"/>
+  <path d="M0 686h1200" stroke="#1e2c27" stroke-width="3"/>
+  <!-- painted bay stripe -->
+  <path d="M150 740h900" stroke="#c6f06b" stroke-width="3" opacity="0.16"/>
+  <ellipse cx="700" cy="700" rx="330" ry="46" fill="url(#pool)"/>
+
+  <!-- two-post lift -->
+  <g fill="url(#steel)">
+    <rect x="232" y="188" width="46" height="498" rx="3"/>
+    <rect x="922" y="188" width="46" height="498" rx="3"/>
+    <rect x="206" y="668" width="98" height="20" rx="3"/>
+    <rect x="896" y="668" width="98" height="20" rx="3"/>
+    <rect x="232" y="176" width="736" height="16" rx="3"/>
+  </g>
+  <!-- lift arms reaching under the sills -->
+  <g fill="#22352e">
+    <rect x="276" y="432" width="120" height="15" rx="4"/>
+    <rect x="804" y="432" width="120" height="15" rx="4"/>
+    <rect x="384" y="416" width="20" height="30" rx="4"/>
+    <rect x="796" y="416" width="20" height="30" rx="4"/>
+  </g>
+
+  <!-- lifted vehicle: crossover profile, rim-lit from the lamp above -->
+  <g>
+    <path d="M368 428 L368 388 Q368 360 396 356 L470 350 L520 300 Q532 288 552 287 L706 287 Q726 288 738 302 L780 352 L836 358 Q862 362 862 390 L862 428 Z"
+          fill="#16241f" stroke="#2c4239" stroke-width="2"/>
+    <!-- glass -->
+    <path d="M494 348 L536 305 Q542 299 552 299 L616 299 L616 344 Z" fill="#0d3a31" opacity="0.85"/>
+    <path d="M634 299 L702 299 Q712 299 718 306 L752 348 L634 344 Z" fill="#0d3a31" opacity="0.85"/>
+    <!-- roof + hood rim light -->
+    <path d="M520 300 Q532 288 552 287 L706 287 Q726 288 738 302" fill="none" stroke="#c6f06b" stroke-width="2.5" opacity="0.5"/>
+    <path d="M836 358 Q862 362 862 390" fill="none" stroke="#c6f06b" stroke-width="2" opacity="0.28"/>
+    <!-- wheels hanging free -->
+    <g>
+      <circle cx="452" cy="430" r="56" fill="#0b1310" stroke="#25382f" stroke-width="3"/>
+      <circle cx="452" cy="430" r="26" fill="#1c2c26"/>
+      <circle cx="778" cy="430" r="56" fill="#0b1310" stroke="#25382f" stroke-width="3"/>
+      <circle cx="778" cy="430" r="26" fill="#1c2c26"/>
+    </g>
+    <!-- exhaust + underbody detail -->
+    <g stroke="#243830" stroke-width="4" fill="none">
+      <path d="M520 428 L700 428"/>
+      <path d="M700 428 L742 420"/>
+    </g>
+  </g>
+
+  <!-- technician underneath, arms up into the wheel well -->
+  <g fill="#050a08">
+    <!-- raised arms -->
+    <path d="M596 556 L578 470 l16 -5 l20 84 z"/>
+    <path d="M624 556 L646 476 l16 6 l-22 78 z"/>
+    <!-- head + cap -->
+    <circle cx="612" cy="540" r="23"/>
+    <path d="M586 532 q26 -22 52 0 l6 -8 q-32 -28 -64 0 z"/>
+    <!-- torso -->
+    <path d="M586 562 q26 -12 52 0 l10 78 q-36 12 -72 0 z"/>
+    <!-- legs, one knee bent -->
+    <path d="M596 638 l-6 48 -20 0 l10 -50 z"/>
+    <path d="M630 638 l14 30 l14 18 l-20 4 l-22 -28 l-2 -22 z"/>
+  </g>
+  <!-- rim light on the technician's shoulder + cap -->
+  <g fill="none" stroke="#c6f06b" stroke-width="2.5" opacity="0.55">
+    <path d="M590 566 q22 -10 46 -2"/>
+    <path d="M590 530 q22 -18 46 -2"/>
+  </g>
+
+  <!-- rolling tool chest -->
+  <g>
+    <rect x="76" y="520" width="132" height="150" rx="4" fill="#141f1b" stroke="#243830" stroke-width="2"/>
+    <g stroke="#243830" stroke-width="2">
+      <path d="M76 560h132M76 600h132M76 640h132"/>
+    </g>
+    <g fill="#2c4239">
+      <rect x="118" y="536" width="48" height="6" rx="3"/>
+      <rect x="118" y="576" width="48" height="6" rx="3"/>
+      <rect x="118" y="616" width="48" height="6" rx="3"/>
+    </g>
+    <circle cx="102" cy="678" r="10" fill="#0b1310" stroke="#243830" stroke-width="2"/>
+    <circle cx="182" cy="678" r="10" fill="#0b1310" stroke="#243830" stroke-width="2"/>
+  </g>
+
+  <!-- creeper leaning against the post -->
+  <path d="M990 600 l52 -78 l16 10 l-52 78 z" fill="#141f1b" stroke="#243830" stroke-width="2"/>
+
+  <!-- vignette -->
+  <rect width="1200" height="800" fill="none"/>
+  <path d="M0 0h1200v800H0z" fill="#060b09" opacity="0.28" style="mix-blend-mode:multiply"/>
+</svg>

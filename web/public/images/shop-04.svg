@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-label="A technician running a diagnostic scan tool at the open driver's door of a car in the bay">
+  <defs>
+    <linearGradient id="s4-wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3ede3"/><stop offset="1" stop-color="#ded4c4"/>
+    </linearGradient>
+    <linearGradient id="s4-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c6bbab"/><stop offset="1" stop-color="#ada191"/>
+    </linearGradient>
+    <radialGradient id="s4-light" cx="0.72" cy="0.14" r="0.62">
+      <stop offset="0" stop-color="#fffdf7" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#fffdf7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="s4-car" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5c646e"/><stop offset="1" stop-color="#343a42"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#s4-wall)"/>
+
+  <!-- tool wall -->
+  <g>
+    <rect x="60" y="130" width="480" height="330" rx="4" fill="#e8dfd0" stroke="#cfc3ae" stroke-width="4"/>
+    <g fill="#c2b5a0">
+      <circle cx="100" cy="170" r="4"/><circle cx="160" cy="170" r="4"/><circle cx="220" cy="170" r="4"/>
+      <circle cx="280" cy="170" r="4"/><circle cx="340" cy="170" r="4"/><circle cx="400" cy="170" r="4"/>
+      <circle cx="460" cy="170" r="4"/><circle cx="500" cy="170" r="4"/>
+    </g>
+    <!-- wrenches, descending -->
+    <g fill="#8a929c">
+      <path d="M112 176 h14 v96 a12 12 0 0 1 -14 0 z"/>
+      <path d="M172 176 h14 v112 a12 12 0 0 1 -14 0 z"/>
+      <path d="M232 176 h14 v130 a12 12 0 0 1 -14 0 z"/>
+      <path d="M292 176 h14 v148 a12 12 0 0 1 -14 0 z"/>
+    </g>
+    <!-- shelf of parts boxes -->
+    <rect x="60" y="360" width="480" height="10" fill="#b6a992"/>
+    <g>
+      <rect x="90" y="288" width="80" height="72" rx="4" fill="#b4463a"/>
+      <rect x="184" y="304" width="70" height="56" rx="4" fill="#356394"/>
+      <rect x="268" y="296" width="86" height="64" rx="4" fill="#c9a227"/>
+      <rect x="368" y="308" width="76" height="52" rx="4" fill="#4c8c5a"/>
+      <rect x="458" y="292" width="66" height="68" rx="4" fill="#8a929c"/>
+    </g>
+  </g>
+
+  <rect width="1200" height="900" fill="url(#s4-light)"/>
+
+  <!-- floor -->
+  <rect x="0" y="690" width="1200" height="210" fill="url(#s4-floor)"/>
+  <path d="M0 690h1200" stroke="#9d917d" stroke-width="4"/>
+  <ellipse cx="760" cy="730" rx="380" ry="40" fill="#fffdf7" opacity="0.32"/>
+
+  <!-- car, side on, driver's door open -->
+  <g>
+    <!-- body -->
+    <path d="M470 690 L470 528 q0 -34 34 -42 L640 452 q22 -60 82 -62 l190 -2 q60 0 78 60 l100 22 q40 8 40 48 l0 172 z"
+          fill="url(#s4-car)"/>
+    <!-- rear glass + quarter -->
+    <path d="M660 456 q20 -50 68 -52 l72 -2 l0 62 l-150 4 z" fill="#93a8ba" opacity="0.45"/>
+    <!-- roof highlight -->
+    <path d="M640 452 q22 -60 82 -62 l190 -2 q60 0 78 60" fill="none" stroke="#fdfaf4" stroke-width="5" opacity="0.5"/>
+    <!-- open driver's door, swung toward us -->
+    <g>
+      <path d="M812 462 l176 -6 l24 232 l-196 8 z" fill="#454d57"/>
+      <path d="M826 476 l152 -6 l0 66 l-152 6 z" fill="#93a8ba" opacity="0.4"/>
+      <rect x="856" y="576" width="70" height="14" rx="7" fill="#6d757f"/>
+      <path d="M812 462 l176 -6" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.4"/>
+    </g>
+    <!-- wheels -->
+    <circle cx="596" cy="668" r="72" fill="#22262b"/>
+    <circle cx="596" cy="668" r="34" fill="#4c545d"/>
+    <circle cx="1046" cy="668" r="72" fill="#22262b"/>
+    <circle cx="1046" cy="668" r="34" fill="#4c545d"/>
+  </g>
+
+  <!-- technician crouched at the door with a scan tool -->
+  <g fill="#37312a">
+    <circle cx="722" cy="470" r="36"/>
+    <path d="M686 462 q36 -34 72 -4 l16 -8 q-46 -40 -94 -2 z"/>
+    <path d="M688 510 q34 -16 68 0 l24 128 q-58 18 -114 0 z"/>
+    <!-- both arms forward, holding the tool -->
+    <path d="M752 520 q56 6 78 44 l-22 16 q-22 -30 -60 -36 z"/>
+    <path d="M688 524 q-30 26 -22 62 l24 -4 q-4 -26 18 -42 z"/>
+    <path d="M700 638 l-14 52 l-42 0 l20 -56 z"/>
+    <path d="M752 638 l26 52 l-42 0 l-20 -50 z"/>
+  </g>
+  <path d="M692 516 q34 -14 66 0" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.35"/>
+
+  <!-- scan tool with a lit readout -->
+  <g>
+    <rect x="796" y="546" width="86" height="126" rx="12" fill="#2b2f34"/>
+    <rect x="808" y="560" width="62" height="66" rx="4" fill="#059669"/>
+    <g stroke="#d9fbe9" stroke-width="4" stroke-linecap="round">
+      <path d="M818 578h42M818 594h42M818 610h26"/>
+    </g>
+    <g fill="#5b636d">
+      <rect x="810" y="638" width="20" height="12" rx="3"/>
+      <rect x="838" y="638" width="20" height="12" rx="3"/>
+      <rect x="810" y="656" width="20" height="10" rx="3"/>
+      <rect x="838" y="656" width="20" height="10" rx="3"/>
+    </g>
+    <!-- cable into the OBD port -->
+    <path d="M840 672 q-6 46 -60 40" fill="none" stroke="#2b2f34" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <g fill="#8d8271" opacity="0.32">
+    <ellipse cx="722" cy="696" rx="86" ry="13"/>
+  </g>
+</svg>

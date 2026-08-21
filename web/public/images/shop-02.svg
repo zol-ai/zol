@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-label="A vehicle raised on a two-post lift with a technician working underneath">
+  <defs>
+    <linearGradient id="s2-wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2ece1"/><stop offset="1" stop-color="#ded4c4"/>
+    </linearGradient>
+    <linearGradient id="s2-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c6bbab"/><stop offset="1" stop-color="#aea291"/>
+    </linearGradient>
+    <radialGradient id="s2-light" cx="0.5" cy="0.1" r="0.7">
+      <stop offset="0" stop-color="#fffdf7" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#fffdf7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="s2-post" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#23486f"/><stop offset="0.45" stop-color="#356394"/><stop offset="1" stop-color="#1d3a5c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#s2-wall)"/>
+
+  <!-- roller bay door, open at the top -->
+  <g>
+    <rect x="700" y="90" width="440" height="120" rx="4" fill="#cfc4b2"/>
+    <g stroke="#bcb09c" stroke-width="3">
+      <path d="M700 120h440M700 150h440M700 180h440"/>
+    </g>
+    <rect x="700" y="210" width="440" height="14" fill="#8d8271"/>
+    <!-- daylight beyond -->
+    <rect x="700" y="224" width="440" height="330" fill="#f8f5ee"/>
+    <rect x="700" y="224" width="440" height="330" fill="none" stroke="#cfc4b2" stroke-width="4"/>
+  </g>
+
+  <!-- window band, left -->
+  <g>
+    <rect x="60" y="120" width="520" height="180" fill="#f7f3ea"/>
+    <g stroke="#d3c8b6" stroke-width="4">
+      <path d="M60 120h520M60 300h520M190 120v180M320 120v180M450 120v180M60 210h520"/>
+    </g>
+  </g>
+
+  <rect width="1200" height="900" fill="url(#s2-light)"/>
+
+  <!-- floor -->
+  <rect x="0" y="700" width="1200" height="200" fill="url(#s2-floor)"/>
+  <path d="M0 700h1200" stroke="#9d917d" stroke-width="4"/>
+  <path d="M140 800h920" stroke="#e0d6c4" stroke-width="6" opacity="0.6"/>
+  <ellipse cx="600" cy="740" rx="400" ry="40" fill="#fffdf7" opacity="0.32"/>
+
+  <!-- lift posts -->
+  <g fill="url(#s2-post)">
+    <rect x="188" y="150" width="62" height="550" rx="5"/>
+    <rect x="950" y="150" width="62" height="550" rx="5"/>
+    <rect x="188" y="138" width="824" height="20" rx="5"/>
+  </g>
+  <g fill="#1d3a5c">
+    <rect x="160" y="682" width="118" height="22" rx="4"/>
+    <rect x="922" y="682" width="118" height="22" rx="4"/>
+  </g>
+  <!-- arms under the sills -->
+  <g fill="#2c5583">
+    <rect x="244" y="452" width="150" height="18" rx="6"/>
+    <rect x="806" y="452" width="150" height="18" rx="6"/>
+    <rect x="382" y="432" width="24" height="34" rx="6"/>
+    <rect x="794" y="432" width="24" height="34" rx="6"/>
+  </g>
+
+  <!-- lifted vehicle -->
+  <g>
+    <path d="M330 448 L330 400 q0 -34 34 -40 L474 344 q14 -46 62 -48 l160 -4 q46 0 62 44 l112 18 q34 6 34 42 l0 52 z"
+          fill="#39404a"/>
+    <path d="M492 348 q10 -34 46 -36 l68 -2 l0 54 l-124 4 z" fill="#93a8ba" opacity="0.5"/>
+    <path d="M626 310 l72 -2 q34 0 46 34 l10 26 l-128 4 z" fill="#93a8ba" opacity="0.4"/>
+    <path d="M474 344 q14 -46 62 -48 l160 -4 q46 0 62 44" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.5"/>
+    <!-- wheels hanging -->
+    <g>
+      <circle cx="412" cy="448" r="66" fill="#22262b"/>
+      <circle cx="412" cy="448" r="30" fill="#4c545d"/>
+      <circle cx="866" cy="448" r="66" fill="#22262b"/>
+      <circle cx="866" cy="448" r="30" fill="#4c545d"/>
+    </g>
+    <!-- underbody -->
+    <g stroke="#2b2f34" stroke-width="7" fill="none" stroke-linecap="round">
+      <path d="M492 448 h300"/>
+      <path d="M792 448 l58 -12"/>
+    </g>
+    <rect x="560" y="430" width="140" height="24" rx="6" fill="#2b2f34"/>
+  </g>
+
+  <!-- technician underneath, arms up to the work -->
+  <g fill="#37312a">
+    <path d="M596 592 l-24 -110 l20 -6 l26 112 z"/>
+    <path d="M642 592 l30 -104 l20 8 l-30 100 z"/>
+    <circle cx="628" cy="576" r="30"/>
+    <path d="M598 566 q30 -28 62 0 l14 -8 q-38 -34 -76 0 z"/>
+    <path d="M598 600 q30 -14 62 0 l14 96 q-46 14 -90 0 z"/>
+    <path d="M610 690 l-8 12 l-34 0 l14 -14 z"/>
+  </g>
+  <path d="M602 604 q28 -12 56 -2" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.35"/>
+
+  <!-- drop light hanging from the car -->
+  <g>
+    <path d="M760 448v70" stroke="#8d8271" stroke-width="3"/>
+    <circle cx="760" cy="530" r="16" fill="#fdfaf4"/>
+    <circle cx="760" cy="530" r="26" fill="#fdfaf4" opacity="0.35"/>
+  </g>
+
+  <!-- creeper on the floor -->
+  <g>
+    <rect x="270" y="668" width="130" height="26" rx="8" fill="#2b2f34"/>
+    <circle cx="292" cy="700" r="9" fill="#4c545d"/>
+    <circle cx="378" cy="700" r="9" fill="#4c545d"/>
+  </g>
+
+  <g fill="#8d8271" opacity="0.32">
+    <ellipse cx="628" cy="706" rx="76" ry="12"/>
+  </g>
+</svg>

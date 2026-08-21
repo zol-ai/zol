@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-label="Two technicians looking over an open engine bay beside a two-post lift">
+  <defs>
+    <linearGradient id="s1-wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2ece1"/><stop offset="1" stop-color="#e2d8c8"/>
+    </linearGradient>
+    <linearGradient id="s1-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c8bdad"/><stop offset="1" stop-color="#b3a794"/>
+    </linearGradient>
+    <radialGradient id="s1-light" cx="0.62" cy="0.16" r="0.6">
+      <stop offset="0" stop-color="#fffdf7" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#fffdf7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="s1-post" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#23486f"/><stop offset="0.45" stop-color="#356394"/><stop offset="1" stop-color="#1d3a5c"/>
+    </linearGradient>
+    <linearGradient id="s1-car" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a5057"/><stop offset="1" stop-color="#2b2f34"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#s1-wall)"/>
+
+  <!-- clerestory windows -->
+  <g>
+    <rect x="0" y="70" width="1200" height="210" fill="#f7f3ea"/>
+    <g stroke="#d3c8b6" stroke-width="4">
+      <path d="M0 70h1200M0 280h1200M150 70v210M300 70v210M450 70v210M600 70v210M750 70v210M900 70v210M1050 70v210"/>
+      <path d="M0 175h1200" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- wall panel seams -->
+  <g stroke="#d8cebd" stroke-width="3">
+    <path d="M0 340h1200M0 470h1200M240 280v380M720 280v380M980 280v380"/>
+  </g>
+
+  <rect width="1200" height="900" fill="url(#s1-light)"/>
+
+  <!-- floor -->
+  <rect x="0" y="660" width="1200" height="240" fill="url(#s1-floor)"/>
+  <path d="M0 660h1200" stroke="#9d917d" stroke-width="4"/>
+  <path d="M0 760h1200" stroke="#c2b7a6" stroke-width="3" opacity="0.7"/>
+  <ellipse cx="640" cy="700" rx="420" ry="42" fill="#fffdf7" opacity="0.35"/>
+
+  <!-- two-post lift, blue -->
+  <g>
+    <rect x="196" y="180" width="60" height="486" rx="5" fill="url(#s1-post)"/>
+    <rect x="170" y="648" width="112" height="22" rx="4" fill="#1d3a5c"/>
+    <rect x="196" y="300" width="60" height="16" fill="#16304d" opacity="0.6"/>
+    <rect x="196" y="430" width="60" height="16" fill="#16304d" opacity="0.6"/>
+    <!-- control box -->
+    <rect x="150" y="330" width="46" height="86" rx="5" fill="#2b2f34"/>
+    <rect x="160" y="344" width="26" height="20" rx="3" fill="#8fbf7a"/>
+    <circle cx="166" cy="386" r="6" fill="#c0473c"/>
+    <circle cx="182" cy="386" r="6" fill="#e0e0dc"/>
+  </g>
+
+  <!-- red rolling tool chest -->
+  <g>
+    <rect x="300" y="452" width="176" height="214" rx="6" fill="#ad4438"/>
+    <rect x="300" y="452" width="176" height="16" rx="6" fill="#933a30"/>
+    <g stroke="#8f382e" stroke-width="3">
+      <path d="M300 500h176M300 546h176M300 592h176M300 634h176"/>
+    </g>
+    <g fill="#e6e2da">
+      <rect x="356" y="476" width="64" height="7" rx="3.5"/>
+      <rect x="356" y="520" width="64" height="7" rx="3.5"/>
+      <rect x="356" y="566" width="64" height="7" rx="3.5"/>
+      <rect x="356" y="610" width="64" height="7" rx="3.5"/>
+    </g>
+  </g>
+
+  <!-- vehicle, front three-quarter with hood up -->
+  <g>
+    <!-- raised hood -->
+    <path d="M690 430 L648 236 q-3 -16 14 -18 l38 -5 q15 -2 19 13 l58 196 z" fill="#3c4249" stroke="#2b2f34" stroke-width="3"/>
+    <path d="M648 236 q-3 -16 14 -18 l38 -5" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.55"/>
+    <!-- body -->
+    <path d="M624 666 L624 486 q0 -38 38 -44 L1010 400 q44 -5 48 40 l8 226 z" fill="url(#s1-car)"/>
+    <!-- windshield + glass -->
+    <path d="M880 404 l-40 -2 q-16 -1 -22 12 l-18 40 l86 -4 z" fill="#8fa4b6" opacity="0.55"/>
+    <path d="M902 402 l86 -4 q22 -1 30 16 l14 32 l-126 4 z" fill="#8fa4b6" opacity="0.4"/>
+    <!-- engine bay opening -->
+    <rect x="676" y="452" width="292" height="76" rx="6" fill="#20242a"/>
+    <g fill="#39404a">
+      <rect x="694" y="462" width="82" height="56" rx="5"/>
+      <rect x="790" y="468" width="56" height="50" rx="16"/>
+      <rect x="860" y="462" width="88" height="34" rx="5"/>
+    </g>
+    <g stroke="#525b66" stroke-width="5" fill="none" stroke-linecap="round">
+      <path d="M778 484 q22 -16 44 0"/>
+      <path d="M848 480 q16 12 32 0"/>
+    </g>
+    <!-- wheel -->
+    <circle cx="948" cy="648" r="70" fill="#22262b"/>
+    <circle cx="948" cy="648" r="34" fill="#4c545d"/>
+    <circle cx="948" cy="648" r="14" fill="#2b2f34"/>
+    <!-- headlight catching light -->
+    <path d="M624 500 h48 a10 10 0 0 1 0 36 h-48 z" fill="#fdfaf4" opacity="0.6"/>
+  </g>
+
+  <!-- technician A: standing, holding an impact gun -->
+  <g fill="#37312a">
+    <circle cx="470" cy="300" r="36"/>
+    <path d="M436 292 q34 -34 70 -4 l16 -8 q-44 -40 -90 -2 z"/>
+    <path d="M436 340 q34 -16 70 0 l22 118 q-58 18 -114 0 z"/>
+    <path d="M436 348 l-18 108 l20 6 l22 -104 z"/>
+    <path d="M506 348 l24 100 l-20 8 l-26 -96 z"/>
+    <path d="M446 456 l-8 210 l-40 0 l16 -212 z"/>
+    <path d="M496 456 l22 210 l-40 0 l-18 -206 z"/>
+  </g>
+  <!-- impact gun in near hand -->
+  <g fill="#2b2f34">
+    <rect x="500" y="446" width="26" height="58" rx="7"/>
+    <rect x="494" y="440" width="40" height="22" rx="6"/>
+    <rect x="506" y="500" width="14" height="30" rx="4" fill="#4c545d"/>
+  </g>
+  <!-- polo highlight -->
+  <path d="M440 346 q32 -14 64 0" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.35"/>
+
+  <!-- technician B: leaning toward the engine bay -->
+  <g fill="#2f2a24">
+    <circle cx="596" cy="322" r="34"/>
+    <path d="M564 314 q32 -32 66 -4 l14 -8 q-42 -38 -86 -2 z"/>
+    <path d="M566 360 q32 -14 64 0 l18 108 q-52 16 -104 0 z"/>
+    <!-- arm reaching to the engine -->
+    <path d="M630 366 q54 8 84 60 l-20 14 q-26 -42 -70 -48 z"/>
+    <path d="M712 424 q26 6 24 26 q-2 18 -22 14 l-18 -24 z"/>
+    <path d="M576 466 l-10 200 l-40 0 l16 -202 z"/>
+    <path d="M624 466 l20 200 l-40 0 l-16 -196 z"/>
+  </g>
+  <path d="M570 366 q30 -12 60 0" fill="none" stroke="#fdfaf4" stroke-width="4" opacity="0.3"/>
+
+  <!-- contact shadows -->
+  <g fill="#8d8271" opacity="0.35">
+    <ellipse cx="452" cy="668" rx="72" ry="12"/>
+    <ellipse cx="596" cy="668" rx="70" ry="12"/>
+    <ellipse cx="388" cy="668" rx="96" ry="12"/>
+  </g>
+</svg>

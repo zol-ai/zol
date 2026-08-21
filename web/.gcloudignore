@@ -1,0 +1,9 @@
+# Build context for `gcloud run deploy zol-web --source web`.
+# Cloud Build uploads everything not listed here, then the Dockerfile installs
+# dependencies itself — shipping node_modules or .next only slows the upload.
+node_modules/
+.next/
+.env
+.env.*
+.vercel/
+*.tsbuildinfo

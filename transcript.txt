@@ -1,0 +1,28 @@
+
+Okay. So it's called. Right? Mhmm. We'll talk about requirements, and then, we will talk about the whole architecture.
+
+For summary, like, it is like an AI agent that basically, does everything for a mechanical shop. It's like an AI employee Mhmm. Starting to ending. It handles calls twenty four seven, and it handles them twenty four seven. And when during working hours, it will route them.
+
+And next is transcript transcribing. It transcribes everything that is in the call. It, then fills the CRM or the forms necessary. It will diagnose the issue. It will diagnose the issue.
+
+It will check the calendar. Will check calendar. Availability and book the slot. And also book slots. It will also, based on owner place and per hour rate, it will also make quotes and, can always send via via text or email.
+
+Or even quickly on the call based on what the client ask, it can say fast because it can easily generate quotes. Yeah. And finally, at the ending, it will follow-up. Yeah. According to It will follow-up mainly on text.
+
+Like, once they use client calls, it will follow-up on text asking them, hey. Either we ordered ordered the part or, when it will be done Yeah. When to pick up When to pick up or the update regarding the Update. Car. Or, if they gave it and went away, it will send them Update.
+
+Exactly what happened, diagnose Yeah. Car repairing updates. Diagnose, report. It will send all of that. But additionally, it will store all these information for each user and their number.
+
+Yeah. So next time when they call, it it knows. Who is that unlock and their history? Plus, it follows up for deals Yeah. On birthday, festival, anniversaries Christmas.
+
+Yeah. And more. Yeah. Christmas, fourth of July, like, all those days Yeah. Whenever necessary.
+
+And it's up to the owner to push anything required. And within within the dashboard of Okay. The well, Exalt, it it can it'll have, like, a left side bar for all instructions and nav bar. It also has, like, an AI chat if they have any questions. It can not only guide them to that, but also take them to the exact page if necessary.
+
+Yeah. Here, they can see each repair order and go into it, close repair orders, open repair orders. If someone comes in, it can collect the information right away. People can type their information. Amazingly, like, it has all these things starting.
+
+Mhmm. So call, text, and everything. And coming to the architecture, it is made completely in GCP with Postgres SQL, self hosted. And front end, we can put on Versal. Front end, we can put on Versal.
+
+And the same git repository, which we create. So landing page two, full working app, fully working app, landing page to fully working app. And, also yeah. Database is not needed. All of these will be in Docker and, then pushed into GCP.
+
+So either on Cloud Run, it will be self hosted. There will not be any reliability issues, and, everything will run on Twilio. And, we can use OpenAI as the LLM because you have those credits. Ultimately, this is the whole thing. Yeah.

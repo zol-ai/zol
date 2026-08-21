@@ -1,0 +1,576 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   ZOL design tokens
+
+   Light, warm, and dense — the page should read like a well-set trade
+   document, not a dark SaaS brochure.
+
+   The one system that runs through everything: every event on this page is
+   attributed. Emerald means ZOL did it with nobody watching. Amber means a
+   person took over. That colour pair is information, so it is never used
+   decoratively.
+   ========================================================================== */
+
+:root {
+  /* Grounds — warm whites, never pure grey */
+  --paper: #ffffff;
+  --paper-2: #faf9f7;
+  --paper-3: #f4f2ee;
+  --paper-4: #ebe8e2;
+
+  /* Ink — warm near-black through to a quiet tertiary */
+  --ink: #191714;
+  --ink-2: #57534e;
+  /* Holds 4.6:1 even on --paper-3, so 11px eyebrows still pass AA. */
+  --ink-3: #736c66;
+  --line: #e7e3dc;
+  --line-2: #d7d2c8;
+
+  /* Attribution */
+  --emerald: #059669;
+  --emerald-deep: #047857;
+  --emerald-wash: #ecfdf5;
+  --emerald-line: #a7f3d0;
+  --amber: #d97706;
+  --amber-deep: #b45309;
+  --amber-wash: #fffbeb;
+  --amber-line: #fde68a;
+
+  /* Inverted panel, used sparingly for emphasis */
+  --panel: #1c1a17;
+  --panel-2: #2a2621;
+  --panel-line: #3a352e;
+  --panel-fg: #f5f3ef;
+  --panel-fg-2: #a8a196;
+
+  --shell: 74rem;
+  --radius: 6px;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-paper-4: var(--paper-4);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-emerald: var(--emerald);
+  --color-emerald-deep: var(--emerald-deep);
+  --color-emerald-wash: var(--emerald-wash);
+  --color-emerald-line: var(--emerald-line);
+  --color-amber: var(--amber);
+  --color-amber-deep: var(--amber-deep);
+  --color-amber-wash: var(--amber-wash);
+  --color-amber-line: var(--amber-line);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-line: var(--panel-line);
+  --color-panel-fg: var(--panel-fg);
+  --color-panel-fg-2: var(--panel-fg-2);
+
+  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--emerald);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* ==========================================================================
+   Type
+   Archivo set uppercase and very tight is ZOL's voice. Inter carries the
+   reading copy; JetBrains Mono carries anything the machine produced.
+   ========================================================================== */
+
+.t-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.t-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.92;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+}
+
+.t-h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+/*
+  Big numerals. Same face and weight as the display type but without the
+  uppercasing, which would turn a unit like "8s" into "8S".
+*/
+.t-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section markers: 01 · HOW IT WORKS */
+.t-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Anything the machine wrote: RO numbers, VINs, timestamps, totals */
+.t-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.t-lede {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+@media (min-width: 768px) {
+  .t-lede {
+    font-size: 1.1875rem;
+  }
+}
+
+/* ==========================================================================
+   Shell + rhythm
+   One class owns vertical rhythm so sections never fight over margins.
+   ========================================================================== */
+
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .shell {
+    padding-inline: 2rem;
+  }
+}
+
+.band {
+  padding-block: 4.5rem;
+}
+
+@media (min-width: 768px) {
+  .band {
+    padding-block: 6.5rem;
+  }
+}
+
+.band-tight {
+  padding-block: 3rem;
+}
+
+@media (min-width: 768px) {
+  .band-tight {
+    padding-block: 4rem;
+  }
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: -0.011em;
+  padding: 0.8125rem 1.3125rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 1px 2px rgb(25 23 20 / 0.16);
+}
+
+.btn-primary:hover {
+  background: #322d27;
+}
+
+/*
+  Uses the deep green, not --emerald: white on #059669 is only 3.77:1 and
+  fails AA. On --emerald-deep it clears at 5.48:1.
+*/
+.btn-emerald {
+  background: var(--emerald-deep);
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(4 120 87 / 0.24);
+}
+
+.btn-emerald:hover {
+  background: #046b4f;
+}
+
+.btn-ghost {
+  border-color: var(--line-2);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.btn-ghost:hover {
+  border-color: var(--ink-3);
+  background: var(--paper-2);
+}
+
+/* On the inverted panel */
+.btn-onpanel {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.btn-onpanel:hover {
+  background: var(--paper-3);
+}
+
+.btn-sm {
+  padding: 0.5625rem 0.9375rem;
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Cards and surfaces
+   ========================================================================== */
+
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* The product screenshots. Lifted just enough to read as a separate plane. */
+.screen {
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  box-shadow:
+    0 1px 2px rgb(25 23 20 / 0.04),
+    0 8px 24px -8px rgb(25 23 20 / 0.10),
+    0 28px 60px -24px rgb(25 23 20 / 0.14);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Attribution — the page's one system
+   ========================================================================== */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1875rem 0.4375rem;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.tag-zol {
+  color: var(--emerald-deep);
+  background: var(--emerald-wash);
+  border-color: var(--emerald-line);
+}
+
+.tag-person {
+  color: var(--amber-deep);
+  background: var(--amber-wash);
+  border-color: var(--amber-line);
+}
+
+.tag-neutral {
+  color: var(--ink-3);
+  background: var(--paper-3);
+  border-color: var(--line);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.dot-live {
+  background: var(--emerald);
+  box-shadow: 0 0 0 0 rgb(5 150 105 / 0.55);
+  animation: pulse 2.2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(5 150 105 / 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(5 150 105 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(5 150 105 / 0);
+  }
+}
+
+/* ==========================================================================
+   Hero media
+   The imagery bleeds to the right edge and runs the full height of the hero;
+   the headline sits on top of it. A scrim keeps the type side readable —
+   horizontal on wide screens, vertical on narrow ones where the picture sits
+   behind the whole block.
+   ========================================================================== */
+
+.hero-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Held further right on smaller desktops so the headline never runs off the
+   solid part of the scrim and onto the picture. */
+@media (min-width: 1024px) {
+  .hero-media {
+    left: 46%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .hero-media {
+    left: 40%;
+  }
+}
+
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Narrow screens put the picture behind the whole block, so the paper stays
+     solid for the full depth of the copy and then clears quickly, leaving a
+     clean band of image at the bottom rather than a wash behind the text. */
+  background: linear-gradient(
+    to bottom,
+    var(--paper) 0%,
+    var(--paper) 68%,
+    color-mix(in srgb, var(--paper) 50%, transparent) 80%,
+    transparent 94%
+  );
+}
+
+@media (min-width: 1024px) {
+  .hero-scrim {
+    background:
+      /* Solid well past the media's left edge: the headline column has to sit
+         on flat paper at every width, not on the picture. */
+      linear-gradient(
+        to right,
+        var(--paper) 0%,
+        var(--paper) 26%,
+        color-mix(in srgb, var(--paper) 74%, transparent) 42%,
+        color-mix(in srgb, var(--paper) 26%, transparent) 62%,
+        transparent 78%
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--paper) 62%, transparent) 0%,
+        transparent 22%,
+        transparent 82%,
+        color-mix(in srgb, var(--paper) 62%, transparent) 100%
+      );
+  }
+}
+
+/* ==========================================================================
+   Hairline grid used behind the hero — a faint bay-floor ruling
+   ========================================================================== */
+
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 4.5rem 4.5rem;
+  mask-image: radial-gradient(60% 55% at 50% 0%, #000 0%, transparent 100%);
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Scan-tool sliders (the missed-call calculator)
+   ========================================================================== */
+
+/*
+  The input itself is 24px tall so there's something to grab on a phone; the
+  visible rail is painted on the track pseudo-element, not the input. Styling
+  the input's own height instead leaves a 4px touch target.
+*/
+.scan-range {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.scan-range::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--line-2);
+  border-radius: 2px;
+}
+
+.scan-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  /* centre the thumb on a 4px rail: (4 - 18) / 2 */
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--emerald-deep);
+  border: 2px solid var(--paper);
+  box-shadow: 0 1px 3px rgb(25 23 20 / 0.28);
+  cursor: grab;
+  transition: transform 120ms ease;
+}
+
+.scan-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.scan-range::-moz-range-track {
+  height: 4px;
+  background: var(--line-2);
+  border-radius: 2px;
+}
+
+.scan-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--emerald-deep);
+  border: 2px solid var(--paper);
+  box-shadow: 0 1px 3px rgb(25 23 20 / 0.28);
+  cursor: grab;
+}
+
+/* ==========================================================================
+   Reveal on scroll
+   ========================================================================== */
+
+.reveal {
+  transition:
+    opacity 640ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 640ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+  Hidden only once the head script has confirmed scripting is live. Without
+  `.js` — scripting blocked, script failed, crawler with JS off — the content
+  is simply visible, which is the state that matters most for a landing page.
+*/
+.js .reveal:not([data-shown="true"]) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+/* ==========================================================================
+   Reduced motion: every end state, no movement.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .dot-live {
+    animation: none;
+  }
+
+  .js .reveal:not([data-shown="true"]),
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

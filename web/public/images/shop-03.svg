@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-label="The service counter of an auto repair shop, with the phone ringing and the bay visible behind">
+  <defs>
+    <linearGradient id="s3-wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4eee4"/><stop offset="1" stop-color="#e0d6c6"/>
+    </linearGradient>
+    <linearGradient id="s3-counter" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9c7a52"/><stop offset="1" stop-color="#7a5d3c"/>
+    </linearGradient>
+    <radialGradient id="s3-light" cx="0.3" cy="0.12" r="0.65">
+      <stop offset="0" stop-color="#fffdf7" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#fffdf7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#s3-wall)"/>
+
+  <!-- window onto the bay -->
+  <g>
+    <rect x="640" y="120" width="500" height="360" fill="#efe9df"/>
+    <rect x="640" y="120" width="500" height="360" fill="none" stroke="#c7bba7" stroke-width="8"/>
+    <path d="M890 120v360M640 300h500" stroke="#c7bba7" stroke-width="6"/>
+    <!-- a car and lift glimpsed through it -->
+    <g opacity="0.5">
+      <rect x="690" y="200" width="26" height="270" rx="4" fill="#356394"/>
+      <rect x="1040" y="200" width="26" height="270" rx="4" fill="#356394"/>
+      <path d="M730 400 l0 -44 q0 -20 22 -24 l70 -12 q10 -30 42 -30 l88 0 q30 0 40 28 l64 12 q20 4 20 26 l0 44 z" fill="#5b636d"/>
+      <circle cx="782" cy="400" r="32" fill="#3a4048"/>
+      <circle cx="990" cy="400" r="32" fill="#3a4048"/>
+    </g>
+  </g>
+
+  <!-- wall clock -->
+  <g>
+    <circle cx="300" cy="180" r="58" fill="#f7f3ea" stroke="#b6a992" stroke-width="6"/>
+    <path d="M300 180v-34M300 180l24 16" stroke="#37312a" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="300" cy="180" r="5" fill="#37312a"/>
+  </g>
+
+  <!-- pegboard with keys -->
+  <g>
+    <rect x="80" y="290" width="330" height="180" rx="4" fill="#e6dccb" stroke="#cfc3ae" stroke-width="4"/>
+    <g fill="#b6a992">
+      <circle cx="120" cy="326" r="4"/><circle cx="176" cy="326" r="4"/><circle cx="232" cy="326" r="4"/>
+      <circle cx="288" cy="326" r="4"/><circle cx="344" cy="326" r="4"/>
+      <circle cx="120" cy="398" r="4"/><circle cx="176" cy="398" r="4"/><circle cx="232" cy="398" r="4"/>
+      <circle cx="288" cy="398" r="4"/><circle cx="344" cy="398" r="4"/>
+    </g>
+    <!-- key tags -->
+    <g>
+      <path d="M120 330v34" stroke="#8d8271" stroke-width="3"/><rect x="106" y="364" width="28" height="38" rx="4" fill="#c9a227"/>
+      <path d="M176 330v26" stroke="#8d8271" stroke-width="3"/><rect x="162" y="356" width="28" height="38" rx="4" fill="#4c8c5a"/>
+      <path d="M232 330v42" stroke="#8d8271" stroke-width="3"/><rect x="218" y="372" width="28" height="38" rx="4" fill="#b4463a"/>
+      <path d="M288 330v30" stroke="#8d8271" stroke-width="3"/><rect x="274" y="360" width="28" height="38" rx="4" fill="#356394"/>
+      <path d="M344 402v30" stroke="#8d8271" stroke-width="3"/><rect x="330" y="432" width="28" height="38" rx="4" fill="#c9a227"/>
+    </g>
+  </g>
+
+  <rect width="1200" height="900" fill="url(#s3-light)"/>
+
+  <!-- counter -->
+  <g>
+    <rect x="0" y="600" width="1200" height="40" fill="#b58a5c"/>
+    <rect x="0" y="640" width="1200" height="260" fill="url(#s3-counter)"/>
+    <g stroke="#6a5033" stroke-width="4">
+      <path d="M0 720h1200M300 640v260M900 640v260"/>
+    </g>
+    <rect x="0" y="596" width="1200" height="8" fill="#c9a074"/>
+  </g>
+
+  <!-- desk phone, ringing -->
+  <g>
+    <rect x="770" y="504" width="150" height="96" rx="8" fill="#3a4048"/>
+    <rect x="792" y="522" width="106" height="34" rx="4" fill="#8fa4b6"/>
+    <g fill="#5b636d">
+      <rect x="792" y="566" width="26" height="16" rx="3"/><rect x="832" y="566" width="26" height="16" rx="3"/><rect x="872" y="566" width="26" height="16" rx="3"/>
+    </g>
+    <path d="M760 480 h170 a12 12 0 0 1 12 12 v14 h-194 v-14 a12 12 0 0 1 12 -12 z" fill="#4c545d"/>
+    <!-- ring arcs -->
+    <g fill="none" stroke="#059669" stroke-linecap="round">
+      <path d="M742 512 a40 40 0 0 0 0 80" stroke-width="6" opacity="0.9"/>
+      <path d="M716 490 a66 66 0 0 0 0 124" stroke-width="6" opacity="0.55"/>
+      <path d="M690 468 a92 92 0 0 0 0 168" stroke-width="6" opacity="0.28"/>
+    </g>
+  </g>
+
+  <!-- clipboard + coffee on the counter -->
+  <g>
+    <g transform="rotate(-7 300 566)">
+      <rect x="238" y="504" width="124" height="96" rx="4" fill="#f7f3ea" stroke="#cfc3ae" stroke-width="3"/>
+      <rect x="284" y="496" width="32" height="16" rx="4" fill="#8d8271"/>
+      <g stroke="#cfc3ae" stroke-width="4">
+        <path d="M256 534h88M256 554h88M256 574h60"/>
+      </g>
+    </g>
+    <g>
+      <path d="M430 540 h56 l-8 60 h-40 z" fill="#f0ece3"/>
+      <rect x="426" y="530" width="64" height="14" rx="4" fill="#b4463a"/>
+    </g>
+  </g>
+
+  <!-- service writer behind the counter -->
+  <g fill="#37312a">
+    <circle cx="480" cy="392" r="42"/>
+    <path d="M442 382 q38 -40 78 -4 l16 -10 q-48 -46 -100 -2 z"/>
+    <path d="M440 440 q40 -20 80 0 l30 162 l-140 0 z"/>
+    <path d="M440 452 l-30 126 l-24 -6 l30 -126 z"/>
+    <path d="M520 452 l34 120 l-24 10 l-34 -118 z"/>
+  </g>
+  <path d="M446 448 q36 -16 70 0" fill="none" stroke="#fdfaf4" stroke-width="5" opacity="0.35"/>
+</svg>
