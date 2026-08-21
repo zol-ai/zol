@@ -56,7 +56,7 @@ export default async function TodayPage(props: PageProps<"/app">) {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Customers" value={counts.customers} />
+        <Stat label="Customers" value={counts.customers} href="/app/customers" />
         <Stat label="Open repair orders" value={counts.open_ros} />
         <Stat label="Calls, last 24h" value={counts.calls_today} />
         <Stat label="People" value={counts.staff} />
@@ -94,12 +94,30 @@ export default async function TodayPage(props: PageProps<"/app">) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="card p-4">
+function Stat({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const body = (
+    <>
       <p className="t-eyebrow">{label}</p>
       <p className="t-num mt-2 text-[2rem]">{value}</p>
-    </div>
+    </>
+  );
+
+  // A count is only a link once there's a screen behind it. The ones without
+  // a destination stay plain rather than pretending.
+  return href ? (
+    <Link href={href} className="card p-4 transition-colors hover:bg-paper-2">
+      {body}
+    </Link>
+  ) : (
+    <div className="card p-4">{body}</div>
   );
 }
 

@@ -16,9 +16,18 @@ build against it.
 - [x] Webhook signature verification, verified against tampering
 - [x] STOP / HELP handling (carrier requirement, correct before go-live)
 - [x] Schema designed
-- [ ] **Run `db/schema.sql` against a real Postgres 16.** It has never
-      executed — expect to fix something.
-- [ ] Stand up Postgres on GCP and wire `DATABASE_URL`
+- [x] **Run `db/schema.sql` against a real Postgres 16.** Loaded onto
+      `zol-ai:us-west1:zol-pg`; twelve tables, no changes needed.
+- [x] Stand up Postgres on GCP and wire it up — Cloud SQL, reached from
+      Vercel with a federated OIDC token rather than a stored key
+- [x] Migrations: `db/migrations/` plus `npm run db:migrate`, run from a
+      laptop rather than from CI
+- [x] **Sign-in.** Shops sign up, owners invite advisors and techs, sessions
+      are rows so revocation is immediate. Shop settings, hours and the
+      quote cap are editable.
+- [x] Customers and vehicles: one search box over name, phone, plate, VIN
+      and make; the phone number is the identity and a re-entry folds into
+      the record that already exists
 - [ ] Pick a query layer and generate types from the schema
 - [ ] Run `diagnose.ts` against the real API with ten transcripts from actual
       shop calls, and check the quotes against what the shop would have charged
@@ -47,7 +56,7 @@ repair order with nobody watching.
 - [ ] Follow-up worker draining `follow_ups` (part ordered → on the lift →
       diagnosis → ready for pickup)
 - [ ] Declined-work recall at the interval the shop sets
-- [ ] Shop dashboard: the board, repair order detail, call history, customers
+- [ ] Shop dashboard: the board, repair order detail, call history
 - [ ] Ask-anything panel that navigates to the record it answered about
 - [ ] Walk-in intake so a customer at the counter can type their own details
 
