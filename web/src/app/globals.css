@@ -204,6 +204,19 @@ body {
   }
 }
 
+/*
+  Past this width the 74rem measure stops being a reading aid and starts being
+  two big empty gutters. The shell opens up so the page keeps some relationship
+  to the window it is in — and because the nav, the hero copy and every section
+  share it, they all move together and the single left edge holds.
+*/
+@media (min-width: 1536px) {
+  .shell {
+    max-width: 88rem;
+    padding-inline: 2.5rem;
+  }
+}
+
 .band {
   padding-block: 4.5rem;
 }
@@ -436,10 +449,10 @@ body {
       linear-gradient(
         to right,
         var(--paper) 0%,
-        var(--paper) 20%,
-        color-mix(in srgb, var(--paper) 80%, transparent) 34%,
-        color-mix(in srgb, var(--paper) 30%, transparent) 50%,
-        transparent 68%
+        var(--paper) 22%,
+        color-mix(in srgb, var(--paper) 80%, transparent) 38%,
+        color-mix(in srgb, var(--paper) 30%, transparent) 52%,
+        transparent 70%
       ),
       /* Softens the picture into the paper above and below it. */
         linear-gradient(

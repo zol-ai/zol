@@ -45,13 +45,16 @@ export function Hero() {
         <HeroMedia />
       </div>
 
-      <div className="shell relative pb-[19rem] pt-12 sm:pb-[22rem] lg:pb-28 lg:pt-20 xl:pt-24">
-        <div className="lg:max-w-[30rem] xl:max-w-[35rem]">
+      <div className="shell relative pb-[19rem] pt-12 sm:pb-[22rem] lg:pb-28 lg:pt-12 xl:pt-14">
+        {/* Opens up on the widest screens, where there is room for SHOP
+            MANAGEMENT to sit on one line — it needs 757px at this size, so the
+            column and the type step up together or not at all. */}
+        <div className="lg:max-w-[30rem] xl:max-w-[35rem] 2xl:max-w-[48rem]">
           <p className="t-eyebrow hero-in" style={{ "--d": "0ms" } as React.CSSProperties}>
             AI shop management for auto repair
           </p>
 
-          <h1 className="t-display mt-5 text-[2.75rem] sm:text-[3.75rem] lg:text-[3.5rem] xl:text-[4.25rem]">
+          <h1 className="t-display mt-5 text-[2.75rem] sm:text-[3.75rem] lg:text-[3.5rem] xl:text-[4.25rem] 2xl:text-[4.5rem]">
             {headline.map((line, i) => (
               <span
                 key={line}
@@ -71,7 +74,7 @@ export function Hero() {
           </p>
 
           <p
-            className="hero-in t-lede mt-3 max-w-lg"
+            className="hero-in t-lede mt-3 max-w-xl"
             style={{ "--d": "520ms" } as React.CSSProperties}
           >
             One system that runs the shop and works the phone. Not one more
