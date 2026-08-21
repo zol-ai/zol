@@ -6,7 +6,12 @@ import {
   Connector,
   IpAddressTypes,
 } from "@google-cloud/cloud-sql-connector";
-import { GoogleAuth } from "google-auth-library";
+import {
+  ExternalAccountClient,
+  GoogleAuth,
+  type AuthClient,
+} from "google-auth-library";
+import { getVercelOidcToken } from "@vercel/oidc";
 
 /**
  * The one Postgres pool.
@@ -48,13 +53,66 @@ const BASE: PoolConfig = {
 /**
  * How the connector proves who we are to the Cloud SQL Admin API.
  *
- * On Cloud Run this is the attached service account and there is nothing to
- * configure — the metadata server answers. Vercel has no metadata server, so
- * it carries the service-account key as JSON in an environment variable.
- * `GOOGLE_APPLICATION_CREDENTIALS` is not an option there: the library treats
- * it as a *path*, and there is no writable file to point it at.
+ * Three ways, in the order they're preferred:
+ *
+ *   1. **Workload Identity Federation** (Vercel). Vercel signs a short-lived
+ *      OIDC token per invocation; GCP's STS trades it for an access token that
+ *      impersonates `zol-vercel`. Nothing long-lived is stored anywhere. This
+ *      is not merely the nicer option — the `zol-ai` org enforces
+ *      `iam.managed.disableServiceAccountKeyCreation`, so a key cannot be
+ *      minted for that project at all.
+ *
+ *   2. **Service-account key JSON**. Kept for a project without that org
+ *      policy, and for local runs against a key someone already has. Unused by
+ *      zol-ai.
+ *
+ *   3. **Ambient credentials**. Cloud Run's metadata server, or a developer's
+ *      `gcloud auth application-default login`. Nothing to configure.
  */
-function googleAuth(): GoogleAuth {
+function gcpAuth(): GoogleAuth | AuthClient {
+  const projectNumber = optional("GCP_PROJECT_NUMBER");
+  const poolId = optional("GCP_WORKLOAD_IDENTITY_POOL_ID");
+  const providerId = optional("GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID");
+  const serviceAccount = optional("GCP_SERVICE_ACCOUNT_EMAIL");
+
+  if (projectNumber && poolId && providerId && serviceAccount) {
+    /*
+      GCP's recommended "default audience" for a pool provider. The same string
+      has to be both the STS audience and the `aud` claim Vercel signs into the
+      token, or the exchange is rejected as intended-for-someone-else — so it
+      is passed to getVercelOidcToken too, not just to the client.
+    */
+    const audience =
+      `https://iam.googleapis.com/projects/${projectNumber}` +
+      `/locations/global/workloadIdentityPools/${poolId}` +
+      `/providers/${providerId}`;
+
+    const client = ExternalAccountClient.fromJSON({
+      type: "external_account",
+      audience,
+      subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+      token_url: "https://sts.googleapis.com/v1/token",
+      service_account_impersonation_url:
+        `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/` +
+        `${serviceAccount}:generateAccessToken`,
+      subject_token_supplier: {
+        getSubjectToken: () => getVercelOidcToken({ audience }),
+      },
+    });
+
+    if (!client) {
+      throw new Error(
+        "Could not build a federated credential from the GCP_* variables. " +
+          "Check GCP_PROJECT_NUMBER, GCP_WORKLOAD_IDENTITY_POOL_ID, " +
+          "GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID and " +
+          "GCP_SERVICE_ACCOUNT_EMAIL.",
+      );
+    }
+
+    client.scopes = ["https://www.googleapis.com/auth/cloud-platform"];
+    return client;
+  }
+
   const raw = optional("GCP_SERVICE_ACCOUNT_JSON");
   if (!raw) return new GoogleAuth();
 
@@ -78,7 +136,7 @@ async function createPool(): Promise<Pool> {
   const instance = optional("INSTANCE_CONNECTION_NAME");
 
   if (instance) {
-    const connector = new Connector({ auth: googleAuth() });
+    const connector = new Connector({ auth: gcpAuth() });
     const options = await connector.getOptions({
       instanceConnectionName: instance,
       // Cloud Run with a VPC connector should set this to PRIVATE; Vercel has

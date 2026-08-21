@@ -167,10 +167,24 @@ if (-not $secretExists) {
   $password = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
 
   gcloud secrets create $secretName --project=$ProjectId --replication-policy=automatic | Out-Null
-  $password | gcloud secrets versions add $secretName --project=$ProjectId --data-file=-
+  Assert 'Secret create'
+  # Piping to a native command in PowerShell 5.1 encodes as UTF-8 *with* a BOM
+  # and appends a newline, both of which end up inside the secret value. Write
+  # a BOM-free temp file instead: three invisible bytes on the front of a
+  # password fail authentication in a way that looks like a wrong password.
+  $tmp = [System.IO.Path]::GetTempFileName()
+  try {
+    [System.IO.File]::WriteAllText($tmp, $password, (New-Object System.Text.UTF8Encoding $false))
+    gcloud secrets versions add $secretName --project=$ProjectId --data-file=$tmp | Out-Null
+    Assert 'Secret version add'
+  } finally {
+    Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+  }
   Ok "password generated and stored in Secret Manager as $secretName"
 } else {
-  $password = gcloud secrets versions access latest --secret=$secretName --project=$ProjectId
+  # Trim a BOM and any trailing newline that an older version of this script
+  # (or a hand-added version) may have baked into the stored value.
+  $password = (gcloud secrets versions access latest --secret=$secretName --project=$ProjectId).TrimStart([char]0xFEFF).Trim()
   Ok "reusing password from Secret Manager secret $secretName"
 }
 

@@ -44,7 +44,9 @@ function Step($m) { Write-Host "`n=== $m" -ForegroundColor Cyan }
 Step 'Reading instance and secret'
 $connectionName = gcloud sql instances describe $InstanceName --project=$ProjectId --format='value(connectionName)'
 if (-not $connectionName) { throw "Instance $InstanceName not found. Run gcp-setup.ps1 first." }
-$password = gcloud secrets versions access latest --secret=$SecretName --project=$ProjectId
+# Strip a BOM/newline that an older version of gcp-setup.ps1 baked into the
+# stored value — invisible bytes that fail auth as if the password were wrong.
+$password = (gcloud secrets versions access latest --secret=$SecretName --project=$ProjectId).TrimStart([char]0xFEFF).Trim()
 Write-Host "    $connectionName"
 
 Step 'Service-account key'
