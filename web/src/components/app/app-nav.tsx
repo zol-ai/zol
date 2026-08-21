@@ -14,6 +14,7 @@ import type { Role } from "@/lib/auth";
  */
 const TABS: { href: string; label: string; ownerOnly?: boolean }[] = [
   { href: "/app", label: "Today" },
+  { href: "/app/schedule", label: "Schedule" },
   { href: "/app/repair-orders", label: "Repair orders" },
   { href: "/app/customers", label: "Customers" },
   { href: "/app/team", label: "Team", ownerOnly: true },

@@ -54,7 +54,9 @@ repair order with nobody watching.
 
 ## Then — the rest of the job
 
-- [ ] Calendar: real availability, hold a bay, respect the no-overlap constraint
+- [x] Calendar: a day view per bay, booking that respects the no-overlap
+      constraint, and arrive / no-show on the slot. What's left is the agent
+      *offering* a slot, which needs the call path
 - [ ] Estimate by SMS with the shop's branding
 - [ ] Follow-up worker draining `follow_ups` (part ordered → on the lift →
       diagnosis → ready for pickup)

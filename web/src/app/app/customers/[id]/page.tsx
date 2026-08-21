@@ -73,6 +73,12 @@ export default async function CustomerPage(
           All customers
         </Link>
         <Link
+          href={`/app/schedule/new?customer=${customer.id}`}
+          className="btn btn-ghost btn-sm"
+        >
+          Book a bay
+        </Link>
+        <Link
           href={`/app/repair-orders/new?customer=${customer.id}`}
           className="btn btn-emerald btn-sm"
         >

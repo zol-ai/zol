@@ -8,6 +8,7 @@ export const metadata = { title: "Today" };
 
 interface Counts {
   customers: string;
+  booked_today: string;
   open_ros: string;
   calls_today: string;
   staff: string;
@@ -25,6 +26,11 @@ export default async function TodayPage(props: PageProps<"/app">) {
   const rows = await query<Counts>(
     `SELECT
        (SELECT count(*) FROM customers WHERE shop_id = $1)          AS customers,
+       (SELECT count(*) FROM appointments a
+         WHERE a.shop_id = $1
+           AND a.status NOT IN ('cancelled', 'no_show')
+           AND (a.starts_at AT TIME ZONE $2)::date
+               = (now() AT TIME ZONE $2)::date)                     AS booked_today,
        (SELECT count(*) FROM repair_orders
          WHERE shop_id = $1 AND status NOT IN ('closed','cancelled')) AS open_ros,
        (SELECT count(*) FROM calls
@@ -33,7 +39,7 @@ export default async function TodayPage(props: PageProps<"/app">) {
        (SELECT count(*) > 0 FROM shop_hours
          WHERE shop_id = $1 AND NOT is_closed)                      AS has_hours,
        (SELECT twilio_number FROM shops WHERE id = $1)              AS twilio_number`,
-    [user.shopId],
+    [user.shopId, user.timezone],
   );
 
   const counts = rows[0];
@@ -55,8 +61,13 @@ export default async function TodayPage(props: PageProps<"/app">) {
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Customers" value={counts.customers} href="/app/customers" />
+        <Stat
+          label="In the book today"
+          value={counts.booked_today}
+          href="/app/schedule"
+        />
         <Stat
           label="Open repair orders"
           value={counts.open_ros}

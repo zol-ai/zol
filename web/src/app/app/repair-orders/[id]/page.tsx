@@ -109,6 +109,12 @@ export default async function RepairOrderPage(
         <Link href="/app/repair-orders" className="btn btn-ghost btn-sm">
           Board
         </Link>
+        <Link
+          href={`/app/schedule/new?customer=${ro.customer_id}`}
+          className="btn btn-ghost btn-sm"
+        >
+          Book a bay
+        </Link>
       </PageHead>
 
       {saved && (
