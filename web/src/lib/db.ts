@@ -1,6 +1,11 @@
 import "server-only";
 
-import { Pool, type PoolConfig, type QueryResultRow } from "pg";
+import {
+  Pool,
+  type PoolClient,
+  type PoolConfig,
+  type QueryResultRow,
+} from "pg";
 import {
   AuthTypes,
   Connector,
@@ -205,6 +210,31 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   const pool = await db();
   const result = await pool.query<T>(text, params as unknown[] | undefined);
   return result.rows;
+}
+
+/**
+ * Run several statements as one unit, on one connection.
+ *
+ * Anything that writes more than one row uses this. Creating a shop means a
+ * shop, an owner and a week of opening hours; two of the three landing is not
+ * a shop, it's a support ticket. The client is released on both paths, and a
+ * throw rolls back — including a throw from `redirect()`, which is why callers
+ * must redirect *after* this returns, never inside it.
+ */
+export async function tx<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const pool = await db();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /** True if the database answers. Used by the deep health check. */

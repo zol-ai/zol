@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:load": "node scripts/load-schema.mjs"
+    "db:load": "node scripts/load-schema.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:status": "node scripts/migrate.mjs --status"
   },
   "dependencies": {
     "@google-cloud/cloud-sql-connector": "^1.11.3",

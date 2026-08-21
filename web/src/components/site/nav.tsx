@@ -43,6 +43,17 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-2.5">
+          {/*
+            Shops that already use ZOL arrive here first and look for the way
+            in. The signed-in check happens on /signin itself, which bounces
+            an existing session straight to the board.
+          */}
+          <Link
+            href="/signin"
+            className="hidden text-[0.875rem] font-medium text-ink-2 transition-colors hover:text-ink sm:block"
+          >
+            Sign in
+          </Link>
           <DemoButton size="sm" className="hidden sm:inline-flex" />
           <button
             type="button"
@@ -80,7 +91,14 @@ export function Nav() {
                 {item.label}
               </a>
             ))}
-            <DemoButton className="mt-4 w-full" />
+            <Link
+              href="/signin"
+              onClick={() => setOpen(false)}
+              className="py-3 text-[0.9375rem] font-medium text-ink-2"
+            >
+              Sign in
+            </Link>
+            <DemoButton className="mt-1 w-full" />
           </div>
         </div>
       )}
