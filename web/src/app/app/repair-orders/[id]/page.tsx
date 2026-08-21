@@ -8,6 +8,7 @@ import {
   RepairOrderForm,
   type RepairOrderRecord,
 } from "@/components/app/ro-forms";
+import { DeclinedForm } from "@/components/app/declined-form";
 import { PageHead } from "@/components/app/shell";
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
@@ -44,6 +45,7 @@ export default async function RepairOrderPage(
     RepairOrderRecord & {
       number: number;
       customer_id: string;
+      vehicle_id: string | null;
       customer_name: string | null;
       phone: string;
       vehicle: string | null;
@@ -59,7 +61,7 @@ export default async function RepairOrderPage(
   >(
     `SELECT ro.id, ro.number, ro.status, ro.complaint, ro.cause, ro.correction,
             ro.mileage_in, ro.total_cents, ro.created_at::text, ro.approved_at::text,
-            ro.customer_id,
+            ro.customer_id, ro.vehicle_id,
             c.full_name AS customer_name, c.phone,
             concat_ws(' ', v.year::text, v.make, v.model, v.trim) AS vehicle,
             v.plate,
@@ -286,9 +288,29 @@ export default async function RepairOrderPage(
         </div>
       </section>
 
-      <section className="card p-5 sm:p-6">
+      <section className="card mb-6 p-5 sm:p-6">
         <h2 className="t-h3 mb-4 text-[1.125rem]">The ticket</h2>
         <RepairOrderForm ro={ro} />
+      </section>
+
+      {/*
+        Recorded from the ticket because that is the moment it happens — the
+        advisor is on the phone hearing "not today", and anywhere else means
+        it never gets written down.
+      */}
+      <section className="card p-5 sm:p-6">
+        <h2 className="t-h3 text-[1.125rem]">Turned something down?</h2>
+        <p className="mt-1 text-[0.9375rem] text-ink-2">
+          Write it here and it lands on the recall list instead of being
+          forgotten.
+        </p>
+        <div className="mt-4">
+          <DeclinedForm
+            customerId={ro.customer_id}
+            vehicleId={ro.vehicle_id}
+            repairOrderId={ro.id}
+          />
+        </div>
       </section>
     </>
   );

@@ -60,7 +60,9 @@ repair order with nobody watching.
 - [ ] Estimate by SMS with the shop's branding
 - [ ] Follow-up worker draining `follow_ups` (part ordered → on the lift →
       diagnosis → ready for pickup)
-- [ ] Declined-work recall at the interval the shop sets
+- [x] Declined work recorded from the ticket, with a recall list that
+      surfaces each item at the interval the shop set. Chasing it
+      automatically is the part waiting on the phone line 📞
 - [ ] Shop dashboard: the board, repair order detail, call history
 - [ ] Ask-anything panel that navigates to the record it answered about
 - [ ] Walk-in intake so a customer at the counter can type their own details
