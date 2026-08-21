@@ -10,7 +10,7 @@
    gcloud auth application-default login
 
  Usage:
-   ./infra/gcp-setup.ps1 -ProjectId zol-prod -BillingAccount 0X0X0X-0X0X0X-0X0X0X
+   ./infra/gcp-setup.ps1
 
  The generated database password is written to Secret Manager and printed
  once. It is never written to a file in this repo.
@@ -19,11 +19,11 @@
 
 [CmdletBinding()]
 param(
-  # Must be globally unique across all of GCP.
-  [Parameter(Mandatory = $true)][string]$ProjectId,
+  # zol-ai already exists (project number 146626211362).
+  [string]$ProjectId = 'zol-ai',
 
-  # From `gcloud billing accounts list`. Required only when creating a new
-  # project; omit if $ProjectId already exists and is billing-enabled.
+  # From `gcloud billing accounts list`. Only needed if the project has no
+  # billing account linked yet — Cloud SQL will not create without one.
   [string]$BillingAccount,
 
   [string]$Region       = 'us-west1',
@@ -200,8 +200,8 @@ Write-Host "  PGUSER=$DatabaseUser"
 Write-Host "  PGPASSWORD=$password"
 Write-Host ""
 Write-Host "Next:" -ForegroundColor Yellow
-Write-Host "  1. Load the schema:   ./infra/load-schema.ps1 -ProjectId $ProjectId"
-Write-Host "  2. Key for Vercel:    ./infra/vercel-env.ps1 -ProjectId $ProjectId"
+Write-Host "  1. Load the schema:   ./infra/load-schema.ps1"
+Write-Host "  2. Key for Vercel:    ./infra/vercel-env.ps1"
 Write-Host ""
 Write-Host "The password above is also in Secret Manager:" -ForegroundColor DarkGray
 Write-Host "  gcloud secrets versions access latest --secret=$secretName --project=$ProjectId" -ForegroundColor DarkGray

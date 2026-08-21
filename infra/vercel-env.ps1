@@ -4,7 +4,7 @@
 
    vercel login
    cd web; vercel link          # once, to bind this directory to a project
-   ./infra/vercel-env.ps1 -ProjectId zol-prod
+   ./infra/vercel-env.ps1
 
  Creates a service-account key for zol-vercel if one isn't cached locally, and
  writes five environment variables to the chosen Vercel environment.
@@ -19,7 +19,7 @@
 
 [CmdletBinding()]
 param(
-  [Parameter(Mandatory = $true)][string]$ProjectId,
+  [string]$ProjectId = 'zol-ai',
   [string]$InstanceName = 'zol-pg',
   [string]$DatabaseName = 'zol',
   [string]$DatabaseUser = 'zol',

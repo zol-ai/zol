@@ -3,8 +3,9 @@
 Three connections, in the order they unblock each other:
 
 1. **GitHub** — already live. `origin` is `ezazahamad2003/zol`.
-2. **GCP** — Cloud SQL for Postgres, plus Cloud Run later for the realtime
-   call service.
+2. **GCP** — project `zol-ai` (number 146626211362), owned by
+   `zaz@tryzol.com`. Cloud SQL for Postgres, plus Cloud Run later for the
+   realtime call service.
 3. **Vercel** — `web/` as the project root.
 
 Everything below is scripted in `infra/`. The scripts are idempotent; re-run
@@ -17,7 +18,7 @@ one after a failure rather than unpicking it by hand.
 These are browser flows and have to be run by a human, not by an agent:
 
 ```bash
-gcloud auth login
+gcloud auth login zaz@tryzol.com
 ```
 
 ```bash
@@ -38,12 +39,24 @@ Cloud SQL from this machine.
 ## 1. Provision Cloud SQL
 
 ```bash
-pwsh ./infra/gcp-setup.ps1 -ProjectId zol-prod -BillingAccount XXXXXX-XXXXXX-XXXXXX
+pwsh ./infra/gcp-setup.ps1
 ```
 
-Creates, in order: the project, the APIs, a Postgres 16 instance, the `zol`
-database, the `zol` user with a generated password in Secret Manager, and a
-`zol-vercel` service account holding exactly one role — `roles/cloudsql.client`.
+Creates, in order: the APIs, a Postgres 16 instance, the `zol` database, the
+`zol` user with a generated password in Secret Manager, and a `zol-vercel`
+service account holding exactly one role — `roles/cloudsql.client`. The project
+already exists, so the script only touches what's inside it.
+
+If `zol-ai` has no billing account linked yet, Cloud SQL will refuse to create.
+Link one first:
+
+```bash
+gcloud billing accounts list
+```
+
+```bash
+pwsh ./infra/gcp-setup.ps1 -BillingAccount XXXXXX-XXXXXX-XXXXXX
+```
 
 Instance creation takes 5–10 minutes. Defaults are `us-west1`, `db-f1-micro`,
 zonal, 10 GB SSD, daily backups with point-in-time recovery.
@@ -60,7 +73,7 @@ SQL Admin API. There is no open IP to find.
 ## 2. Load the schema
 
 ```bash
-pwsh ./infra/load-schema.ps1 -ProjectId zol-prod
+pwsh ./infra/load-schema.ps1
 ```
 
 Pulls the password from Secret Manager and runs `db/schema.sql` through
@@ -80,7 +93,7 @@ cd web && vercel link
 Project root is `web/`, framework preset Next.js. Then:
 
 ```bash
-pwsh ./infra/vercel-env.ps1 -ProjectId zol-prod
+pwsh ./infra/vercel-env.ps1
 ```
 
 Writes `INSTANCE_CONNECTION_NAME`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` and
@@ -138,7 +151,7 @@ gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
 On Cloud Run, attach the instance and drop the key:
 
 ```bash
-gcloud run services update zol-web --add-cloudsql-instances zol-prod:us-west1:zol-pg --region us-west1
+gcloud run services update zol-web --add-cloudsql-instances zol-ai:us-west1:zol-pg --region us-west1
 ```
 
 Set `CLOUD_SQL_IP_TYPE=PRIVATE` only once a VPC connector exists; without one

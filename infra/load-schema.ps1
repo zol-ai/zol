@@ -6,7 +6,7 @@
  hands off to web/scripts/load-schema.mjs (which has the pg + connector
  dependencies).
 
-   ./infra/load-schema.ps1 -ProjectId zol-prod
+   ./infra/load-schema.ps1
 
  Needs application-default credentials for the connector:
    gcloud auth application-default login
@@ -15,7 +15,7 @@
 
 [CmdletBinding()]
 param(
-  [Parameter(Mandatory = $true)][string]$ProjectId,
+  [string]$ProjectId = 'zol-ai',
   [string]$InstanceName = 'zol-pg',
   [string]$DatabaseName = 'zol',
   [string]$DatabaseUser = 'zol',

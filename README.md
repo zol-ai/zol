@@ -45,15 +45,15 @@ Full runbook in [docs/DEPLOY.md](docs/DEPLOY.md). The short version, once
 have been run:
 
 ```bash
-pwsh ./infra/gcp-setup.ps1 -ProjectId zol-prod -BillingAccount XXXXXX-XXXXXX-XXXXXX
+pwsh ./infra/gcp-setup.ps1
 ```
 
 ```bash
-pwsh ./infra/load-schema.ps1 -ProjectId zol-prod
+pwsh ./infra/load-schema.ps1
 ```
 
 ```bash
-pwsh ./infra/vercel-env.ps1 -ProjectId zol-prod
+pwsh ./infra/vercel-env.ps1
 ```
 
 **Vercel** — project root `web/`. Every branch gets a preview URL.
