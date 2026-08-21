@@ -8,12 +8,46 @@ than replacing it. No rip and replace is the core positioning.
 
 ```
 zol/
-├── web/          Next.js 16 — landing page, dashboard, Twilio webhooks
-├── db/           PostgreSQL schema
+├── web/          Next.js 16 — landing page, the app, Twilio webhooks
+├── db/           PostgreSQL schema and migrations
 ├── infra/        Scripts that provision Cloud SQL and wire Vercel
 ├── docs/         Architecture, roadmap, deploy runbook
 └── .env.example  Every environment variable the app reads
 ```
+
+## What's behind sign-in
+
+A shop signs up at `/signup`, which creates the shop, its owner and a default
+week of opening hours. The owner invites advisors and techs from **Team** and
+hands over the link — there's no outbound email yet, and warming a sending
+domain is the same carrier-reputation problem the SMS side is waiting on.
+
+| Screen | What it does |
+| --- | --- |
+| Today | Counts, and what's still missing before ZOL can answer a call |
+| Schedule | A day per bay. The database refuses to double-book one |
+| Repair orders | The board, and a ticket with lines, totals and the quote cap |
+| Customers | Name, phone, plate, VIN or make — one search box over all of it |
+| Declined | What customers said no to, and when to raise it again |
+| Team | Invites and who has an account |
+| Settings | Labour rate, parts margin, tax, hours, and the quote cap |
+
+Sessions are rows in Postgres, not signed tokens, so disabling somebody or
+signing out takes effect on the very next request. Passwords are scrypt from
+Node's standard library — no native module to fail at build time on Vercel.
+
+## Changing the schema
+
+`db/schema.sql` is the baseline; everything after it is a numbered file in
+`db/migrations/`, applied from a laptop rather than from CI:
+
+```bash
+cd web && npm run db:migrate
+```
+
+A Vercel build has no reliable route to Cloud SQL, and migrating from CI
+races every preview deployment against production's schema. `npm run
+db:status` lists what has and hasn't been applied.
 
 ## Run it
 

@@ -51,12 +51,17 @@ export default async function TeamPage(props: PageProps<"/app/team">) {
     ),
   ]);
 
-  // Build the link against the host actually being used, so an invite created
-  // on a preview deployment points at that preview rather than at production.
+  /*
+    The host the owner is actually looking at — not ZOL_PUBLIC_URL, which
+    exists to reconstruct the exact string Twilio signed and has nothing to do
+    with where a person is browsing. An invite made on a preview deployment
+    should point at that preview, and if the shop reaches production through
+    a domain we haven't been told about, the link still works.
+  */
   const h = await headers();
-  const origin =
-    process.env.ZOL_PUBLIC_URL ??
-    `https://${h.get("x-forwarded-host") ?? h.get("host")}`;
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const protocol = h.get("x-forwarded-proto") ?? "https";
+  const origin = `${protocol}://${host}`;
 
   return (
     <>
