@@ -77,15 +77,26 @@ function gcpAuth(): GoogleAuth | AuthClient {
 
   if (projectNumber && poolId && providerId && serviceAccount) {
     /*
-      GCP's recommended "default audience" for a pool provider. The same string
-      has to be both the STS audience and the `aud` claim Vercel signs into the
-      token, or the exchange is rejected as intended-for-someone-else — so it
-      is passed to getVercelOidcToken too, not just to the client.
+      Two spellings of one provider, and they are not interchangeable.
+
+        * STS's `audience` field wants the bare resource name, `//iam...`.
+          Handed the https:// form it answers "Invalid value for audience.
+          This value should be the full resource name of the Identity
+          Provider" and no connection is ever made.
+
+        * The `aud` claim inside the token is matched against the provider's
+          allowed audiences, which default to *both* spellings. The https://
+          form is the one Google's own docs put in that claim, so use it.
+
+      Passing either string in both places fails: the first is rejected by
+      STS, the second by the provider's audience check.
     */
-    const audience =
-      `https://iam.googleapis.com/projects/${projectNumber}` +
+    const provider =
+      `/projects/${projectNumber}` +
       `/locations/global/workloadIdentityPools/${poolId}` +
       `/providers/${providerId}`;
+    const audience = `//iam.googleapis.com${provider}`;
+    const tokenAudience = `https://iam.googleapis.com${provider}`;
 
     const client = ExternalAccountClient.fromJSON({
       type: "external_account",
@@ -96,7 +107,8 @@ function gcpAuth(): GoogleAuth | AuthClient {
         `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/` +
         `${serviceAccount}:generateAccessToken`,
       subject_token_supplier: {
-        getSubjectToken: () => getVercelOidcToken({ audience }),
+        getSubjectToken: () =>
+          getVercelOidcToken({ audience: tokenAudience }),
       },
     });
 
