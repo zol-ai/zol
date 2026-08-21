@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAllowedUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.appAccess == true;
+    }
+
+    // Browser clients are not used by this MVP, but these rules protect direct
+    // SDK access. The server Admin SDK bypasses rules, so API handlers must
+    // independently validate the session and ALLOWED_EMAILS on every request.
+    match /teamMembers/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
+    match /tasks/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
+    match /clients/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
