@@ -17,7 +17,7 @@ export function OneRecord() {
               one ticket
             </>
           }
-          lede="Nothing here was retyped into a second system. This is RO-4471 exactly as it happened, from the call after close to the invoice."
+          lede="RO-4471 exactly as it happened — after-hours call through invoice. Nothing retyped into a second system."
         />
 
         <AttributionLegend className="mt-6" />

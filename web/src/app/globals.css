@@ -119,6 +119,9 @@ body {
   text-transform: uppercase;
   line-height: 0.9;
   letter-spacing: -0.035em;
+  /* The tight track closes the spaces up too — bought back here, or a phrase
+     like YOUR SHOP SOFTWARE reads as a single word. */
+  word-spacing: 0.14em;
   text-wrap: balance;
 }
 
@@ -128,6 +131,7 @@ body {
   text-transform: uppercase;
   line-height: 0.92;
   letter-spacing: -0.032em;
+  word-spacing: 0.14em;
   text-wrap: balance;
 }
 
@@ -137,6 +141,7 @@ body {
   text-transform: uppercase;
   line-height: 1.02;
   letter-spacing: -0.02em;
+  word-spacing: 0.1em;
 }
 
 /*
@@ -579,9 +584,9 @@ body {
   .flow-link {
     display: block;
     position: absolute;
-    /* Centre of a 54px node, clearing its edge on both sides. */
-    top: 26px;
-    left: 62px;
+    /* Centre of a 72px node, clearing its edge on both sides. */
+    top: 35px;
+    left: 82px;
     right: calc(-2rem + 8px);
     height: 2px;
     border-radius: 2px;
@@ -620,12 +625,13 @@ body {
 }
 
 .flow-node {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  border: 1px solid var(--line-2);
+  border: 1.5px solid var(--line-2);
   background: var(--paper);
   color: var(--ink-2);
   animation: flow-node var(--flow-cycle) linear infinite;
@@ -633,17 +639,52 @@ body {
 }
 
 @keyframes flow-node {
-  0%,
-  22% {
+  0% {
+    transform: scale(0.94);
     border-color: var(--emerald);
     color: var(--emerald-deep);
-    box-shadow: 0 0 0 5px var(--emerald-wash);
+    box-shadow: 0 0 0 0 var(--emerald-wash);
+  }
+  6% {
+    transform: scale(1.05);
+  }
+  12%,
+  22% {
+    transform: scale(1);
+    border-color: var(--emerald);
+    color: var(--emerald-deep);
+    box-shadow: 0 0 0 7px var(--emerald-wash);
   }
   32%,
   100% {
+    transform: scale(1);
     border-color: var(--line-2);
     color: var(--ink-2);
     box-shadow: 0 0 0 0 rgb(5 150 105 / 0);
+  }
+}
+
+/* A ring leaving the node as its step opens. */
+.flow-node::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--emerald);
+  opacity: 0;
+  animation: flow-ping var(--flow-cycle) linear infinite;
+  animation-delay: calc(var(--i, 0) * var(--flow-step));
+}
+
+@keyframes flow-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  14%,
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
   }
 }
 
@@ -801,6 +842,7 @@ body {
 */
 @media (prefers-reduced-motion: reduce) {
   .flow-node,
+  .flow-node::before,
   .flow-link::after,
   .hero-in,
   .fx {
@@ -810,6 +852,11 @@ body {
   .flow-link::after {
     transform: none;
     opacity: 1;
+  }
+
+  /* The expanding ring has no resting state worth showing. */
+  .flow-node::before {
+    display: none;
   }
 
   .hero-in,

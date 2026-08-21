@@ -18,7 +18,7 @@ export function HowItWorks() {
               to the follow-up
             </>
           }
-          lede="One job, start to finish, on an ordinary Tuesday. ZOL runs the emerald steps with nobody watching and hands you the rest."
+          lede="One job, start to finish. ZOL runs the emerald steps unattended and hands you the rest."
         />
 
         <div className="flow mt-14">

@@ -16,7 +16,7 @@ export function WhySwitch() {
               only writes it down
             </>
           }
-          lede="Every shop management system on the market is a record-keeper: somebody still has to answer the phone, chase the approval and call about the part. ZOL keeps the record — customers, vehicles, repair orders, the schedule — and does that work too. One system, not a filing cabinet plus three people."
+          lede="Every shop system records the work. Someone still has to answer the phone, chase the approval, call about the part. ZOL does both."
         />
 
         <Reveal className="mt-10">
@@ -33,8 +33,7 @@ export function WhySwitch() {
             ))}
           </ul>
           <p className="t-data mt-3 text-[0.6875rem] text-ink-3">
-            Customers, vehicles and repair-order history come across during
-            onboarding. Your data stays exportable.
+            History comes across during onboarding. Your data stays exportable.
           </p>
         </Reveal>
 

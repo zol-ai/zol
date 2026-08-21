@@ -74,9 +74,8 @@ export function Hero() {
             className="hero-in t-lede mt-3 max-w-lg"
             style={{ "--d": "520ms" } as React.CSSProperties}
           >
-            ZOL answers the calls nobody gets to, books the job, texts the
-            estimate and chases the approval. It&rsquo;s the whole shop system —
-            not one more tab for your writer to type into.
+            One system that runs the shop and works the phone. Not one more
+            tab for your writer to type into.
           </p>
 
           <ul className="mt-7 grid gap-2.5">

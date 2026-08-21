@@ -16,7 +16,7 @@ export function RunsItself() {
               desk never gets to
             </>
           }
-          lede="Not a chatbot bolted onto a calendar. Four jobs ZOL does end to end — and hands back the moment judgment is required."
+          lede="Four jobs ZOL does end to end — and hands back the moment judgment is required."
         />
 
         <div className="mt-12 grid gap-5 md:grid-cols-2">

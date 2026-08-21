@@ -13,12 +13,12 @@
 type IconProps = { className?: string };
 
 const common = {
-  width: 26,
-  height: 26,
+  width: 34,
+  height: 34,
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 1.6,
+  strokeWidth: 1.5,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   "aria-hidden": true,

@@ -10,7 +10,7 @@ export const site = {
     "ZOL is shop management software that does the work instead of just recording it: it answers every call night and weekend, writes the repair order, texts estimates and chases approvals, orders parts and flags vendor delays.",
   url: "https://tryzol.com",
   demoUrl: "https://calendar.app.google/Q262bp3TVLBRcedm9",
-  contactEmail: "hello@tryzol.com",
+  contactEmail: "zaz@tryzol.com",
 } as const;
 
 export const nav = [

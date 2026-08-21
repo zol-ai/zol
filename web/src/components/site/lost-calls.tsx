@@ -20,10 +20,15 @@ type FieldProps = {
   onChange: (n: number) => void;
 };
 
+/**
+ * Three of these sit side by side. Each one spans all three rows of the parent
+ * grid and inherits its row track, so the rails and the hints line up across
+ * the columns even when one label wraps and another doesn't.
+ */
 function Field({ label, hint, min, max, step, value, display, onChange }: FieldProps) {
   const id = useId();
   return (
-    <div>
+    <div className="sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-0">
       <div className="flex items-baseline justify-between gap-3">
         <label htmlFor={id} className="t-eyebrow text-[0.625rem]">
           {label}
@@ -40,7 +45,7 @@ function Field({ label, hint, min, max, step, value, display, onChange }: FieldP
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="scan-range mt-3 w-full"
+        className="scan-range mt-3 w-full self-end"
       />
       <p className="mt-2 text-[0.75rem] leading-snug text-ink-3">{hint}</p>
     </div>
@@ -68,10 +73,10 @@ export function LostCalls() {
             What the missed ones are worth
           </h3>
 
-          <div className="mt-7 grid gap-6 sm:grid-cols-3">
+          <div className="mt-7 grid gap-6 sm:grid-cols-3 sm:grid-rows-[auto_auto_1fr] sm:gap-y-0">
             <Field
               label="Calls missed / week"
-              hint="After hours, on another line, or nobody free to grab it."
+              hint="After hours, or nobody free to grab it."
               min={0}
               max={60}
               step={1}
@@ -81,7 +86,7 @@ export function LostCalls() {
             />
             <Field
               label="Would have booked"
-              hint="Share of those callers with real work to sell."
+              hint="Callers with real work to sell."
               min={5}
               max={90}
               step={5}
@@ -90,8 +95,8 @@ export function LostCalls() {
               onChange={setCloseRate}
             />
             <Field
-              label="Average repair order"
-              hint="Your typical ticket, parts and labor together."
+              label="Average ticket"
+              hint="Parts and labor together."
               min={80}
               max={2000}
               step={20}
@@ -108,7 +113,7 @@ export function LostCalls() {
             {money.format(annual)}
           </p>
           <p className="mt-3 text-[0.75rem] leading-relaxed text-ink-3">
-            {missed} × 52 weeks × {closeRate}% × {money.format(ticket)}. Your
+            {missed} × 52 × {closeRate}% × {money.format(ticket)}. Your
             arithmetic, not our claim.
           </p>
           <DemoButton variant="emerald" size="sm" className="mt-5 self-start">
