@@ -1,12 +1,12 @@
 # Company OS
 
-Company OS is a focused internal dashboard for a small startup team. It manages team members, clients, and assigned tasks in Firebase Firestore. The MVP deliberately excludes Gmail, Calendar, Drive API calls, AI chat, embeddings, and document processing.
+Company OS is a focused internal dashboard for a small startup team. It manages team members, clients, and assigned tasks in Firebase Firestore and includes Company Brain, a read-only OpenAI assistant for questions about live workspace data. The MVP deliberately excludes Gmail, Calendar, Drive API calls, embeddings, and document processing.
 
 ## Features
 
 - Google Sign-In through Firebase Authentication with a server-side email allowlist
 - Secure, HTTP-only Firebase Admin session cookies
-- Dashboard metrics, personal work, team workload, and recently completed work
+- Dashboard metrics and a read-only Company Brain chat grounded in live Firestore data
 - Task create/edit/delete, complete/reopen, assignment, filtering, sorting, and client association
 - Team add/edit/archive with historical task preservation
 - Lightweight client management with related tasks
@@ -24,6 +24,7 @@ flowchart LR
   Browser -->|Session cookie| ApiRoutes[Protected Next.js API routes]
   ApiRoutes -->|Zod validation| Repositories[Firestore repositories]
   Repositories -->|Admin SDK| Firestore[(Cloud Firestore)]
+  ApiRoutes -->|Read-only tool calls| OpenAI[OpenAI Responses API]
   CloudRun[Google Cloud Run] --> ApiRoutes
 ```
 
@@ -78,6 +79,9 @@ The `NEXTAUTH_*` placeholders are retained in `.env.example` for the originally 
 Copy `.env.example` to `.env.local` and configure:
 
 - `ALLOWED_EMAILS`: comma-separated, case-insensitive application allowlist
+- `COMPANY_TIME_ZONE`: timezone used for today/overdue calculations
+- `OPENAI_API_KEY`: server-only key used by Company Brain
+- `OPENAI_MODEL`: Responses API model name; defaults to `gpt-5.5`
 - `FIREBASE_PROJECT_ID`: required server-side project identifier
 - `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: optional fallback credentials; leave blank when using local ADC or the Cloud Run service identity
 - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`: Firebase web app identifiers
@@ -85,6 +89,19 @@ Copy `.env.example` to `.env.local` and configure:
 If a private key is used, keep it quoted with escaped `\n` line breaks. Public Firebase web identifiers are expected in the browser; authorization does not rely on hiding them.
 
 If configuration is absent, the sign-in page shows setup guidance and API requests return a clear setup error.
+
+### Company Brain
+
+Company Brain sends the current conversation and only the minimum read-only tool results needed for an answer to OpenAI. OpenAI never receives Firebase credentials or generic database access. Numerical answers come from deterministic server-side Firestore tools; the model selects tools and explains their results.
+
+For local development, add `OPENAI_API_KEY` to `.env.local`. Never use a `NEXT_PUBLIC_` prefix. In Cloud Run, store the key in Secret Manager:
+
+```bash
+printf "YOUR_OPENAI_KEY" | gcloud secrets create openai-api-key --data-file=-
+gcloud secrets add-iam-policy-binding openai-api-key \
+  --member="serviceAccount:company-os-runtime@PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+```
 
 ## Seed data
 
@@ -118,7 +135,7 @@ Create an Artifact Registry repository once:
 ```bash
 gcloud auth login
 gcloud config set project PROJECT_ID
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
 gcloud artifacts repositories create company-os --repository-format=docker --location=us-central1
 gcloud iam service-accounts create company-os-runtime --display-name="Company OS runtime"
 gcloud projects add-iam-policy-binding PROJECT_ID --member="serviceAccount:company-os-runtime@PROJECT_ID.iam.gserviceaccount.com" --role="roles/datastore.user"
@@ -139,7 +156,8 @@ gcloud run deploy company-os \
   --region us-central1 \
   --allow-unauthenticated \
   --service-account company-os-runtime@PROJECT_ID.iam.gserviceaccount.com \
-  --set-env-vars FIREBASE_PROJECT_ID=PROJECT_ID,ALLOWED_EMAILS=founder1@example.com\\,founder2@example.com
+  --set-env-vars FIREBASE_PROJECT_ID=PROJECT_ID,ALLOWED_EMAILS=founder1@example.com\\,founder2@example.com,OPENAI_MODEL=gpt-5.5 \
+  --set-secrets OPENAI_API_KEY=openai-api-key:latest
 ```
 
 Cloud Run must be publicly reachable so Google Sign-In can load, but every workspace page and API route still requires an approved authenticated session. Add the resulting hostname to Firebase Authorized domains.
@@ -154,17 +172,19 @@ Cloud Run must be publicly reachable so Google Sign-In can load, but every works
 - Team-member records are assignment metadata and do not grant application access.
 - This is an MVP allowlist, not an invitation, organization, or role-based access system.
 - Client deletion is blocked while tasks reference the client. Archiving marks the client closed instead.
+- Company Brain is read-only, uses bounded tool calls, omits contact details, and cannot mutate Firestore.
+- Prompts and minimal query results are sent to OpenAI to generate answers; do not enter unrelated secrets in chat.
 
 ## Project structure
 
 ```text
 app/
   (workspace)/dashboard, tasks, team, clients
-  api/auth, dashboard, tasks, team, clients
+  api/auth, company-brain, dashboard, tasks, team, clients
 components/
-  dashboard, tasks, team, clients, ui
+  company-brain, dashboard, tasks, team, clients, ui
 lib/
-  auth, firebase, firestore, validation
+  ai, auth, firebase, firestore, validation
 scripts/
 types/
 tests/
@@ -175,6 +195,6 @@ tests/
 - Google Drive documents
 - Google Calendar
 - Gmail
-- AI assistant
+- Additional Company Brain tools and confirmed write actions
 
-See [docs/future-integrations.md](docs/future-integrations.md). These integrations are documentation-only and are not present in this MVP.
+See [docs/future-integrations.md](docs/future-integrations.md). Drive, Calendar, and Gmail integrations are documentation-only and are not present in this MVP.

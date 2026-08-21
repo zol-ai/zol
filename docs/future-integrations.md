@@ -1,6 +1,6 @@
 # Future integrations
 
-This document records possible additions after the task-management MVP is stable. None of these integrations are implemented, configured, or requested by the current application.
+This document records possible additions after the task-management MVP is stable. Company Brain currently answers read-only questions from Firestore; the external integrations below are not implemented.
 
 ## Google Drive documents
 
@@ -14,6 +14,8 @@ Task due dates could later appear as calendar events. The design should define w
 
 Client records could optionally link to relevant message threads. A future design must minimize Gmail scopes, avoid storing message bodies by default, support disconnect and data deletion, and pass any Google OAuth verification required for sensitive scopes.
 
-## AI assistant
+## Company Brain expansion
 
-An assistant could help draft task descriptions or summarize user-selected workspace data. It should be opt-in, disclose the model provider and data sent, avoid training on company content, keep an audit trail for mutations, and require confirmation before changing tasks. Model providers, agents, embeddings, vector databases, and document summarization are deliberately absent from the MVP.
+Company Brain uses an extensible, allowlisted tool registry. Future tools can add Calendar, Gmail, and Drive context without giving the model generic API or database access. Each integration should use narrowly scoped OAuth permissions, return bounded and redacted results, and treat external content as untrusted data.
+
+Write actions may be added later, but every mutation must show a preview, require explicit user confirmation, and create an audit record. Embeddings, vector databases, autonomous agents, and document summarization remain outside the current scope.

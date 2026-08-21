@@ -12,14 +12,12 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
-import type { Task, TeamMember } from "@/types";
 import { Card } from "@/components/ui/core";
+import { CompanyBrainChat } from "@/components/company-brain/company-brain-chat";
 import {
-  EmptyState,
   ErrorState,
   LoadingState,
   PageHeader,
-  TaskSummary,
 } from "@/components/shared";
 
 type DashboardData = {
@@ -31,11 +29,6 @@ type DashboardData = {
     completedThisWeek: number;
     activeMembers: number;
   };
-  matchingMember: TeamMember | null;
-  myTasks: Task[];
-  openTasks: Task[];
-  recentlyCompleted: Task[];
-  team: Array<TeamMember & { activeTaskCount: number }>;
 };
 
 export function DashboardView() {
@@ -101,60 +94,7 @@ export function DashboardView() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">My Tasks</h2>
-            <Link href="/tasks?view=my" className="text-sm font-medium text-blue-600">View all</Link>
-          </div>
-          {!data.matchingMember ? (
-            <EmptyState
-              title="No matching team member"
-              description={`Add ${data.user.email} to a team member record to see assigned tasks here.`}
-            />
-          ) : data.myTasks.length ? (
-            <div className="space-y-2">{data.myTasks.map((task) => <TaskSummary key={task.id} task={task} />)}</div>
-          ) : (
-            <EmptyState title="You’re all caught up" description="No open tasks are assigned to you." />
-          )}
-        </Card>
-
-        <Card>
-          <h2 className="mb-4 font-semibold">Team Members</h2>
-          <div className="space-y-3">
-            {data.team.map((member) => (
-              <div key={member.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
-                <div>
-                  <p className="text-sm font-medium">{member.name}</p>
-                  <p className="text-xs text-slate-500">{member.role || "Team member"}</p>
-                </div>
-                <span className="text-sm font-semibold">{member.activeTaskCount} open</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold">All Open Tasks</h2>
-            <Link href="/tasks" className="text-sm font-medium text-blue-600">View all tasks</Link>
-          </div>
-          {data.openTasks.length ? (
-            <div className="space-y-2">{data.openTasks.map((task) => <TaskSummary key={task.id} task={task} />)}</div>
-          ) : (
-            <EmptyState title="No open tasks" description="Create a task to get your team moving." />
-          )}
-        </Card>
-
-        <Card>
-          <h2 className="mb-4 font-semibold">Recently Completed</h2>
-          {data.recentlyCompleted.length ? (
-            <div className="space-y-2">{data.recentlyCompleted.map((task) => <TaskSummary key={task.id} task={task} />)}</div>
-          ) : (
-            <EmptyState title="Nothing completed yet" description="Completed tasks will appear here." />
-          )}
-        </Card>
-      </div>
+      <CompanyBrainChat />
     </>
   );
 }
