@@ -92,6 +92,13 @@ cd web && vercel link
 
 Project root is `web/`, framework preset Next.js. Then:
 
+`web/vercel.json` pins functions to `pdx1` (Portland). This matters more than
+it looks: Vercel defaults to `iad1` in Virginia, and Cloud SQL is in
+`us-west1` in Oregon. On the default every database round trip — including the
+connector's TLS handshake when a function is cold — crosses the continent
+twice. `pdx1` is the same metro as the instance, so keep the two in step if
+either ever moves region.
+
 ```bash
 pwsh ./infra/vercel-env.ps1
 ```

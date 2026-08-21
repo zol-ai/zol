@@ -36,6 +36,11 @@ param(
   # not a migration, so start small.
   [string]$Tier         = 'db-f1-micro',
 
+  # Shared-core tiers like db-f1-micro exist only on the ENTERPRISE edition.
+  # gcloud now defaults new instances to ENTERPRISE_PLUS, which rejects them
+  # with "Invalid Tier ... for (ENTERPRISE_PLUS) Edition". Pin it explicitly.
+  [ValidateSet('ENTERPRISE', 'ENTERPRISE_PLUS')][string]$Edition = 'ENTERPRISE',
+
   # ZONAL is roughly half the price of REGIONAL. Switch to REGIONAL before the
   # first shop's phone number points at this.
   [ValidateSet('ZONAL', 'REGIONAL')][string]$Availability = 'ZONAL'
@@ -45,6 +50,13 @@ $ErrorActionPreference = 'Stop'
 
 function Step($message) { Write-Host "`n=== $message" -ForegroundColor Cyan }
 function Ok($message)   { Write-Host "    $message"    -ForegroundColor DarkGray }
+
+# gcloud is a native executable: a non-zero exit does NOT raise, and
+# $ErrorActionPreference has no effect on it. Without an explicit check the
+# script runs straight past a failed create and still reports success.
+function Assert($what) {
+  if ($LASTEXITCODE -ne 0) { throw "$what failed (gcloud exited $LASTEXITCODE)" }
+}
 
 # --- 0. Confirm we are authenticated -----------------------------------------
 Step 'Checking gcloud credentials'
@@ -89,6 +101,7 @@ gcloud services enable `
   artifactregistry.googleapis.com `
   iam.googleapis.com `
   --project=$ProjectId
+Assert 'Enabling APIs'
 Ok 'sqladmin, secretmanager, run, cloudbuild, artifactregistry, iam'
 
 # --- 3. Cloud SQL instance ----------------------------------------------------
@@ -104,6 +117,7 @@ if (-not $instance) {
   gcloud sql instances create $InstanceName `
     --project=$ProjectId `
     --database-version=POSTGRES_16 `
+    --edition=$Edition `
     --tier=$Tier `
     --region=$Region `
     --availability-type=$Availability `
@@ -116,12 +130,15 @@ if (-not $instance) {
     --enable-point-in-time-recovery `
     --database-flags=cloudsql.iam_authentication=on `
     --require-ssl
+  Assert 'Cloud SQL instance create'
   Ok 'created'
 } else {
   Ok 'already exists'
 }
 
 $connectionName = gcloud sql instances describe $InstanceName --project=$ProjectId --format='value(connectionName)'
+Assert 'Cloud SQL instance describe'
+if (-not $connectionName) { throw 'Instance describe returned an empty connection name.' }
 Ok "connection name: $connectionName"
 
 # --- 4. Database --------------------------------------------------------------
@@ -130,6 +147,7 @@ $db = $null
 try { $db = gcloud sql databases describe $DatabaseName --instance=$InstanceName --project=$ProjectId --format='value(name)' 2>$null } catch {}
 if (-not $db) {
   gcloud sql databases create $DatabaseName --instance=$InstanceName --project=$ProjectId
+  Assert 'Database create'
   Ok 'created'
 } else {
   Ok 'already exists'
@@ -157,11 +175,14 @@ if (-not $secretExists) {
 }
 
 $userExists = (gcloud sql users list --instance=$InstanceName --project=$ProjectId --format='value(name)') -contains $DatabaseUser
+Assert 'Database user list'
 if (-not $userExists) {
   gcloud sql users create $DatabaseUser --instance=$InstanceName --project=$ProjectId --password=$password
+  Assert 'Database user create'
   Ok 'created'
 } else {
   gcloud sql users set-password $DatabaseUser --instance=$InstanceName --project=$ProjectId --password=$password
+  Assert 'Database user set-password'
   Ok 'password reset to the Secret Manager value'
 }
 
