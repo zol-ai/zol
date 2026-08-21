@@ -4,7 +4,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 /**
- * Rotating hero imagery, framed inside the hero's right column.
+ * Rotating hero imagery. Fills `.hero-media`, which bleeds off the right edge
+ * of the window and sits under the headline.
  *
  * Real shop photography, in the order a job actually moves: the front desk
  * takes the call, the bay does the work, the counter pulls the parts, the
@@ -29,7 +30,7 @@ const slides = [
   },
 ];
 
-const INTERVAL_MS = 5500;
+const INTERVAL_MS = 4200;
 
 export function HeroMedia() {
   const [index, setIndex] = useState(0);
@@ -55,14 +56,14 @@ export function HeroMedia() {
   }, []);
 
   return (
-    <div className="hero-frame">
+    <>
       {slides.map((slide, i) => (
         <Image
           key={slide.src}
           src={slide.src}
           alt={i === index ? slide.alt : ""}
           fill
-          sizes="(min-width: 1024px) 46vw, 100vw"
+          sizes="(min-width: 1024px) 75vw, 100vw"
           unoptimized
           priority={i === 0}
           /*
@@ -74,17 +75,16 @@ export function HeroMedia() {
           */
           loading={i <= index + 1 ? "eager" : "lazy"}
           aria-hidden={i === index ? undefined : true}
-          className="object-cover transition-opacity duration-[1100ms] ease-in-out motion-reduce:transition-none"
+          className="object-cover transition-opacity duration-[850ms] ease-in-out motion-reduce:transition-none"
           style={{ opacity: i === index ? 1 : 0 }}
         />
       ))}
 
-      {/* Softens the top edge into the paper so the frame doesn't read as a
-          pasted-on rectangle. */}
-      <div className="hero-frame-fade" aria-hidden="true" />
+      {/* Fades the picture into the paper the copy sits on. */}
+      <div className="hero-scrim" aria-hidden="true" />
 
       {/* Real controls, not decoration — reachable by keyboard. */}
-      <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+      <div className="absolute bottom-5 right-5 z-10 flex gap-2 lg:bottom-7 lg:right-8">
         {slides.map((slide, i) => (
           <button
             key={slide.src}
@@ -102,13 +102,13 @@ export function HeroMedia() {
             <span
               className={`block h-1.5 rounded-full transition-all duration-300 ${
                 i === index
-                  ? "w-7 bg-paper"
-                  : "w-1.5 bg-paper/45 group-hover:bg-paper/75"
+                  ? "w-7 bg-ink"
+                  : "w-1.5 bg-ink/30 group-hover:bg-ink/55"
               }`}
             />
           </button>
         ))}
       </div>
-    </div>
+    </>
   );
 }

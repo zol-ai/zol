@@ -384,48 +384,67 @@ body {
 }
 
 /* ==========================================================================
-   Hero
-   The picture sits in the right column of the shell, so it shares the page's
-   left and right edges with the nav and every section below it. A fade along
-   its top and bottom keeps it from reading as a pasted-on rectangle.
+   Hero media
+
+   The picture takes the right three quarters of the window and runs the full
+   height of the hero; the headline lies over it on the left. The scrim is what
+   makes that readable — solid paper under the type, then a long fade so the
+   two don't meet at a hard edge.
    ========================================================================== */
 
-.hero-frame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
+.hero-media {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  border-radius: 10px;
-  background: var(--paper-3);
-  box-shadow:
-    0 1px 2px rgb(25 23 20 / 0.05),
-    0 10px 30px -12px rgb(25 23 20 / 0.18),
-    0 34px 70px -30px rgb(25 23 20 / 0.22);
 }
 
 @media (min-width: 1024px) {
-  .hero-frame {
-    aspect-ratio: 5 / 6;
-    max-height: 34rem;
+  .hero-media {
+    left: 25%;
   }
 }
 
-.hero-frame-fade {
+.hero-scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--paper) 55%, transparent) 0%,
-      transparent 26%
-    ),
-    linear-gradient(
-      to top,
-      rgb(25 23 20 / 0.42) 0%,
-      rgb(25 23 20 / 0.06) 26%,
-      transparent 46%
-    );
+  /* Narrow screens put the picture behind the whole block, so the paper stays
+     solid for the full depth of the copy and then clears quickly, leaving a
+     clean band of image at the bottom rather than a wash behind the text. */
+  background: linear-gradient(
+    to bottom,
+    var(--paper) 0%,
+    /* Holds past the buttons — they are the last thing sitting on paper. */
+    var(--paper) 72%,
+    color-mix(in srgb, var(--paper) 50%, transparent) 84%,
+    transparent 96%
+  );
+}
+
+@media (min-width: 1024px) {
+  .hero-scrim {
+    background:
+      /* The horizontal fade. Percentages are of the media box, which starts a
+         quarter of the way across the window: the copy column ends around a
+         third of the way into it, so the paper holds solid past that and only
+         then gives way. */
+      linear-gradient(
+        to right,
+        var(--paper) 0%,
+        var(--paper) 20%,
+        color-mix(in srgb, var(--paper) 80%, transparent) 34%,
+        color-mix(in srgb, var(--paper) 30%, transparent) 50%,
+        transparent 68%
+      ),
+      /* Softens the picture into the paper above and below it. */
+        linear-gradient(
+          to bottom,
+          color-mix(in srgb, var(--paper) 62%, transparent) 0%,
+          transparent 22%,
+          transparent 82%,
+          color-mix(in srgb, var(--paper) 62%, transparent) 100%
+        );
+  }
 }
 
 /* --------------------------------------------------------------------------

@@ -36,12 +36,17 @@ export function Hero() {
       <div className="grid-bg" aria-hidden="true" />
 
       {/*
-        Both columns live inside the same shell as the nav and every section
-        below it, so the page has one left edge and one right edge the whole
-        way down — the picture no longer bleeds past the container.
+        The picture takes the right three quarters of the window and runs the
+        full height of the hero. The copy stays on the shell's left edge — the
+        same edge the nav and every section below it use — and lies over the
+        image, with the scrim fading the two together where they meet.
       */}
-      <div className="shell relative grid items-center gap-12 pb-16 pt-12 lg:grid-cols-[1.02fr_1fr] lg:gap-14 lg:pb-24 lg:pt-20">
-        <div className="max-w-xl">
+      <div className="hero-media">
+        <HeroMedia />
+      </div>
+
+      <div className="shell relative pb-[19rem] pt-12 sm:pb-[22rem] lg:pb-28 lg:pt-20 xl:pt-24">
+        <div className="lg:max-w-[30rem] xl:max-w-[35rem]">
           <p className="t-eyebrow hero-in" style={{ "--d": "0ms" } as React.CSSProperties}>
             AI shop management for auto repair
           </p>
@@ -96,13 +101,6 @@ export function Hero() {
               See how it works
             </a>
           </div>
-        </div>
-
-        <div
-          className="hero-in w-full"
-          style={{ "--d": "300ms" } as React.CSSProperties}
-        >
-          <HeroMedia />
         </div>
       </div>
     </section>

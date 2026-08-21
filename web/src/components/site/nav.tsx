@@ -19,10 +19,18 @@ export function Nav() {
 
   return (
     <header
+      /*
+        Kept translucent at both ends now that the hero picture runs under it —
+        the blur is what holds the type legible, not the fill. The open mobile
+        menu drops back to solid paper, since a list of links over a photograph
+        is not readable at any blur.
+      */
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        lifted
-          ? "border-b border-line bg-paper/85 backdrop-blur-md"
-          : "border-b border-transparent bg-paper"
+        open
+          ? "border-b border-line bg-paper"
+          : lifted
+            ? "border-b border-line bg-paper/70 backdrop-blur-xl backdrop-saturate-150"
+            : "border-b border-transparent bg-paper/55 backdrop-blur-md backdrop-saturate-150"
       }`}
     >
       <div className="shell flex h-[64px] items-center justify-between gap-6">
