@@ -5,9 +5,9 @@
 
 export const site = {
   name: "ZOL",
-  tagline: "The AI that runs your front desk",
+  tagline: "The best AI shop management tool",
   description:
-    "ZOL answers every call night and weekend, texts estimates and chases approvals, orders parts and flags vendor delays — on top of the shop management software you already run.",
+    "ZOL is shop management software that does the work instead of just recording it: it answers every call night and weekend, writes the repair order, texts estimates and chases approvals, orders parts and flags vendor delays.",
   url: "https://tryzol.com",
   demoUrl: "https://calendar.app.google/Q262bp3TVLBRcedm9",
   contactEmail: "hello@tryzol.com",
@@ -17,5 +17,5 @@ export const nav = [
   { label: "How it works", href: "#how-it-works" },
   { label: "One record", href: "#one-record" },
   { label: "What it does", href: "#runs-itself" },
-  { label: "Integrations", href: "#integrations" },
+  { label: "Why switch", href: "#why-switch" },
 ] as const;

@@ -10,9 +10,9 @@ export function Footer() {
           <div className="max-w-xs">
             <Wordmark />
             <p className="mt-4 text-[0.875rem] leading-relaxed text-ink-3">
-              The AI front desk for independent auto repair shops. It answers,
-              books, quotes, chases and follows up — on top of the software you
-              already run.
+              AI shop management for independent auto repair shops. One system
+              that answers, books, quotes, chases and follows up — and keeps
+              the record while it does.
             </p>
           </div>
 

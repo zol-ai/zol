@@ -7,6 +7,7 @@ type Props = {
   /** Stagger within a group, in milliseconds. */
   delay?: number;
   className?: string;
+  style?: React.CSSProperties;
   as?: "div" | "li" | "section";
 };
 
@@ -19,7 +20,13 @@ type Props = {
  *   2. Reduced motion is handled entirely in CSS — the reveal sits at its end
  *      state and never transitions — so there's no motion branch here.
  */
-export function Reveal({ children, delay = 0, className = "", as = "div" }: Props) {
+export function Reveal({
+  children,
+  delay = 0,
+  className = "",
+  style,
+  as = "div",
+}: Props) {
   const ref = useRef<HTMLElement>(null);
   const [shown, setShown] = useState(false);
 
@@ -66,7 +73,7 @@ export function Reveal({ children, delay = 0, className = "", as = "div" }: Prop
     <Tag
       ref={ref as React.Ref<never>}
       data-shown={shown}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ ...style, transitionDelay: `${delay}ms` }}
       className={`reveal ${className}`}
     >
       {children}

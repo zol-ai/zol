@@ -4,14 +4,13 @@ import { Faq } from "@/components/site/faq";
 import { Footer } from "@/components/site/footer";
 import { Hero } from "@/components/site/hero";
 import { HowItWorks } from "@/components/site/how-it-works";
-import { Integrations } from "@/components/site/integrations";
 import { LostCalls } from "@/components/site/lost-calls";
 import { Nav } from "@/components/site/nav";
 import { OneRecord } from "@/components/site/one-record";
 import { Reveal } from "@/components/site/reveal";
 import { RunsItself } from "@/components/site/runs-itself";
 import { Stats } from "@/components/site/stats";
-import { Status } from "@/components/site/status";
+import { WhySwitch } from "@/components/site/why-switch";
 import { site } from "@/lib/site";
 
 const jsonLd = {
@@ -60,8 +59,7 @@ export default function Home() {
           </div>
         </section>
 
-        <Integrations />
-        <Status />
+        <WhySwitch />
         <Faq />
         <Cta />
       </main>

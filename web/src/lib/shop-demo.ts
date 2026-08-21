@@ -204,7 +204,8 @@ export const jobs = [
   },
 ];
 
-export const integrations = [
+/** The shop management systems ZOL is built to take over from. */
+export const replaces = [
   "Tekmetric",
   "Shopmonkey",
   "Shop-Ware",
@@ -212,7 +213,11 @@ export const integrations = [
   "AutoLeap",
 ];
 
-/** What changes with ZOL on top, rather than what it replaces. */
+/**
+ * Why a shop switches. Every "without" row describes what a shop management
+ * system does by design — it records the work — not a defect in any one
+ * product. The difference is that ZOL does the work as well as record it.
+ */
 export const comparison = [
   {
     row: "After-hours phone",
@@ -225,6 +230,11 @@ export const comparison = [
     with: "Answered in seconds, appointment written to the board",
   },
   {
+    row: "Writing the ticket",
+    without: "Someone retypes the call into the system",
+    with: "The call is already the repair order",
+  },
+  {
     row: "Estimate approvals",
     without: "Your writer calls back twice and gives up",
     with: "Texted, nudged once, then handed to a person",
@@ -235,8 +245,8 @@ export const comparison = [
     with: "Vendor ETA change surfaces the bay conflict early",
   },
   {
-    row: "Your shop software",
-    without: "—",
-    with: "Stays exactly where it is, kept in sync",
+    row: "What you pay for",
+    without: "Shop software, plus an answering service, plus a texting add-on",
+    with: "One system, one bill",
   },
 ];

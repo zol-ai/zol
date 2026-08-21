@@ -4,18 +4,29 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 /**
- * Rotating hero imagery.
+ * Rotating hero imagery, framed inside the hero's right column.
  *
- * These are hand-drawn placeholder scenes. To use real photographs, drop files
- * with these exact names into web/public/images/ (jpg or webp, landscape,
- * ~2000px wide) and change the extensions here — nothing else needs to move.
+ * Real shop photography, in the order a job actually moves: the front desk
+ * takes the call, the bay does the work, the counter pulls the parts, the
+ * ticket closes on the screen.
  */
 const slides = [
-  { src: "/images/shop-01.svg", alt: "Two technicians looking over an open engine bay in a service bay" },
-  { src: "/images/shop-02.svg", alt: "A vehicle raised on a two-post lift with a technician working underneath" },
-  { src: "/images/shop-03.svg", alt: "The service counter of a repair shop with the phone ringing" },
-  { src: "/images/shop-04.svg", alt: "A technician running a diagnostic scan tool at an open driver's door" },
-  { src: "/images/shop-05.svg", alt: "A technician carrying a parts box past the shelving, bay door open to daylight" },
+  {
+    src: "/images/landing_page/front-desk.jpg",
+    alt: "A service advisor at a ZOL front desk taking a call with a tablet in hand",
+  },
+  {
+    src: "/images/landing_page/bay-tech.jpg",
+    alt: "A technician working under an open hood with a torque wrench",
+  },
+  {
+    src: "/images/landing_page/parts-counter.jpg",
+    alt: "Two technicians at the parts counter reviewing the shop-wide workflow board",
+  },
+  {
+    src: "/images/landing_page/work-order.png",
+    alt: "A technician reading an open work order on the shop management screen",
+  },
 ];
 
 const INTERVAL_MS = 5500;
@@ -44,14 +55,14 @@ export function HeroMedia() {
   }, []);
 
   return (
-    <>
+    <div className="hero-frame">
       {slides.map((slide, i) => (
         <Image
           key={slide.src}
           src={slide.src}
           alt={i === index ? slide.alt : ""}
           fill
-          sizes="(min-width: 1024px) 58vw, 100vw"
+          sizes="(min-width: 1024px) 46vw, 100vw"
           unoptimized
           priority={i === 0}
           /*
@@ -68,10 +79,12 @@ export function HeroMedia() {
         />
       ))}
 
-      <div className="hero-scrim" aria-hidden="true" />
+      {/* Softens the top edge into the paper so the frame doesn't read as a
+          pasted-on rectangle. */}
+      <div className="hero-frame-fade" aria-hidden="true" />
 
       {/* Real controls, not decoration — reachable by keyboard. */}
-      <div className="absolute bottom-5 right-5 z-10 flex gap-2 lg:bottom-7 lg:right-8">
+      <div className="absolute bottom-4 left-4 z-10 flex gap-2">
         {slides.map((slide, i) => (
           <button
             key={slide.src}
@@ -87,15 +100,15 @@ export function HeroMedia() {
             className="group grid h-8 place-items-center px-1"
           >
             <span
-              className={`block h-2 rounded-full transition-all duration-300 ${
+              className={`block h-1.5 rounded-full transition-all duration-300 ${
                 i === index
-                  ? "w-7 bg-ink"
-                  : "w-2 bg-ink/30 group-hover:bg-ink/55"
+                  ? "w-7 bg-paper"
+                  : "w-1.5 bg-paper/45 group-hover:bg-paper/75"
               }`}
             />
           </button>
         ))}
       </div>
-    </>
+    </div>
   );
 }

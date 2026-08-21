@@ -7,6 +7,10 @@ const proof = [
   "Orders parts and flags vendor delays",
 ];
 
+/* The headline is set one line per element so each can fade in from the top in
+   sequence. Every other piece of the hero picks up the same stagger. */
+const headline = ["The best AI", "shop management", "tool."];
+
 function Check() {
   return (
     <span
@@ -31,44 +35,74 @@ export function Hero() {
     <section className="relative overflow-hidden">
       <div className="grid-bg" aria-hidden="true" />
 
-      {/* Runs the full height and bleeds to the right edge; the type sits on it. */}
-      <div className="hero-media">
-        <HeroMedia />
-      </div>
+      {/*
+        Both columns live inside the same shell as the nav and every section
+        below it, so the page has one left edge and one right edge the whole
+        way down — the picture no longer bleeds past the container.
+      */}
+      <div className="shell relative grid items-center gap-12 pb-16 pt-12 lg:grid-cols-[1.02fr_1fr] lg:gap-14 lg:pb-24 lg:pt-20">
+        <div className="max-w-xl">
+          <p className="t-eyebrow hero-in" style={{ "--d": "0ms" } as React.CSSProperties}>
+            AI shop management for auto repair
+          </p>
 
-      <div className="shell relative pb-[19rem] pt-12 sm:pb-[22rem] lg:pb-28 lg:pt-24 xl:pb-32 xl:pt-28">
-        <div className="lg:max-w-[28rem] xl:max-w-[34rem]">
-          <p className="t-eyebrow">AI front desk for auto repair shops</p>
-
-          <h1 className="t-display mt-5 text-[2.5rem] sm:text-[3.5rem] lg:text-[3.75rem] xl:text-[4.5rem]">
-            The front desk
-            <br />
-            that never
-            <br />
-            goes home.
+          <h1 className="t-display mt-5 text-[2.75rem] sm:text-[3.75rem] lg:text-[3.5rem] xl:text-[4.25rem]">
+            {headline.map((line, i) => (
+              <span
+                key={line}
+                className="hero-in block"
+                style={{ "--d": `${90 + i * 110}ms` } as React.CSSProperties}
+              >
+                {line}
+              </span>
+            ))}
           </h1>
 
-          <p className="t-lede mt-6 max-w-xl">
-            ZOL picks up the calls nobody gets to, books the job, texts the
-            estimate and chases the approval — then leaves the shop software you
-            already run exactly where it is.
+          <p
+            className="hero-in mt-6 text-[1.0625rem] font-semibold leading-snug text-ink md:text-[1.25rem]"
+            style={{ "--d": "440ms" } as React.CSSProperties}
+          >
+            Don&rsquo;t let your competitors beat you with AI and automation.
+          </p>
+
+          <p
+            className="hero-in t-lede mt-3 max-w-lg"
+            style={{ "--d": "520ms" } as React.CSSProperties}
+          >
+            ZOL answers the calls nobody gets to, books the job, texts the
+            estimate and chases the approval. It&rsquo;s the whole shop system —
+            not one more tab for your writer to type into.
           </p>
 
           <ul className="mt-7 grid gap-2.5">
-            {proof.map((line) => (
-              <li key={line} className="flex items-start gap-2.5">
+            {proof.map((line, i) => (
+              <li
+                key={line}
+                className="hero-in flex items-start gap-2.5"
+                style={{ "--d": `${600 + i * 80}ms` } as React.CSSProperties}
+              >
                 <Check />
                 <span className="text-[0.9375rem] text-ink-2">{line}</span>
               </li>
             ))}
           </ul>
 
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div
+            className="hero-in mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
+            style={{ "--d": "860ms" } as React.CSSProperties}
+          >
             <DemoButton />
             <a href="#how-it-works" className="btn btn-ghost">
               See how it works
             </a>
           </div>
+        </div>
+
+        <div
+          className="hero-in w-full"
+          style={{ "--d": "300ms" } as React.CSSProperties}
+        >
+          <HeroMedia />
         </div>
       </div>
     </section>

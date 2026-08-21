@@ -35,12 +35,12 @@ export const metadata: Metadata = {
   },
   description: site.description,
   keywords: [
+    "AI shop management software",
+    "auto repair shop management software",
     "AI receptionist for auto repair shops",
-    "auto shop answering service",
-    "Tekmetric integration",
-    "Shopmonkey integration",
+    "Tekmetric alternative",
+    "Shopmonkey alternative",
     "repair order automation",
-    "shop management AI",
   ],
   openGraph: {
     type: "website",

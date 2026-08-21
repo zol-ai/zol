@@ -2,8 +2,8 @@ import { Reveal } from "./reveal";
 
 const questions = [
   {
-    q: "Do I have to replace my shop management software?",
-    a: "No, and that's the point. Tekmetric, Shopmonkey, Shop-Ware, Mitchell 1 and AutoLeap record the work — they're not the problem. ZOL sits on top and does the phone, the texting and the chasing that nobody has time for. Customers, vehicles and repair orders sync both ways, so your writers keep working exactly where they already work.",
+    q: "What happens to the shop software I run now?",
+    a: "ZOL takes its place. Tekmetric, Shopmonkey, Shop-Ware, Mitchell 1 and AutoLeap are good at recording the work — that's what they were built for — but somebody on your team still has to answer the phone, chase the approval and call about the part. ZOL keeps the same record and does that work too, so you're paying for one system instead of shop software plus an answering service plus a texting add-on. Customers, vehicles and repair-order history come across during onboarding, and everything stays exportable.",
   },
   {
     q: "Will my customers know they're not talking to a person?",
