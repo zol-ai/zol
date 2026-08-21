@@ -9,7 +9,7 @@ const proof = [
 
 /* The headline is set one line per element so each can fade in from the top in
    sequence. Every other piece of the hero picks up the same stagger. */
-const headline = ["The best AI", "shop management", "tool."];
+const headline = ["The best AI", "shop management", "software."];
 
 function Check() {
   return (

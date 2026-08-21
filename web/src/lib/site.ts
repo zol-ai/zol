@@ -5,7 +5,7 @@
 
 export const site = {
   name: "ZOL",
-  tagline: "The best AI shop management tool",
+  tagline: "The best AI shop management software",
   description:
     "ZOL is shop management software that does the work instead of just recording it: it answers every call night and weekend, writes the repair order, texts estimates and chases approvals, orders parts and flags vendor delays.",
   url: "https://tryzol.com",
