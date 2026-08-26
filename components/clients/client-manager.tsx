@@ -241,80 +241,100 @@ export function ClientManager() {
           action={<Button onClick={openCreate}>Add client</Button>}
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {clients.map((client) => {
-            const related = tasks.filter((task) => task.clientId === client.id);
-            const openRelated = related.filter((task) => task.status !== "completed");
-            const color = getClientColor(client.color ?? "blue");
-            return (
-              <Card key={client.id} className={`p-0 ${color.border}`}>
-                <div className="flex items-start justify-between gap-3 p-5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="break-words font-semibold text-slate-950">{client.name}</h2>
-                      <Badge tone={statusTone[client.status]}>{client.status}</Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {client.contactName || "No contact"}
-                      {client.contactEmail ? ` | ${client.contactEmail}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold">
-                      {related.length} tasks
-                    </span>
-                    <span
-                      aria-label={`${color.label} client color`}
-                      className={`size-4 rounded-full border border-white shadow-sm ring-2 ring-slate-200 ${color.dot}`}
-                    />
-                  </div>
-                </div>
-
-                <div className={`border-y px-5 py-3 ${color.soft}`}>
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    <span><strong>{openRelated.length}</strong> open tasks</span>
-                    <span><strong>{related.length - openRelated.length}</strong> completed</span>
-                    <span><strong>{client.status}</strong> stage</span>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  {client.notes ? <p className="mb-4 text-sm text-slate-600">{client.notes}</p> : null}
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Related tasks</p>
-                    {related.length ? (
-                      <div className="space-y-2">
-                        {related.slice(0, 4).map((task) => (
-                          <div key={task.id} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                            <span className="min-w-0 truncate">{task.title}</span>
-                            <Badge tone={task.status === "completed" ? "green" : "blue"}>{task.status.replace("_", " ")}</Badge>
+        <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[980px] border-collapse text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-5 py-3">Client</th>
+                  <th className="px-4 py-3">Stage</th>
+                  <th className="px-4 py-3">Contact</th>
+                  <th className="px-4 py-3">Tasks</th>
+                  <th className="px-4 py-3">Related work</th>
+                  <th className="px-4 py-3">Notes</th>
+                  <th className="px-4 py-3">Actions</th>
+                  <th className="px-5 py-3 text-right">Color</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {clients.map((client) => {
+                  const related = tasks.filter((task) => task.clientId === client.id);
+                  const openRelated = related.filter((task) => task.status !== "completed");
+                  const color = getClientColor(client.color ?? "blue");
+                  return (
+                    <tr key={client.id} className="bg-white align-top hover:bg-slate-50">
+                      <td className="max-w-[220px] px-5 py-4">
+                        <div className="font-semibold text-slate-950">{client.name}</div>
+                        <div className="mt-1 text-xs text-slate-500">{related.length} total tasks</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <Badge tone={statusTone[client.status]}>{client.status}</Badge>
+                      </td>
+                      <td className="max-w-[220px] px-4 py-4 text-slate-600">
+                        <div>{client.contactName || "No contact"}</div>
+                        {client.contactEmail ? (
+                          <div className="mt-1 truncate text-xs text-slate-500">{client.contactEmail}</div>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="font-semibold text-slate-950">{openRelated.length} open</div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {related.length - openRelated.length} completed
+                        </div>
+                      </td>
+                      <td className="max-w-[260px] px-4 py-4">
+                        {related.length ? (
+                          <div className="space-y-1">
+                            {related.slice(0, 3).map((task) => (
+                              <div key={task.id} className="flex items-center gap-2">
+                                <span className="min-w-0 truncate text-slate-700">{task.title}</span>
+                                <Badge tone={task.status === "completed" ? "green" : "blue"}>
+                                  {task.status.replace("_", " ")}
+                                </Badge>
+                              </div>
+                            ))}
+                            {related.length > 3 ? (
+                              <div className="text-xs text-slate-500">+{related.length - 3} more</div>
+                            ) : null}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-500">No related tasks.</p>
-                    )}
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => openEdit(client)}>
-                      <Pencil size={15} /> Edit
-                    </Button>
-                    {client.status !== "closed" ? (
-                      <Button variant="ghost" onClick={() => setConfirming({ client, action: "archive" })}>
-                        <Archive size={15} /> Archive
-                      </Button>
-                    ) : null}
-                    <Button variant="ghost" className="text-red-600" onClick={() => setConfirming({ client, action: "delete" })}>
-                      <Trash2 size={15} /> Delete
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                        ) : (
+                          <span className="text-slate-500">No related tasks</span>
+                        )}
+                      </td>
+                      <td className="max-w-[240px] px-4 py-4 text-slate-600">
+                        {client.notes ? <p className="line-clamp-2">{client.notes}</p> : <span className="text-slate-500">No notes</span>}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <Button variant="secondary" onClick={() => openEdit(client)}>
+                            <Pencil size={15} /> Edit
+                          </Button>
+                          {client.status !== "closed" ? (
+                            <Button variant="ghost" onClick={() => setConfirming({ client, action: "archive" })}>
+                              <Archive size={15} /> Archive
+                            </Button>
+                          ) : null}
+                          <Button variant="ghost" className="text-red-600" onClick={() => setConfirming({ client, action: "delete" })}>
+                            <Trash2 size={15} /> Delete
+                          </Button>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end">
+                          <span
+                            aria-label={`${color.label} client color`}
+                            className={`size-4 rounded-full border border-white shadow-sm ring-2 ring-slate-200 ${color.dot}`}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
-
       <Modal open={modalOpen} onOpenChange={setModalOpen} title={editing ? "Edit client" : "Add client"}>
         <form onSubmit={save} className="space-y-4">
           <div>
