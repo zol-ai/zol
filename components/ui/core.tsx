@@ -5,6 +5,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { X } from "lucide-react";
 import type {
   ButtonHTMLAttributes,
+  HTMLAttributes,
   InputHTMLAttributes,
   LabelHTMLAttributes,
   ReactNode,
@@ -41,12 +42,15 @@ export function Button({
 export function Card({
   className,
   children,
-}: {
-  className?: string;
+  ...props
+}: HTMLAttributes<HTMLElement> & {
   children: ReactNode;
 }) {
   return (
-    <section className={cn("rounded-xl border bg-white p-5 shadow-sm", className)}>
+    <section
+      className={cn("rounded-xl border bg-white p-5 shadow-sm", className)}
+      {...props}
+    >
       {children}
     </section>
   );

@@ -6,6 +6,7 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  PanelsTopLeft,
   Menu,
   Users,
   X,
@@ -18,6 +19,7 @@ import { cn, initials } from "@/lib/utils";
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tasks", label: "Tasks", icon: CheckSquare2 },
+  { href: "/cards", label: "Cards", icon: PanelsTopLeft },
   { href: "/team", label: "Team", icon: Users },
   { href: "/clients", label: "Clients", icon: BriefcaseBusiness },
 ];

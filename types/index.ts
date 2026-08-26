@@ -1,6 +1,7 @@
 export type TaskStatus = "todo" | "in_progress" | "completed";
 export type TaskPriority = "low" | "medium" | "high";
 export type ClientStatus = "lead" | "active" | "paused" | "closed";
+export type WorkCardColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 
 export type TeamMember = {
   id: string;
@@ -38,6 +39,22 @@ export type Client = {
   updatedAt: string;
 };
 
+export type WorkCardTodo = {
+  id: string;
+  text: string;
+  done: boolean;
+};
+
+export type WorkCard = {
+  id: string;
+  title: string;
+  todos: WorkCardTodo[];
+  color: WorkCardColor;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type TeamMemberDocument = Omit<TeamMember, "id" | "createdAt" | "updatedAt"> & {
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
@@ -53,6 +70,11 @@ export type TaskDocument = Omit<
 };
 
 export type ClientDocument = Omit<Client, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type WorkCardDocument = Omit<WorkCard, "id" | "createdAt" | "updatedAt"> & {
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
 };

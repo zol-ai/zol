@@ -52,6 +52,30 @@ export const clientUpdateSchema = clientCreateSchema.partial().refine(
   "At least one field is required",
 );
 
+const cardTodoSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  text: z.string().trim().min(1, "Todo text is required").max(240),
+  done: z.boolean().default(false),
+});
+
+export const cardCreateSchema = z.object({
+  title: z.string().trim().min(1, "Heading is required").max(160),
+  todos: z.array(cardTodoSchema).max(50).default([]),
+  color: z.enum(["blue", "green", "amber", "rose", "violet", "slate"]).default("blue"),
+  order: z.number().finite().nonnegative().default(0),
+});
+
+export const cardUpdateSchema = z.object({
+  title: z.string().trim().min(1, "Heading is required").max(160).optional(),
+  todos: z.array(cardTodoSchema).max(50).optional(),
+  color: z.enum(["blue", "green", "amber", "rose", "violet", "slate"]).optional(),
+  order: z.number().finite().nonnegative().optional(),
+}).refine(
+  (value) => Object.keys(value).length > 0,
+  "At least one field is required",
+);
+
 export type TaskInput = z.infer<typeof taskCreateSchema>;
 export type TeamMemberInput = z.infer<typeof teamMemberCreateSchema>;
 export type ClientInput = z.infer<typeof clientCreateSchema>;
+export type CardInput = z.infer<typeof cardCreateSchema>;

@@ -203,13 +203,36 @@ export function TaskManager() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
+  const assigneeTabNames = useMemo(() => ["Amol", "Ezaz"], []);
+  const assigneeTabs = useMemo(
+    () =>
+      assigneeTabNames.map((name) => {
+        const lookup = name.toLowerCase();
+        const member = members.find((item) => {
+          const normalized = item.name.trim().toLowerCase();
+          return normalized === lookup || normalized.split(/\s+/)[0] === lookup;
+        });
+        return { id: `member:${lookup}`, label: name, memberId: member?.id ?? "" };
+      }),
+    [assigneeTabNames, members],
+  );
+  const tabs = useMemo(
+    () => [
+      { id: "my", label: "My Tasks", memberId: "" },
+      { id: "all", label: "All Tasks", memberId: "" },
+      ...assigneeTabs,
+      { id: "completed", label: "Completed", memberId: "" },
+    ],
+    [assigneeTabs],
+  );
+  const selectedTab = tabs.find((item) => item.id === tab) ?? tabs[1];
+
   const filteredTasks = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
-    const tabMember = members.find((member) => member.name.toLowerCase() === tab.toLowerCase());
     return tasks.filter((task) => {
-      if (tab === "my" && (!myMemberId || task.assignedToId !== myMemberId)) return false;
-      if (tab === "completed" && task.status !== "completed") return false;
-      if (tabMember && task.assignedToId !== tabMember.id) return false;
+      if (selectedTab.id === "my" && (!myMemberId || task.assignedToId !== myMemberId)) return false;
+      if (selectedTab.id === "completed" && task.status !== "completed") return false;
+      if (selectedTab.id.startsWith("member:") && (!selectedTab.memberId || task.assignedToId !== selectedTab.memberId)) return false;
       if (assignee && task.assignedToId !== assignee) return false;
       if (status && task.status !== status) return false;
       if (priority && task.priority !== priority) return false;
@@ -220,11 +243,12 @@ export function TaskManager() {
       if (due === "none" && task.dueDate) return false;
       return true;
     });
-  }, [assignee, client, due, members, myMemberId, priority, status, tab, tasks]);
+  }, [assignee, client, due, myMemberId, priority, selectedTab, status, tasks]);
 
   function openCreate() {
     setEditing(null);
-    setDraft(emptyDraft);
+    const tabAssigneeId = selectedTab.id === "my" ? myMemberId : selectedTab.memberId;
+    setDraft({ ...emptyDraft, assignedToId: tabAssigneeId ?? "" });
     setModalOpen(true);
   }
 
@@ -297,8 +321,6 @@ export function TaskManager() {
   if (loading) return <LoadingState label="Loading tasks" />;
   if (error) return <ErrorState message={error} retry={load} />;
 
-  const tabs = ["my", "all", "amol", "ezaz", "completed"];
-
   return (
     <>
       <PageHeader
@@ -311,12 +333,12 @@ export function TaskManager() {
         <div className="flex min-w-max gap-1 rounded-lg border bg-white p-1">
           {tabs.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              onClick={() => setTab(item)}
-              className={`rounded-md px-4 py-2 text-sm font-medium capitalize ${tab === item ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+              onClick={() => setTab(item.id)}
+              className={`rounded-md px-4 py-2 text-sm font-medium ${tab === item.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
             >
-              {item === "my" ? "My Tasks" : item === "all" ? "All Tasks" : item}
+              {item.label}
             </button>
           ))}
         </div>
@@ -371,7 +393,7 @@ export function TaskManager() {
                     </div>
                     {task.description ? <p className="mt-2 line-clamp-2 text-sm text-slate-600">{task.description}</p> : null}
                     <p className="mt-2 text-xs text-slate-500">
-                      {task.assignedToName || "Unassigned"} 뿯½ {task.dueDate ? `Due ${task.dueDate}` : "No due date"}{clientName ? ` 뿯½ ${clientName}` : ""}
+                      {task.assignedToName || "Unassigned"} | {task.dueDate ? `Due ${task.dueDate}` : "No due date"}{clientName ? ` | ${clientName}` : ""}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
