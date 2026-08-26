@@ -14,6 +14,7 @@ function fromDocument(snapshot: DocumentSnapshot): Client {
     contactName: data.contactName,
     contactEmail: data.contactEmail,
     status: data.status,
+    color: data.color ?? "blue",
     notes: data.notes,
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),

@@ -44,6 +44,14 @@ describe("card validation", () => {
 });
 
 describe("team and client validation", () => {
+  it("defaults a new client color for CRM labels", () => {
+    expect(clientCreateSchema.parse({ name: "Northstar" }).color).toBe("blue");
+  });
+
+  it("rejects an invalid client color", () => {
+    expect(() => clientCreateSchema.parse({ name: "Northstar", color: "black" })).toThrow();
+  });
+
   it("defaults a new team member to active", () => {
     expect(teamMemberCreateSchema.parse({ name: "Amol" }).active).toBe(true);
   });

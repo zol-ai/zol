@@ -1,6 +1,7 @@
 export type TaskStatus = "todo" | "in_progress" | "completed";
 export type TaskPriority = "low" | "medium" | "high";
 export type ClientStatus = "lead" | "active" | "paused" | "closed";
+export type ClientColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 export type WorkCardColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 
 export type TeamMember = {
@@ -34,6 +35,7 @@ export type Client = {
   contactName?: string;
   contactEmail?: string;
   status: ClientStatus;
+  color: ClientColor;
   notes?: string;
   createdAt: string;
   updatedAt: string;

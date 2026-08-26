@@ -21,7 +21,7 @@ const navigation = [
   { href: "/tasks", label: "Tasks", icon: CheckSquare2 },
   { href: "/cards", label: "Cards", icon: PanelsTopLeft },
   { href: "/team", label: "Team", icon: Users },
-  { href: "/clients", label: "Clients", icon: BriefcaseBusiness },
+  { href: "/clients", label: "CRM", icon: BriefcaseBusiness },
 ];
 
 export function AppShell({

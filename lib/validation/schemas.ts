@@ -39,15 +39,25 @@ export const teamMemberUpdateSchema = teamMemberCreateSchema.partial().refine(
   "At least one field is required",
 );
 
+const clientColorSchema = z.enum(["blue", "green", "amber", "rose", "violet", "slate"]);
+
 export const clientCreateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(160),
   contactName: z.string().trim().max(160).optional().transform((value) => value || undefined),
   contactEmail: z.string().trim().email().optional().or(z.literal("").transform(() => undefined)),
   status: z.enum(["lead", "active", "paused", "closed"]).default("lead"),
+  color: clientColorSchema.default("blue"),
   notes: optionalText,
 });
 
-export const clientUpdateSchema = clientCreateSchema.partial().refine(
+export const clientUpdateSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(160).optional(),
+  contactName: z.string().trim().max(160).optional().transform((value) => value || undefined),
+  contactEmail: z.string().trim().email().optional().or(z.literal("").transform(() => undefined)),
+  status: z.enum(["lead", "active", "paused", "closed"]).optional(),
+  color: clientColorSchema.optional(),
+  notes: optionalText,
+}).refine(
   (value) => Object.keys(value).length > 0,
   "At least one field is required",
 );
