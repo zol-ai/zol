@@ -3,6 +3,7 @@ export type TaskPriority = "low" | "medium" | "high";
 export type ClientStatus = "lead" | "active" | "paused" | "closed";
 export type ClientColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 export type WorkCardColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+export type NoteColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 
 export type TeamMember = {
   id: string;
@@ -57,6 +58,15 @@ export type WorkCard = {
   updatedAt: string;
 };
 
+export type WorkspaceNote = {
+  id: string;
+  title: string;
+  body: string;
+  color: NoteColor;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type TeamMemberDocument = Omit<TeamMember, "id" | "createdAt" | "updatedAt"> & {
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
@@ -77,6 +87,11 @@ export type ClientDocument = Omit<Client, "id" | "createdAt" | "updatedAt"> & {
 };
 
 export type WorkCardDocument = Omit<WorkCard, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type WorkspaceNoteDocument = Omit<WorkspaceNote, "id" | "createdAt" | "updatedAt"> & {
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
 };

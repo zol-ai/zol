@@ -75,6 +75,23 @@ export const cardCreateSchema = z.object({
   order: z.number().finite().nonnegative().default(0),
 });
 
+const noteColorSchema = z.enum(["blue", "green", "amber", "rose", "violet", "slate"]);
+
+export const noteCreateSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(160),
+  body: z.string().trim().max(4000).default(""),
+  color: noteColorSchema.default("amber"),
+});
+
+export const noteUpdateSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(160).optional(),
+  body: z.string().trim().max(4000).optional(),
+  color: noteColorSchema.optional(),
+}).refine(
+  (value) => Object.keys(value).length > 0,
+  "At least one field is required",
+);
+
 export const cardUpdateSchema = z.object({
   title: z.string().trim().min(1, "Heading is required").max(160).optional(),
   todos: z.array(cardTodoSchema).max(50).optional(),
@@ -89,3 +106,4 @@ export type TaskInput = z.infer<typeof taskCreateSchema>;
 export type TeamMemberInput = z.infer<typeof teamMemberCreateSchema>;
 export type ClientInput = z.infer<typeof clientCreateSchema>;
 export type CardInput = z.infer<typeof cardCreateSchema>;
+export type NoteInput = z.infer<typeof noteCreateSchema>;

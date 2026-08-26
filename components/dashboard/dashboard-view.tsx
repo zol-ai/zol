@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  BriefcaseBusiness,
   CalendarClock,
   CheckCircle2,
   ListTodo,
@@ -28,6 +29,7 @@ type DashboardData = {
     overdue: number;
     completedThisWeek: number;
     activeMembers: number;
+    clients: number;
   };
 };
 
@@ -56,6 +58,7 @@ export function DashboardView() {
     { label: "Open tasks", value: data.summary.openTasks, icon: ListTodo, tone: "text-blue-600" },
     { label: "Due today", value: data.summary.dueToday, icon: CalendarClock, tone: "text-amber-600" },
     { label: "Overdue", value: data.summary.overdue, icon: AlertTriangle, tone: "text-red-600" },
+    { label: "Clients", value: data.summary.clients, icon: BriefcaseBusiness, tone: "text-cyan-600" },
     {
       label: "Completed this week",
       value: data.summary.completedThisWeek,
@@ -82,7 +85,7 @@ export function DashboardView() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {metrics.map(({ label, value, icon: Icon, tone }) => (
           <Card key={label} className="p-4">
             <div className="flex items-center justify-between">

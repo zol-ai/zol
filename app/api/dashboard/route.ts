@@ -1,11 +1,16 @@
 import { startOfWeek } from "date-fns";
 import { authorized } from "@/lib/api-server";
+import { getClients } from "@/lib/firestore/clients";
 import { getTasks } from "@/lib/firestore/tasks";
 import { getTeamMembers } from "@/lib/firestore/teamMembers";
 
 export async function GET() {
   return authorized(async (user) => {
-    const [tasks, members] = await Promise.all([getTasks(), getTeamMembers()]);
+    const [tasks, members, clients] = await Promise.all([
+      getTasks(),
+      getTeamMembers(),
+      getClients(),
+    ]);
     const today = new Date().toISOString().slice(0, 10);
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString();
     const open = tasks.filter((task) => task.status !== "completed");
@@ -24,6 +29,7 @@ export async function GET() {
           (task) => task.completedAt && task.completedAt >= weekStart,
         ).length,
         activeMembers: members.filter((member) => member.active).length,
+        clients: clients.length,
       },
       matchingMember: matchingMember ?? null,
       myTasks: matchingMember

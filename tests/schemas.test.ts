@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   cardCreateSchema,
   clientCreateSchema,
+  noteCreateSchema,
   taskCreateSchema,
   teamMemberCreateSchema,
 } from "../lib/validation/schemas";
@@ -20,6 +21,20 @@ describe("task validation", () => {
     expect(() =>
       taskCreateSchema.parse({ title: "", dueDate: "08/20/2026" }),
     ).toThrow();
+  });
+});
+
+describe("note validation", () => {
+  it("accepts notes with a default color", () => {
+    expect(noteCreateSchema.parse({ title: "Call notes" })).toMatchObject({
+      title: "Call notes",
+      body: "",
+      color: "amber",
+    });
+  });
+
+  it("rejects empty note titles", () => {
+    expect(() => noteCreateSchema.parse({ title: "" })).toThrow();
   });
 });
 
