@@ -1,4 +1,12 @@
 steps:
+  - name: bash
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        test -n "${_FIREBASE_API_KEY}" || { echo "Missing _FIREBASE_API_KEY substitution"; exit 1; }
+        test -n "${_FIREBASE_AUTH_DOMAIN}" || { echo "Missing _FIREBASE_AUTH_DOMAIN substitution"; exit 1; }
+        test -n "${_FIREBASE_APP_ID}" || { echo "Missing _FIREBASE_APP_ID substitution"; exit 1; }
   - name: gcr.io/cloud-builders/docker
     args:
       - build

@@ -145,7 +145,7 @@ gcloud projects add-iam-policy-binding PROJECT_ID --member="serviceAccount:compa
 Build the image. Firebase web values are public build arguments:
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml --substitutions=_FIREBASE_API_KEY=API_KEY,_FIREBASE_AUTH_DOMAIN=PROJECT_ID.firebaseapp.com,_FIREBASE_APP_ID=APP_ID
+gcloud builds submit --config cloudbuild.yaml --substitutions="_FIREBASE_API_KEY=API_KEY,_FIREBASE_AUTH_DOMAIN=PROJECT_ID.firebaseapp.com,_FIREBASE_APP_ID=APP_ID"
 ```
 
 Deploy the image shown by Cloud Build using the keyless runtime service account:
