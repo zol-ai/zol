@@ -199,7 +199,70 @@ export default async function RepairOrderPage(
             count × what you charge for it.
           </p>
         ) : (
-          <table className="w-full text-left text-[0.875rem]">
+          <>
+          {/*
+            Six columns of numbers do not fit a phone, and a table scrolled
+            sideways hides the money column — the one thing anybody opens a
+            ticket to check. Below sm the same lines are stacked instead, with
+            the total on the right of each one.
+          */}
+          <ul className="divide-y divide-line border-y border-line sm:hidden">
+            {lines.map((line) => (
+              <li key={line.id} className="flex items-start gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[0.9375rem] text-ink">
+                    {line.description}
+                    {line.quoted_by_agent && (
+                      <span className="tag tag-zol ml-2">ZOL</span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[0.8125rem] text-ink-3">
+                    {KIND_LABEL[line.kind]}
+                    {" · "}
+                    <span className="t-data">
+                      {Number(line.quantity)} × {formatCents(line.unit_cents)}
+                    </span>
+                  </p>
+                  <form action={removeLine} className="mt-1">
+                    <input type="hidden" name="line_id" value={line.id} />
+                    <input type="hidden" name="repair_order_id" value={ro.id} />
+                    <button
+                      type="submit"
+                      className="text-[0.8125rem] text-ink-3 underline underline-offset-2"
+                      aria-label={`Remove ${line.description}`}
+                    >
+                      Remove
+                    </button>
+                  </form>
+                </div>
+                <span className="t-data flex-none text-[0.9375rem] text-ink">
+                  {formatCents(line.total_cents)}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <dl className="mt-3 flex flex-col gap-1 text-[0.875rem] sm:hidden">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-ink-2">Subtotal</dt>
+              <dd className="t-data text-ink">{formatCents(subtotal)}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-ink-2">
+                Tax, {ro.tax_rate_pct}% on {formatCents(taxable)} of parts and
+                fees
+              </dt>
+              <dd className="t-data flex-none text-ink">{formatCents(tax)}</dd>
+            </div>
+            <div className="mt-1 flex items-baseline justify-between gap-4 border-t border-line-2 pt-2">
+              <dt className="font-semibold text-ink">Total</dt>
+              <dd className="t-data text-[1.0625rem] font-semibold text-ink">
+                {formatCents(ro.total_cents)}
+              </dd>
+            </div>
+          </dl>
+
+          <table className="hidden w-full text-left text-[0.875rem] sm:table">
             <thead>
               <tr className="border-b border-line">
                 <th className="t-eyebrow pb-2 font-semibold">Kind</th>
@@ -278,6 +341,7 @@ export default async function RepairOrderPage(
               </tr>
             </tfoot>
           </table>
+          </>
         )}
 
         <div className="mt-6 border-t border-line pt-5">

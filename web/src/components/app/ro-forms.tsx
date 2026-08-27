@@ -177,20 +177,32 @@ export function AddLineForm({
   );
 
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-[9rem_1fr_5rem_7rem_auto]">
-      <Select label="Kind" name="kind" defaultValue={state?.values?.kind ?? "labor"}>
-        <option value="labor">Labour</option>
-        <option value="part">Part</option>
-        <option value="fee">Fee</option>
-        <option value="discount">Discount</option>
-      </Select>
-      <Field
-        label="Description"
-        name="description"
-        required
-        defaultValue={state?.values?.description}
-        error={state?.fields?.description}
-      />
+    /*
+      One row on a laptop. On a phone the two number boxes pair up rather than
+      each taking a full line — adding four parts to a ticket was otherwise a
+      long scroll.
+    */
+    <form
+      action={action}
+      className="grid grid-cols-2 gap-3 sm:grid-cols-[9rem_1fr_5rem_7rem_auto]"
+    >
+      <div className="col-span-2 sm:col-span-1">
+        <Select label="Kind" name="kind" defaultValue={state?.values?.kind ?? "labor"}>
+          <option value="labor">Labour</option>
+          <option value="part">Part</option>
+          <option value="fee">Fee</option>
+          <option value="discount">Discount</option>
+        </Select>
+      </div>
+      <div className="col-span-2 sm:col-span-1">
+        <Field
+          label="Description"
+          name="description"
+          required
+          defaultValue={state?.values?.description}
+          error={state?.fields?.description}
+        />
+      </div>
       <Field
         label="Qty / hrs"
         name="quantity"
@@ -208,7 +220,7 @@ export function AddLineForm({
         error={state?.fields?.unit}
       />
       <input type="hidden" name="repair_order_id" value={repairOrderId} />
-      <div className="flex items-end">
+      <div className="col-span-2 flex items-end sm:col-span-1">
         <Submit className="btn btn-ghost w-full sm:w-auto">Add</Submit>
       </div>
     </form>

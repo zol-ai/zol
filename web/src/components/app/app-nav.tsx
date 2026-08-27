@@ -26,32 +26,45 @@ export function AppNav({ role }: { role: Role }) {
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label="Sections"
-      className="shell flex h-[42px] items-stretch gap-5 overflow-x-auto border-t border-line"
-    >
-      {TABS.filter((tab) => !tab.ownerOnly || role === "owner").map((tab) => {
-        // "/app" would otherwise light up on every child route.
-        const active =
-          tab.href === "/app"
-            ? pathname === "/app"
-            : pathname.startsWith(tab.href);
+    /*
+      Seven tabs don't fit a phone, and stacking them into a menu costs a tap
+      on every screen change. They scroll sideways instead — the scrollbar
+      hidden, and a fade on the right edge doing the job of saying there is
+      more. Above md the row fits and the fade is gone.
+    */
+    <div className="relative border-t border-line">
+      <nav
+        aria-label="Sections"
+        className="shell swipe-x flex h-[46px] items-stretch gap-5 sm:h-[42px]"
+      >
+        {TABS.filter((tab) => !tab.ownerOnly || role === "owner").map((tab) => {
+          // "/app" would otherwise light up on every child route.
+          const active =
+            tab.href === "/app"
+              ? pathname === "/app"
+              : pathname.startsWith(tab.href);
 
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            aria-current={active ? "page" : undefined}
-            className={`-mb-px flex items-center whitespace-nowrap border-b-2 text-[0.875rem] font-semibold transition-colors ${
-              active
-                ? "border-emerald-deep text-ink"
-                : "border-transparent text-ink-3 hover:text-ink"
-            }`}
-          >
-            {tab.label}
-          </Link>
-        );
-      })}
-    </nav>
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              aria-current={active ? "page" : undefined}
+              className={`-mb-px flex items-center whitespace-nowrap border-b-2 text-[0.875rem] font-semibold transition-colors ${
+                active
+                  ? "border-emerald-deep text-ink"
+                  : "border-transparent text-ink-3 hover:text-ink"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-paper to-transparent md:hidden"
+      />
+    </div>
   );
 }

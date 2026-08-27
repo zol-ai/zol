@@ -173,7 +173,9 @@ function BayRow({
         <ul className="divide-y divide-line">
           {slots.map((slot) => (
             <li key={slot.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
-              <span className="t-data w-36 flex-none text-[0.875rem] text-ink">
+              {/* On a phone the time takes its own line: squeezed next to the
+                  name it left about twenty characters for the customer. */}
+              <span className="t-data w-full flex-none text-[0.875rem] text-ink sm:w-36">
                 {clockLabel(zonedTime(new Date(slot.starts_at), timezone))}
                 <span className="text-ink-3">
                   {" – "}

@@ -90,8 +90,14 @@ export default async function BoardPage() {
           </p>
         </div>
       ) : (
-        <div className="-mx-5 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:px-8">
-          <div className="grid min-w-[64rem] grid-cols-5 gap-3">
+        /*
+          Five columns need about 64rem, so the board only becomes a board on
+          a wide screen. On a phone it stacks: the same columns in the same
+          order, read top to bottom. Sideways-scrolling a kanban one column at
+          a time is how you miss the one that costs money.
+        */
+        <div className="pb-2 lg:-mx-8 lg:overflow-x-auto lg:px-8">
+          <div className="flex flex-col gap-6 lg:grid lg:min-w-[64rem] lg:grid-cols-5 lg:gap-3">
             {COLUMNS.map((status) => {
               const cards = rows.filter((row) => row.status === status);
               return (

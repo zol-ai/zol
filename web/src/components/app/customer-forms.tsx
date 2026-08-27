@@ -119,7 +119,9 @@ export function VehicleForm({
       <input type="hidden" name="customer_id" value={customerId} />
       {vehicle && <input type="hidden" name="id" value={vehicle.id} />}
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      {/* Year and make pair up on a phone, model and trim under them —
+          four boxes in a single column is a lot of thumb travel. */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Field
           label="Year"
           name="year"
@@ -150,17 +152,20 @@ export function VehicleForm({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field
-          label="VIN"
-          name="vin"
-          maxLength={17}
-          autoCapitalize="characters"
-          spellCheck={false}
-          defaultValue={v?.vin ?? vehicle?.vin ?? ""}
-          error={state?.fields?.vin}
-          hint="17 characters, off the door jamb."
-        />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {/* Seventeen characters need the whole width of a phone. */}
+        <div className="col-span-2 sm:col-span-1">
+          <Field
+            label="VIN"
+            name="vin"
+            maxLength={17}
+            autoCapitalize="characters"
+            spellCheck={false}
+            defaultValue={v?.vin ?? vehicle?.vin ?? ""}
+            error={state?.fields?.vin}
+            hint="17 characters, off the door jamb."
+          />
+        </div>
         <Field
           label="Plate"
           name="plate"

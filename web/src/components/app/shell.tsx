@@ -22,18 +22,21 @@ export function AppShell({
   return (
     <div className="flex min-h-dvh flex-col bg-paper-2">
       <header className="sticky top-0 z-40 border-b border-line bg-paper">
-        <div className="shell flex h-[60px] items-center justify-between gap-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link href="/app" aria-label="ZOL">
+        <div className="shell flex h-[60px] items-center justify-between gap-3 sm:gap-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Link href="/app" aria-label="ZOL" className="flex-none">
               <Wordmark size={26} />
             </Link>
-            <span className="hidden h-5 w-px bg-line-2 sm:block" />
-            <span className="hidden truncate text-[0.875rem] font-semibold text-ink-2 sm:block">
+            <span className="h-5 w-px flex-none bg-line-2" />
+            {/* Kept on a phone too: it is the only thing up here that says
+                which shop you are looking at. It truncates rather than
+                pushing Sign out off the edge. */}
+            <span className="truncate text-[0.875rem] font-semibold text-ink-2">
               {user.shopName}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-none items-center gap-3">
             <span className="hidden text-right text-[0.8125rem] leading-tight text-ink-3 md:block">
               <span className="block font-semibold text-ink-2">
                 {user.fullName}
@@ -79,7 +82,9 @@ export function PageHead({
         {eyebrow && <p className="t-eyebrow mb-1.5">{eyebrow}</p>}
         <h1 className="t-h2 text-[1.75rem] sm:text-[2rem]">{title}</h1>
       </div>
-      {children && <div className="flex items-center gap-2">{children}</div>}
+      {children && (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      )}
     </div>
   );
 }

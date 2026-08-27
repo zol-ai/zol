@@ -881,3 +881,47 @@ body {
     stroke-dashoffset: 0 !important;
   }
 }
+
+/* ==========================================================================
+   Touch
+
+   The counter machine is a laptop, but the owner checks the board from a
+   phone in the bay — one hand, gloves half off. Two things break there and
+   nowhere else.
+   ========================================================================== */
+
+@media (pointer: coarse) {
+  /*
+    iOS Safari zooms the page whenever a focused field is under 16px, and it
+    does not zoom back out. Every control behind sign-in is 15px, so tapping
+    a name field left the shop looking at a page one and a half times too
+    wide with no obvious way back. The visual size barely moves.
+  */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* A 36px target is a mis-tap on a phone. */
+  .btn-sm {
+    min-height: 40px;
+  }
+}
+
+/*
+  A row of things wider than the screen, scrolled sideways: the section tabs,
+  and the board once it is five columns. The scrollbar is hidden because on a
+  phone it is drawn over the content and then fades; the fade on the right
+  edge is what says there is more.
+*/
+.swipe-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.swipe-x::-webkit-scrollbar {
+  display: none;
+}

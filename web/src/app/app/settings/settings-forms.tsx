@@ -149,21 +149,25 @@ export function HoursForm({ hours }: { hours: DayHours[] }) {
               Closed
             </label>
 
-            <input
-              type="time"
-              name={`opens_${day}`}
-              aria-label={`${label} opening time`}
-              defaultValue={row?.opens_at?.slice(0, 5) ?? "08:00"}
-              className="t-data rounded-[var(--radius)] border border-line-2 bg-paper px-2 py-1.5 text-[0.875rem]"
-            />
-            <span className="text-ink-3">to</span>
-            <input
-              type="time"
-              name={`closes_${day}`}
-              aria-label={`${label} closing time`}
-              defaultValue={row?.closes_at?.slice(0, 5) ?? "17:00"}
-              className="t-data rounded-[var(--radius)] border border-line-2 bg-paper px-2 py-1.5 text-[0.875rem]"
-            />
+            {/* The two clocks drop to their own line on a phone rather than
+                wrapping between "to" and the closing time. */}
+            <div className="flex w-full items-center gap-3 sm:w-auto">
+              <input
+                type="time"
+                name={`opens_${day}`}
+                aria-label={`${label} opening time`}
+                defaultValue={row?.opens_at?.slice(0, 5) ?? "08:00"}
+                className="t-data rounded-[var(--radius)] border border-line-2 bg-paper px-2 py-1.5 text-[0.875rem]"
+              />
+              <span className="text-ink-3">to</span>
+              <input
+                type="time"
+                name={`closes_${day}`}
+                aria-label={`${label} closing time`}
+                defaultValue={row?.closes_at?.slice(0, 5) ?? "17:00"}
+                className="t-data rounded-[var(--radius)] border border-line-2 bg-paper px-2 py-1.5 text-[0.875rem]"
+              />
+            </div>
 
             {error && (
               <span className="w-full text-[0.8125rem] text-amber-deep">
