@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { nav, site } from "@/lib/site";
 import { DemoButton } from "./demo-button";
 import { Wordmark } from "./mark";
@@ -37,6 +39,14 @@ export function Footer() {
             <div>
               <p className="t-eyebrow text-[0.5625rem]">Talk to us</p>
               <ul className="mt-2 space-y-0.5">
+                <li>
+                  <Link
+                    href={site.waitlistPath}
+                    className="block py-2 text-[0.875rem] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Join waitlist
+                  </Link>
+                </li>
                 <li>
                   <a
                     href={`mailto:${site.contactEmail}`}

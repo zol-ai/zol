@@ -11,6 +11,13 @@ export const site = {
   url: "https://tryzol.com",
   demoUrl: "https://calendar.app.google/Q262bp3TVLBRcedm9",
   contactEmail: "zaz@tryzol.com",
+  /*
+    Deliberately not in `nav` below: everything in that list is an anchor into
+    the landing page, and the footer renders it under "The product". This is a
+    route, and it belongs beside the demo button rather than among the section
+    links.
+  */
+  waitlistPath: "/waitlist",
 } as const;
 
 export const nav = [

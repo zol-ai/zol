@@ -59,13 +59,19 @@ export function Select({
   error,
   children,
   defaultValue,
+  required,
+  hint,
 }: {
   label: string;
   name: string;
   error?: string;
   children: ReactNode;
   defaultValue?: string;
+  required?: boolean;
+  hint?: ReactNode;
 }) {
+  const describedBy = error ? `${name}-error` : hint ? `${name}-hint` : undefined;
+
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={name} className="text-[0.8125rem] font-semibold text-ink-2">
@@ -75,14 +81,77 @@ export function Select({
         id={name}
         name={name}
         defaultValue={defaultValue}
+        required={required}
         aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
         className={`w-full rounded-[var(--radius)] border bg-paper px-3 py-2.5 text-[0.9375rem] text-ink ${
           error ? "border-amber-deep" : "border-line-2"
         }`}
       >
         {children}
       </select>
-      {error && <p className="text-[0.8125rem] text-amber-deep">{error}</p>}
+      {error ? (
+        <p id={`${name}-error`} className="text-[0.8125rem] text-amber-deep">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${name}-hint`} className="text-[0.8125rem] text-ink-3">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * A single checkbox with its wording beside it.
+ *
+ * The label is the whole sentence, not a word next to a box — the one place
+ * this is used is a consent tick, where what somebody agreed to has to be the
+ * thing they clicked on, and has to be legible on a phone. `defaultChecked` is
+ * a prop rather than a default so a rejected submit can put back what the
+ * person actually ticked; nothing here should ever start out ticked.
+ */
+export function Checkbox({
+  name,
+  error,
+  defaultChecked,
+  required,
+  children,
+}: {
+  name: string;
+  error?: string;
+  defaultChecked?: boolean;
+  required?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={name}
+        className="flex cursor-pointer items-start gap-2.5 text-[0.875rem] leading-relaxed text-ink-2"
+      >
+        <input
+          id={name}
+          name={name}
+          type="checkbox"
+          defaultChecked={defaultChecked}
+          required={required}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${name}-error` : undefined}
+          // mt-1 rather than items-center: the wording runs to three lines on a
+          // phone and a centred box floats away from its first line.
+          className={`mt-1 h-4 w-4 flex-none accent-[var(--emerald-deep)] ${
+            error ? "outline outline-1 outline-amber-deep" : ""
+          }`}
+        />
+        <span>{children}</span>
+      </label>
+      {error && (
+        <p id={`${name}-error`} className="text-[0.8125rem] text-amber-deep">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

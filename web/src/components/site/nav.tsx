@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { nav } from "@/lib/site";
+import { nav, site } from "@/lib/site";
 import { DemoButton } from "./demo-button";
 import { Wordmark } from "./mark";
 
@@ -62,6 +62,21 @@ export function Nav() {
           >
             Sign in
           </Link>
+          {/*
+            Secondary on purpose. A shop owner ready to talk should land on the
+            calendar, not in a queue — so the waitlist is the quieter of the two
+            and the filled button stays the demo.
+
+            The wrapper is what hides it below sm, not a `hidden` on the link
+            itself: `.btn` sets display:inline-flex from unlayered CSS, which
+            beats Tailwind's `.hidden` in @layer utilities, so the class would
+            be silently ignored and the header would run off a 375px screen.
+          */}
+          <span className="hidden sm:inline-flex">
+            <Link href={site.waitlistPath} className="btn btn-ghost btn-sm">
+              Join waitlist
+            </Link>
+          </span>
           <DemoButton size="sm" className="hidden sm:inline-flex" />
           <button
             type="button"
@@ -99,6 +114,13 @@ export function Nav() {
                 {item.label}
               </a>
             ))}
+            <Link
+              href={site.waitlistPath}
+              onClick={() => setOpen(false)}
+              className="border-b border-line py-3 text-[0.9375rem] font-medium text-ink-2"
+            >
+              Join waitlist
+            </Link>
             <Link
               href="/signin"
               onClick={() => setOpen(false)}
