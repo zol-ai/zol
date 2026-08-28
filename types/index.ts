@@ -38,6 +38,24 @@ export type Task = {
  */
 export type ClientSource = "manual" | "waitlist";
 
+/**
+ * A CRM is a named pipeline — Clients, Investors, whatever the team needs
+ * next. Records carry a `crmId`; the CRM page shows one pipeline at a time.
+ *
+ * The default CRM has the fixed document ID "clients". Waitlist ingest always
+ * writes there, so inbound leads cannot land in (or merge across) any other
+ * pipeline.
+ */
+export type Crm = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** The fixed ID of the default CRM that waitlist ingest writes to. */
+export const DEFAULT_CRM_ID = "clients";
+
 /** One person attached to a client. The first one is also the top-level contact. */
 export type ClientContact = {
   name?: string;
@@ -94,6 +112,8 @@ export type Client = {
   phone?: string;
   zip?: string;
   bays?: string;
+  /** Which pipeline this record belongs to. Absent means the default CRM. */
+  crmId?: string;
   source: ClientSource;
   contacts?: ClientContact[];
   /** Consent to be called and texted, as captured by the waitlist form. */

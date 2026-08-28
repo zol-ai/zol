@@ -23,6 +23,10 @@ service cloud.firestore {
       allow read, write: if isAllowedUser();
     }
 
+    match /crms/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
     // Deduplication markers for inbound events, written only by the Admin SDK
     // inside the ingest transaction. Denied to every browser client, including
     // an allowlisted one: a person editing these by hand would either replay an

@@ -25,7 +25,14 @@ import {
   Textarea,
 } from "@/components/ui/core";
 import { apiFetch } from "@/lib/api";
-import type { Client, ClientColor, ClientStatus, Task } from "@/types";
+import {
+  DEFAULT_CRM_ID,
+  type Client,
+  type ClientColor,
+  type ClientStatus,
+  type Crm,
+  type Task,
+} from "@/types";
 
 type ClientDraft = {
   name: string;
@@ -103,16 +110,28 @@ export function ClientManager() {
   const [confirming, setConfirming] = useState<{ client: Client; action: "archive" | "delete" } | null>(null);
   const [draft, setDraft] = useState<ClientDraft>(emptyDraft);
   const [saving, setSaving] = useState(false);
+  /*
+    Multiple pipelines, one page. "Clients" (the fixed default, fed by the
+    waitlist) is always first; the rest are whatever the team created —
+    Investors, Partners. One pipeline shows at a time.
+  */
+  const [crms, setCrms] = useState<Crm[]>([]);
+  const [activeCrmId, setActiveCrmId] = useState<string>(DEFAULT_CRM_ID);
+  const [crmModalOpen, setCrmModalOpen] = useState(false);
+  const [newCrmName, setNewCrmName] = useState("");
+  const [creatingCrm, setCreatingCrm] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setError("");
-      const [clientData, taskData] = await Promise.all([
+      const [clientData, taskData, crmData] = await Promise.all([
         apiFetch<Client[]>("/api/clients"),
         apiFetch<Task[]>("/api/tasks"),
+        apiFetch<Crm[]>("/api/crms"),
       ]);
       setClients(clientData);
       setTasks(taskData);
+      setCrms(crmData);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unknown error");
     } finally {
@@ -125,34 +144,60 @@ export function ClientManager() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
+  /** The active pipeline's records. Everything below renders from this. */
+  const pipelineClients = useMemo(
+    () => clients.filter((client) => (client.crmId ?? DEFAULT_CRM_ID) === activeCrmId),
+    [clients, activeCrmId],
+  );
+
   const crmStats = useMemo(() => {
-    const openTasks = tasks.filter((task) => task.status !== "completed");
+    const ids = new Set(pipelineClients.map((client) => client.id));
+    const related = tasks.filter((task) => task.clientId && ids.has(task.clientId));
+    const openTasks = related.filter((task) => task.status !== "completed");
     return {
-      totalClients: clients.length,
-      totalTasks: tasks.length,
+      totalClients: pipelineClients.length,
+      totalTasks: related.length,
       openTasks: openTasks.length,
       byStatus: {
-        lead: clients.filter((client) => client.status === "lead").length,
-        active: clients.filter((client) => client.status === "active").length,
-        paused: clients.filter((client) => client.status === "paused").length,
-        closed: clients.filter((client) => client.status === "closed").length,
+        lead: pipelineClients.filter((client) => client.status === "lead").length,
+        active: pipelineClients.filter((client) => client.status === "active").length,
+        paused: pipelineClients.filter((client) => client.status === "paused").length,
+        closed: pipelineClients.filter((client) => client.status === "closed").length,
       },
     };
-  }, [clients, tasks]);
+  }, [pipelineClients, tasks]);
 
   /*
     Every record where an inbound event disagreed with something stored.
 
-    Waitlist leads land in this table directly — there is no unreviewed
-    filter. An earlier version hid them behind a toggle until reviewed; that
-    was removed on request: the CRM is where inbound leads should appear, full
-    stop, and the `waitlist` badge plus this banner carry the "came over the
-    wire" context instead.
+    Waitlist leads land in the table directly — there is no unreviewed filter.
+    The banner is scoped to the active pipeline, which in practice means the
+    default one: ingest only ever writes there.
   */
   const needsReview = useMemo(
-    () => clients.filter((client) => reviewCount(client) > 0),
-    [clients],
+    () => pipelineClients.filter((client) => reviewCount(client) > 0),
+    [pipelineClients],
   );
+
+  async function createCrmPipeline(event: FormEvent) {
+    event.preventDefault();
+    setCreatingCrm(true);
+    try {
+      const created = await apiFetch<Crm>("/api/crms", {
+        method: "POST",
+        body: JSON.stringify({ name: newCrmName }),
+      });
+      setCrms((current) => [...current, created]);
+      setActiveCrmId(created.id);
+      setCrmModalOpen(false);
+      setNewCrmName("");
+      toast.success(`${created.name} pipeline created`);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not create pipeline");
+    } finally {
+      setCreatingCrm(false);
+    }
+  }
 
   async function resolve(
     client: Client,
@@ -200,7 +245,8 @@ export function ClientManager() {
         editing ? `/api/clients/${editing.id}` : "/api/clients",
         {
           method: editing ? "PATCH" : "POST",
-          body: JSON.stringify(draft),
+          // New records join the pipeline being looked at; edits never move one.
+          body: JSON.stringify(editing ? draft : { ...draft, crmId: activeCrmId }),
         },
       );
       setClients((current) =>
@@ -255,10 +301,34 @@ export function ClientManager() {
         description="Track clients, pipeline status, ownership context, and related work."
         actions={
           <Button onClick={openCreate}>
-            <Plus size={17} /> Add client
+            <Plus size={17} /> Add record
           </Button>
         }
       />
+
+      {/*
+        The pipelines. "Clients" is fed by the tryzol.com waitlist; the rest
+        hold whatever the team tracks the same way — investors, partners.
+      */}
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        {crms.map((crm) => (
+          <button
+            key={crm.id}
+            type="button"
+            onClick={() => setActiveCrmId(crm.id)}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+              activeCrmId === crm.id
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            {crm.name}
+          </button>
+        ))}
+        <Button variant="ghost" onClick={() => setCrmModalOpen(true)}>
+          <Plus size={15} /> New CRM
+        </Button>
+      </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="p-4">
@@ -365,11 +435,15 @@ export function ClientManager() {
         </Card>
       ) : null}
 
-      {!clients.length ? (
+      {!pipelineClients.length ? (
         <EmptyState
-          title="No clients yet"
-          description="Add a client, or wait — tryzol.com waitlist submissions land here on their own within five minutes."
-          action={<Button onClick={openCreate}>Add client</Button>}
+          title="Nothing here yet"
+          description={
+            activeCrmId === DEFAULT_CRM_ID
+              ? "Add a record, or wait — tryzol.com waitlist submissions land here on their own within five minutes."
+              : "Add the first record to this pipeline."
+          }
+          action={<Button onClick={openCreate}>Add record</Button>}
         />
       ) : (
         <Card className="overflow-hidden p-0">
@@ -388,7 +462,7 @@ export function ClientManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {clients.map((client) => {
+                {pipelineClients.map((client) => {
                   const related = tasks.filter((task) => task.clientId === client.id);
                   const openRelated = related.filter((task) => task.status !== "completed");
                   const color = getClientColor(client.color ?? "blue");
@@ -536,6 +610,29 @@ export function ClientManager() {
           </div>
           <div className="flex justify-end">
             <Button disabled={saving}>{saving ? "Saving..." : "Save client"}</Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal open={crmModalOpen} onOpenChange={setCrmModalOpen} title="New CRM">
+        <form onSubmit={createCrmPipeline} className="space-y-4">
+          <div>
+            <Label htmlFor="crm-name">Name</Label>
+            <Input
+              id="crm-name"
+              required
+              placeholder="Investors"
+              value={newCrmName}
+              onChange={(event) => setNewCrmName(event.target.value)}
+            />
+            <p className="mt-2 text-xs text-slate-500">
+              A separate pipeline with its own records and stages. Waitlist
+              submissions always land in Clients.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button disabled={creatingCrm}>
+              {creatingCrm ? "Creating..." : "Create pipeline"}
+            </Button>
           </div>
         </form>
       </Modal>

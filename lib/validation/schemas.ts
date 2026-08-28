@@ -65,11 +65,17 @@ export const clientCreateSchema = z.object({
   phone: e164Schema.optional().or(z.literal("").transform(() => undefined)),
   zip: z.string().trim().max(16).optional().transform((value) => value || undefined),
   bays: z.string().trim().max(16).optional().transform((value) => value || undefined),
+  /** Which pipeline the record belongs to. Defaults to the built-in Clients CRM. */
+  crmId: z.string().trim().min(1).max(60).default("clients"),
   /*
     Anything created through the API is somebody typing it in. Only the ingest
     route sets "waitlist", and it does not go through this schema.
   */
   source: z.enum(["manual", "waitlist"]).default("manual"),
+});
+
+export const crmCreateSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(60),
 });
 
 export const clientUpdateSchema = z.object({
@@ -133,3 +139,4 @@ export type TeamMemberInput = z.infer<typeof teamMemberCreateSchema>;
 export type ClientInput = z.infer<typeof clientCreateSchema>;
 export type CardInput = z.infer<typeof cardCreateSchema>;
 export type NoteInput = z.infer<typeof noteCreateSchema>;
+export type CrmInput = z.infer<typeof crmCreateSchema>;

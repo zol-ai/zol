@@ -2,11 +2,12 @@ import { FieldValue, type DocumentSnapshot } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { WaitlistSubmittedPayload } from "@/lib/validation/events";
 import type { ClientInput } from "@/lib/validation/schemas";
-import type {
-  Client,
-  ClientContact,
-  ClientDocument,
-  PendingReviewEntry,
+import {
+  DEFAULT_CRM_ID,
+  type Client,
+  type ClientContact,
+  type ClientDocument,
+  type PendingReviewEntry,
 } from "@/types";
 import { markerRef, type IngestMarker } from "./ingestEvents";
 import { compact, timestampToIso } from "./serialize";
@@ -28,6 +29,9 @@ function fromDocument(snapshot: DocumentSnapshot): Client {
     phone: data.phone,
     zip: data.zip,
     bays: data.bays,
+    // Read-side default only. The stored field IS backfilled — ingest matches
+    // on it server-side, where a missing field matches nothing.
+    crmId: data.crmId ?? DEFAULT_CRM_ID,
     /*
       Everything that predates the waitlist integration was created by a person
       typing it in, so absent means manual. Not backfilled — the default is the
@@ -183,8 +187,24 @@ export async function ingestWaitlistSubmission(input: {
       return { outcome: "duplicate", clientId: previous.clientId };
     }
 
-    let match = (await tx.get(clients.where("phone", "==", payload.phone).limit(1)))
-      .docs[0];
+    /*
+      Scoped to the default Clients CRM, on both lookups. Waitlist events are
+      about auto shops; an investor record in another pipeline that happens to
+      share a phone number must never be matched and merged into. Equality-only
+      filters, so no composite index is needed.
+
+      Existing records were backfilled with crmId — a document without the
+      field would not match an equality filter, and an unmatched shop would be
+      silently duplicated.
+    */
+    let match = (
+      await tx.get(
+        clients
+          .where("crmId", "==", DEFAULT_CRM_ID)
+          .where("phone", "==", payload.phone)
+          .limit(1),
+      )
+    ).docs[0];
 
     /*
       No match on the current number: try the ones this person used to have.
@@ -203,7 +223,14 @@ export async function ingestWaitlistSubmission(input: {
       const history = [...payload.phone_history].reverse();
       for (let i = 0; i < history.length && !match; i += 10) {
         const chunk = history.slice(i, i + 10);
-        match = (await tx.get(clients.where("phone", "in", chunk).limit(1))).docs[0];
+        match = (
+          await tx.get(
+            clients
+              .where("crmId", "==", DEFAULT_CRM_ID)
+              .where("phone", "in", chunk)
+              .limit(1),
+          )
+        ).docs[0];
       }
       if (match) displaced = (match.data() as ClientDocument).phone;
     }
@@ -224,6 +251,7 @@ export async function ingestWaitlistSubmission(input: {
           consentAt: payload.consent_at,
           status: "lead" as const,
           source: "waitlist" as const,
+          crmId: DEFAULT_CRM_ID,
           color: "blue" as const,
           /*
             The first contact is seeded here rather than only on a later merge.
