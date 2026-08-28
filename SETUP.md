@@ -60,10 +60,13 @@ You also need, from the Company OS side:
 
 ---
 
-## 1. Apply the migration
+## 1. Apply the migrations
 
 `0005_waitlist_delivery.sql` adds `event_id`, `revision`, `delivered_at` and
 `phone_history` to `waitlist_entries`, and marks every existing row delivered.
+`0006_waitlist_entries_keyset.sql` adds the `(updated_at, event_id)` index the
+read endpoint pages on — without it that endpoint still works and gets slower
+with every page.
 
 Migrations run from a laptop, never from CI — a Vercel build has no reliable
 route to Cloud SQL, and migrating from CI races every preview deploy against
@@ -131,8 +134,13 @@ gcloud run services add-iam-policy-binding zol-web --region us-west1 --member="s
 
 ## 4. Configure and deploy
 
+`--update-env-vars`, never `--set-env-vars`: the latter replaces the service's
+**entire** variable set, which would strip the database credentials
+(`INSTANCE_CONNECTION_NAME`, `PGUSER`, `PGPASSWORD`…) and anything else already
+configured — the sweeper would then 503 on every run.
+
 ```bash
-gcloud run services update zol-web --region us-west1 --set-env-vars "COMPANY_OS_URL=https://company-os-XXXXXX.REGION.run.app,COMPANY_OS_SCHEDULER_SERVICE_ACCOUNT=zol-scheduler@PROJECT_ID.iam.gserviceaccount.com,COMPANY_OS_SWEEP_AUDIENCE=https://zol-web-XXXXXX.REGION.run.app/api/waitlist/sweep"
+gcloud run services update zol-web --region us-west1 --update-env-vars "COMPANY_OS_URL=https://company-os-XXXXXX.REGION.run.app,COMPANY_OS_SCHEDULER_SERVICE_ACCOUNT=zol-scheduler@PROJECT_ID.iam.gserviceaccount.com,COMPANY_OS_SWEEP_AUDIENCE=https://zol-web-XXXXXX.REGION.run.app/api/waitlist/sweep"
 ```
 
 `COMPANY_OS_URL` must be the bare origin with no trailing slash and no path.
@@ -221,3 +229,76 @@ hand the sweeper the entire back catalogue at fifty rows per five minutes with
 no way to watch what it creates, and every one of those rows would arrive at
 `occurred_at` values months in the past against clients that may already exist.
 Write the script, log what it does, and run it where you can see it.
+
+---
+
+## The read endpoint
+
+`GET /api/waitlist/entries` is a read-only window onto `waitlist_entries` for
+Company OS to reconcile against. It writes nothing, touches no `delivered_at`,
+and returns the same envelopes the sweeper sends — produced by the same
+function, so the two paths cannot drift.
+
+Its caller is **Company OS**, not Cloud Scheduler. That is a third identity in
+this integration and it gets its own allowlist:
+
+| Door | Caller | Allowlist |
+| --- | --- | --- |
+| `/api/waitlist/sweep` | Cloud Scheduler | `COMPANY_OS_SCHEDULER_SERVICE_ACCOUNT` |
+| `/api/waitlist/entries` | Company OS runtime | `WAITLIST_READ_ALLOWED_SERVICE_ACCOUNTS` |
+
+Collapsing them into one variable would let either service do the other's job.
+
+Find Company OS's runtime account:
+
+```bash
+gcloud run services describe company-os --project COMPANY_OS_PROJECT_ID --region us-central1 --format="value(spec.template.spec.serviceAccountName)"
+```
+
+Then add it, along with the audience it will mint tokens for. Use
+`--update-env-vars`, not `--set-env-vars` — the latter replaces the whole set
+and would drop `COMPANY_OS_URL` and everything else the service already needs:
+
+```bash
+gcloud run services update zol-web --region us-west1 --update-env-vars "WAITLIST_READ_ALLOWED_SERVICE_ACCOUNTS=company-os-runtime@COMPANY_OS_PROJECT_ID.iam.gserviceaccount.com,WAITLIST_READ_AUDIENCE=https://zol-web-XXXXXX.REGION.run.app,WAITLIST_READ_MIN_UPDATED_AT=2026-08-27T00:00:00Z"
+```
+
+`WAITLIST_READ_MIN_UPDATED_AT` is the floor of the reconciliation window — set
+it to the moment migration 0005 was applied, and the endpoint never returns a
+row from before it. This is what keeps the pre-integration back catalogue,
+which that migration deliberately marked out of scope, from being replayed into
+Company OS by a full reconciliation run. The endpoint refuses to serve while it
+is unset.
+
+`WAITLIST_READ_AUDIENCE` here and `WAITLIST_SOURCE_URL` on the Company OS side
+must be the same string. Company OS mints its token for that value and this
+endpoint compares the `aud` claim to it exactly.
+
+### Check it
+
+The endpoint needs a Google-signed token minted for that audience. From a
+machine allowed to impersonate the Company OS runtime account:
+
+```bash
+TOKEN=$(gcloud auth print-identity-token --impersonate-service-account=company-os-runtime@COMPANY_OS_PROJECT_ID.iam.gserviceaccount.com --audiences=https://zol-web-XXXXXX.REGION.run.app)
+```
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" "https://zol-web-XXXXXX.REGION.run.app/api/waitlist/entries?limit=2" | head -40
+```
+
+Unauthenticated should be a bare `401`:
+
+```bash
+curl -i -s "https://zol-web-XXXXXX.REGION.run.app/api/waitlist/entries" | head -5
+```
+
+### Paging
+
+`limit` (1–500, default 100), `since` (ISO timestamp) and `cursor`. The
+response carries `next_cursor`; walk until it comes back `null`.
+
+The cursor is keyset on `(updated_at, event_id)` ascending, which makes the
+walk at-least-once rather than at-most-once: a row updated mid-walk moves
+*behind* the cursor and is visited twice, never skipped. Duplicates are free —
+the receiver discards them on the dedupe marker. Treat the cursor as opaque.

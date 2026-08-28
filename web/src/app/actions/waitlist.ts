@@ -318,7 +318,14 @@ export async function joinWaitlist(
  * one function body and not to this file.
  */
 async function notify(entry: WaitlistEntry): Promise<void> {
-  const repeat = entry.created_at !== entry.updated_at;
+  /*
+    By instant, not by reference. `pg` returns timestamptz as Date objects
+    whatever the interface says, and two Dates are never `!==`-equal even when
+    they hold the same moment — the naive comparison marked every submission
+    ever taken as a repeat.
+  */
+  const repeat =
+    new Date(entry.created_at).getTime() !== new Date(entry.updated_at).getTime();
 
   await sendEmail({
     to: OPERATOR_EMAIL,

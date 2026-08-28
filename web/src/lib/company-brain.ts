@@ -3,7 +3,7 @@ import "server-only";
 import { GoogleAuth } from "google-auth-library";
 
 import { env } from "@/lib/env";
-import { waitlistEventPayload, type WaitlistEntry } from "@/lib/waitlist";
+import { waitlistEvent, type WaitlistEntry } from "@/lib/waitlist";
 
 /**
  * Delivery of one waitlist entry to Company OS.
@@ -38,16 +38,6 @@ export type DeliveryResult =
   | { status: "rejected"; code: number; detail: string }
   | { status: "failed"; detail: string };
 
-/** One `POST /api/events` envelope. */
-interface EventEnvelope {
-  event_id: string;
-  revision: number;
-  type: string;
-  occurred_at: string;
-  source: string;
-  payload: ReturnType<typeof waitlistEventPayload>;
-}
-
 /**
  * Memoised across invocations on a warm instance.
  *
@@ -73,26 +63,12 @@ export async function pushWaitlistEntryToCompanyBrain(
 ): Promise<DeliveryResult> {
   const base = env.companyOs.url.replace(/\/+$/, "");
 
-  const envelope: EventEnvelope = {
-    /*
-      Both halves, separately. The receiver keys its deduplication marker on
-      `${event_id}:${revision}` — but it also needs the bare event_id, to
-      record which submission a contact came from. Sending only the joined
-      string would lose that.
-    */
-    event_id: entry.event_id,
-    revision: entry.revision,
-    type: "waitlist.submitted",
-    /*
-      When the shop owner submitted, not when we got round to sending it. A
-      retry three days later must not claim the lead arrived three days late,
-      and `updated_at` is the moment of the submission that produced this
-      revision.
-    */
-    occurred_at: new Date(entry.updated_at).toISOString(),
-    source: "tryzol.com",
-    payload: waitlistEventPayload(entry),
-  };
+  /*
+    Built by the shared builder, not here. `GET /api/waitlist/entries` returns
+    the output of the same function, so the reconciliation path and this one
+    cannot drift into sending two different envelopes for the same row.
+  */
+  const envelope = waitlistEvent(entry);
 
   let response: { status: number; body: string };
 

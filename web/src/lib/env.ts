@@ -26,6 +26,22 @@ function flag(name: string): boolean {
   return optional(name)?.toLowerCase() === "true";
 }
 
+/**
+ * A positive integer, or the fallback.
+ *
+ * Not `Number(...)`: that turns a typo'd value into NaN, and NaN slips through
+ * every `>` guard downstream — a page-size ceiling compared against NaN stops
+ * being a ceiling at all. A throw would be worse still, since these evaluate
+ * at module load and would take down every route that imports this file. The
+ * typo costs the operator their override, never the bound.
+ */
+function positiveInt(name: string, fallback: number): number {
+  const raw = optional(name);
+  if (raw === undefined) return fallback;
+  const value = Number(raw);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
 export const env = {
   /**
    * Telephony stays off until Twilio's carrier registration (A2P 10DLC brand
@@ -98,9 +114,9 @@ export const env = {
      * would bury the failure under identical log lines. Rows past it stay in
      * the table with delivered_at still null, which is the signal.
      */
-    sweepWindowDays: Number(optional("COMPANY_OS_SWEEP_WINDOW_DAYS") ?? 7),
+    sweepWindowDays: positiveInt("COMPANY_OS_SWEEP_WINDOW_DAYS", 7),
     /** Rows per sweep. Bounds one Cloud Run request, not the backlog. */
-    sweepBatchSize: Number(optional("COMPANY_OS_SWEEP_BATCH_SIZE") ?? 50),
+    sweepBatchSize: positiveInt("COMPANY_OS_SWEEP_BATCH_SIZE", 50),
     /**
      * The service account Cloud Scheduler presents when it calls the sweeper.
      *
@@ -112,11 +128,64 @@ export const env = {
     schedulerServiceAccount: optional("COMPANY_OS_SCHEDULER_SERVICE_ACCOUNT"),
     /**
      * The audience Cloud Scheduler was told to mint its token for — this
-     * service's own sweeper URL. Falls back to ZOL_PUBLIC_URL, since that is
-     * already the canonical origin.
+     * service's own sweeper URL, path included.
+     *
+     * No fallback, on purpose. An earlier draft fell back to ZOL_PUBLIC_URL,
+     * which is structurally an origin and can never equal an audience that
+     * carries the /api/waitlist/sweep path — so the fallback could only ever
+     * produce a mismatch that 401s with a log line blaming the token instead
+     * of the missing variable. Unset now names itself.
      */
     get sweepAudience() {
-      return optional("COMPANY_OS_SWEEP_AUDIENCE") ?? optional("ZOL_PUBLIC_URL");
+      return optional("COMPANY_OS_SWEEP_AUDIENCE");
     },
+  },
+
+  /**
+   * `GET /api/waitlist/entries` — the reconciliation window onto the queue.
+   *
+   * A different caller from the sweeper's, and so a different allowlist.
+   * Cloud Scheduler calls *into* the sweeper; Company OS calls into this. They
+   * are separate identities and collapsing them into one variable would let
+   * either service do the other's job.
+   */
+  waitlistRead: {
+    /**
+     * Service accounts allowed to read the queue. Company OS's runtime
+     * identity, normally. Unset means nobody: an endpoint that hands out every
+     * waitlist entry must not be one bad deploy away from being public.
+     */
+    allowedServiceAccounts: optional("WAITLIST_READ_ALLOWED_SERVICE_ACCOUNTS"),
+    /**
+     * The audience the caller mints for. This service's own origin — so the
+     * ZOL_PUBLIC_URL fallback is correct here, unlike the sweeper's, whose
+     * audience carries a path.
+     */
+    get audience() {
+      return optional("WAITLIST_READ_AUDIENCE") ?? optional("ZOL_PUBLIC_URL");
+    },
+    /** Rows per page, and the ceiling a caller may ask for. */
+    defaultPageSize: positiveInt("WAITLIST_READ_PAGE_SIZE", 100),
+    maxPageSize: positiveInt("WAITLIST_READ_MAX_PAGE_SIZE", 500),
+    /**
+     * The floor of the reconciliation window — rows whose `updated_at`
+     * predates this are never returned, whatever the caller asks for.
+     *
+     * This is what keeps migration 0005's one deliberate exclusion
+     * enforceable. That migration stamped every pre-integration row
+     * `delivered_at = now()` to mark it out of scope, but the read endpoint
+     * cannot see the difference between "out of scope" and "delivered" — and
+     * reconciliation deliberately ignores `delivered_at`, because rows the
+     * sweeper's window aged out are exactly what it exists to catch. Without a
+     * floor, one empty-body reconcile run would replay the entire back
+     * catalogue into Company OS.
+     *
+     * Set it to the moment migration 0005 ran. A pre-integration row that
+     * resubmits rises above the floor on its own, because the upsert moves
+     * `updated_at` — which is correct: the resubmission puts it in scope.
+     *
+     * Required. The endpoint refuses to serve without it.
+     */
+    minUpdatedAt: optional("WAITLIST_READ_MIN_UPDATED_AT"),
   },
 } as const;

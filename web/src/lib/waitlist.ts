@@ -142,3 +142,52 @@ export function waitlistEventPayload(entry: WaitlistEntry): WaitlistEventPayload
     WAITLIST_PAYLOAD_COLUMNS.map((column) => [column, entry[column]]),
   ) as WaitlistEventPayload;
 }
+
+export const WAITLIST_EVENT_TYPE = "waitlist.submitted";
+export const WAITLIST_EVENT_SOURCE = "tryzol.com";
+
+/** One `POST /api/events` envelope, payload included. */
+export interface WaitlistEvent {
+  event_id: string;
+  revision: number;
+  type: typeof WAITLIST_EVENT_TYPE;
+  occurred_at: string;
+  source: typeof WAITLIST_EVENT_SOURCE;
+  payload: WaitlistEventPayload;
+}
+
+/**
+ * One row → one envelope. **The only place an envelope is constructed.**
+ *
+ * Two callers: the sweeper, which POSTs it to Company OS, and
+ * `GET /api/waitlist/entries`, which hands the same object to a reconciliation
+ * job that POSTs it to the same endpoint. They have to agree exactly — a
+ * reconciliation that produced a subtly different envelope from the push would
+ * write different data through the same ingest transaction, and the two would
+ * only be caught disagreeing by somebody noticing a record was wrong.
+ *
+ * Sharing the *shape* by convention is what fails here: both sides look right
+ * in isolation, and the drift arrives whenever somebody adds a field to one
+ * path. So they share the function instead, and there is no second definition
+ * to forget about.
+ */
+export function waitlistEvent(entry: WaitlistEntry): WaitlistEvent {
+  return {
+    event_id: entry.event_id,
+    revision: entry.revision,
+    type: WAITLIST_EVENT_TYPE,
+    /*
+      When the shop owner submitted, not when we got round to sending it.
+      `updated_at` is the moment of the submission that produced this revision,
+      so a delivery three days late — or a reconciliation three months late —
+      still reports when it actually happened.
+
+      Built from a Date rather than trusted as a string: `pg` hands back a Date
+      for timestamptz whatever the declared type here says, and both callers
+      have to serialise it identically.
+    */
+    occurred_at: new Date(entry.updated_at).toISOString(),
+    source: WAITLIST_EVENT_SOURCE,
+    payload: waitlistEventPayload(entry),
+  };
+}
