@@ -89,13 +89,14 @@ here at all.
 ## 4. Configure and deploy
 
 ```bash
-gcloud run services update company-os --region us-central1 --set-env-vars "EVENTS_AUDIENCE=https://company-os-XXXXXX.us-central1.run.app,EVENTS_ALLOWED_SERVICE_ACCOUNTS=zol-web-runtime@ZOL_PROJECT_ID.iam.gserviceaccount.com"
+gcloud run services update company-os --region us-central1 --update-env-vars "EVENTS_AUDIENCE=https://company-os-XXXXXX.us-central1.run.app,EVENTS_ALLOWED_SERVICE_ACCOUNTS=zol-web-runtime@ZOL_PROJECT_ID.iam.gserviceaccount.com"
 ```
 
-`--set-env-vars` replaces the whole set. If the service already carries
-`FIREBASE_PROJECT_ID`, `ALLOWED_EMAILS` and `OPENAI_MODEL`, either include them
-in the same flag or use `--update-env-vars` instead — replacing the set and
-losing `ALLOWED_EMAILS` locks every human out of the workspace.
+`--update-env-vars`, never `--set-env-vars`. The latter replaces the service's
+**entire** variable set — everything not named in the flag is deleted, and the
+set of things this service needs grows over time, so any enumerated list here
+would eventually be stale. Losing `ALLOWED_EMAILS` alone locks every human out
+of the workspace.
 
 Then build and deploy as usual:
 
@@ -179,3 +180,107 @@ not the same thing as unreviewed noise.
 same document. There is no `leads` collection, nothing moves between
 collections, and `source` stays `waitlist` forever — it records how the record
 arrived, which does not change because somebody later approved it.
+
+---
+
+## Reconciliation
+
+`POST /api/reconcile` pages through tryzol.com's `GET /api/waitlist/entries`
+and replays each envelope through **this service's own** `POST /api/events`.
+Nothing is duplicated: Postgres stays the source of truth for waitlist rows,
+Firestore for client records, and the ingest transaction stays the only writer.
+
+```
+POST /api/reconcile
+      │  (OIDC, aud = WAITLIST_SOURCE_URL)
+      ▼
+zol GET /api/waitlist/entries   ──▶ pages of envelopes
+      │
+      │  (OIDC, aud = EVENTS_AUDIENCE)  ← back into ourselves
+      ▼
+POST /api/events ──▶ ingest transaction ──▶ Firestore
+```
+
+### The self-call, and the two things it needs
+
+> **This service's own runtime account must be in
+> `EVENTS_ALLOWED_SERVICE_ACCOUNTS`.** Reconciliation authenticates to
+> `/api/events` exactly like tryzol.com does, so it has to be on that list.
+> Without it every replayed row comes back `401` and the run reports every row
+> as failed.
+
+> **Do not set this service to `--concurrency=1`.** A run holds one request
+> open while making requests back to the same service. At concurrency 1 the run
+> occupies the only slot and waits on a request that can never be scheduled —
+> the job hangs until the platform timeout. The default (80) leaves ample room,
+> and the job issues one self-request at a time.
+
+### Configure
+
+`--update-env-vars`, not `--set-env-vars`: the latter replaces the whole set
+and would drop `ALLOWED_EMAILS`, locking every human out of the workspace.
+
+```bash
+gcloud run services update company-os --region us-central1 --update-env-vars "WAITLIST_SOURCE_URL=https://zol-web-XXXXXX.REGION.run.app,RECONCILE_ALLOWED_SERVICE_ACCOUNTS=company-os-scheduler@PROJECT_ID.iam.gserviceaccount.com"
+```
+
+```bash
+gcloud run services update company-os --region us-central1 --update-env-vars "EVENTS_ALLOWED_SERVICE_ACCOUNTS=zol-web-runtime@ZOL_PROJECT_ID.iam.gserviceaccount.com,company-os-runtime@PROJECT_ID.iam.gserviceaccount.com"
+```
+
+`WAITLIST_SOURCE_URL` must equal `WAITLIST_READ_AUDIENCE` on the zol side
+exactly — bare origin, no trailing slash. It is both the destination and the
+`aud` claim.
+
+### Trigger it by hand
+
+A signed-in session works from the browser. From a terminal, use the scheduler
+identity:
+
+```bash
+TOKEN=$(gcloud auth print-identity-token --impersonate-service-account=company-os-scheduler@PROJECT_ID.iam.gserviceaccount.com --audiences=https://company-os-XXXXXX.us-central1.run.app)
+```
+
+```bash
+curl -s -X POST https://company-os-XXXXXX.us-central1.run.app/api/reconcile -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}'
+```
+
+Options, all optional: `since` (ISO timestamp), `cursor`, `pageSize` (≤500),
+`maxPages` (≤200). An empty body reconciles everything.
+
+The report distinguishes `created`, `merged`, `duplicates` and `failed`.
+**`duplicates` dominating is the healthy result** — it means the push path
+already delivered those rows and the two sides agree. A non-zero `created` on a
+routine run means the push path missed something worth investigating.
+
+If `truncated` is true the run hit its page ceiling. Resume it with the
+`nextCursor` it returned:
+
+```bash
+curl -s -X POST https://company-os-XXXXXX.us-central1.run.app/api/reconcile -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"cursor":"<nextCursor from the previous run>"}'
+```
+
+### On a schedule
+
+Optional, and slow on purpose. The push path is what delivers; this is the
+safety net. Nightly is plenty — a tight loop just replays the whole queue
+against Firestore for nothing.
+
+```bash
+gcloud iam service-accounts create company-os-scheduler --display-name="Company OS reconciliation"
+```
+
+```bash
+gcloud scheduler jobs create http waitlist-reconcile --location us-central1 --schedule "17 4 * * *" --uri "https://company-os-XXXXXX.us-central1.run.app/api/reconcile" --http-method POST --headers "Content-Type=application/json" --message-body '{"since":"2026-01-01T00:00:00Z"}' --oidc-service-account-email "company-os-scheduler@PROJECT_ID.iam.gserviceaccount.com" --oidc-token-audience "https://company-os-XXXXXX.us-central1.run.app" --attempt-deadline 1800s
+```
+
+### When it doesn't
+
+| Symptom | Cause |
+| --- | --- |
+| every row `failed` with `HTTP 401` | This service's own runtime account is missing from `EVENTS_ALLOWED_SERVICE_ACCOUNTS` |
+| the run itself `401`s | The caller is not in `RECONCILE_ALLOWED_SERVICE_ACCOUNTS`, and there is no session |
+| `WAITLIST_SOURCE_URL is not set` | Config dropped, most likely by a `--set-env-vars` that replaced the set |
+| the read call `401`s | `WAITLIST_SOURCE_URL` ≠ zol's `WAITLIST_READ_AUDIENCE`, this service's runtime account is missing from zol's `WAITLIST_READ_ALLOWED_SERVICE_ACCOUNTS`, or zol's `WAITLIST_READ_MIN_UPDATED_AT` is unset — that endpoint refuses to serve without its floor |
+| `malformed envelope` in `errors` | The payload schemas in the two repos have drifted. The named field is the drift |
+| the run hangs and times out | Concurrency is set to 1 — see above |

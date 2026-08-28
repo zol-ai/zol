@@ -86,7 +86,9 @@ Copy `.env.example` to `.env.local` and configure:
 - `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: optional fallback credentials; leave blank when using local ADC or the Cloud Run service identity
 - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`: Firebase web app identifiers
 - `EVENTS_AUDIENCE`: this service's own public URL, compared exactly against the `aud` claim on inbound event tokens
-- `EVENTS_ALLOWED_SERVICE_ACCOUNTS`: comma-separated service accounts permitted to `POST /api/events`. Separate from `ALLOWED_EMAILS`; unset means nobody
+- `EVENTS_ALLOWED_SERVICE_ACCOUNTS`: comma-separated service accounts permitted to `POST /api/events`. Separate from `ALLOWED_EMAILS`; unset means nobody. Must include this service's own runtime account, because reconciliation replays through the same route
+- `WAITLIST_SOURCE_URL`: tryzol.com's Cloud Run origin, read by the reconciliation job
+- `RECONCILE_ALLOWED_SERVICE_ACCOUNTS`: comma-separated service accounts permitted to trigger `POST /api/reconcile`. A signed-in session also works
 
 If a private key is used, keep it quoted with escaped `\n` line breaks. Public Firebase web identifiers are expected in the browser; authorization does not rely on hiding them.
 
@@ -158,9 +160,11 @@ gcloud run deploy company-os \
   --region us-central1 \
   --allow-unauthenticated \
   --service-account company-os-runtime@PROJECT_ID.iam.gserviceaccount.com \
-  --set-env-vars FIREBASE_PROJECT_ID=PROJECT_ID,ALLOWED_EMAILS=founder1@example.com\\,founder2@example.com,OPENAI_MODEL=gpt-5.5 \
+  --update-env-vars FIREBASE_PROJECT_ID=PROJECT_ID,ALLOWED_EMAILS=founder1@example.com\\,founder2@example.com,OPENAI_MODEL=gpt-5.5 \
   --set-secrets OPENAI_API_KEY=openai-api-key:latest
 ```
+
+`--update-env-vars`, not `--set-env-vars`: the two behave identically on a first deploy, but on a redeploy `--set-env-vars` replaces the service's entire variable set — which would silently strip `EVENTS_AUDIENCE`, `EVENTS_ALLOWED_SERVICE_ACCOUNTS`, `WAITLIST_SOURCE_URL` and anything else configured since, shutting down event ingest until somebody notices the queue backing up.
 
 Cloud Run must be publicly reachable so Google Sign-In can load, but every workspace page and API route still requires an approved authenticated session, with the single deliberate exception of `POST /api/events` — see below. Add the resulting hostname to Firebase Authorized domains.
 
@@ -173,6 +177,14 @@ Events are idempotent. Each delivery is keyed `${event_id}:${revision}` in the `
 Inbound events never overwrite a human edit. They fill fields that are empty, append additional people to `contacts`, always update `lastInboundAt`, and record any disagreement in `pendingReview` for somebody to settle in the CRM view. Waitlist leads are `clients` with `status: 'lead'` and `source: 'waitlist'`; there is no separate leads collection, and promotion is a status change rather than a copy.
 
 Setup, including the Cloud Scheduler job on the sending side, is in [SETUP.md](SETUP.md).
+
+### Reconciliation
+
+`POST /api/reconcile` pages through tryzol.com's `GET /api/waitlist/entries` and replays each entry through this service's own `POST /api/events`. Nothing is duplicated: Postgres remains the source of truth for waitlist rows, Firestore for client records, and the read endpoint is a window rather than a copy.
+
+Routing back through HTTP rather than calling the repository directly is deliberate. The ingest transaction stays the single writer, with one set of merge rules and one definition of "already applied" — a reconciliation that wrote its own documents would be a second write path into `clients`, which is exactly what the single-writer design prevents. Because `ingest_events` is keyed `${event_id}:${revision}`, rows already applied are no-ops.
+
+Accepts a signed-in session or an allowlisted service account, so it can be triggered by hand or on a slow schedule. It is a safety net, not the delivery mechanism — the push path is what delivers in the ordinary case, and this should not run on a tight loop.
 
 ## Security notes
 
