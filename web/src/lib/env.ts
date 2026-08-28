@@ -76,4 +76,47 @@ export const env = {
    * silently fails every signature check.
    */
   publicUrl: optional("ZOL_PUBLIC_URL"),
+
+  /** Waitlist events out to Company OS, and the sweeper that sends them. */
+  companyOs: {
+    /**
+     * Company OS's Cloud Run origin. Two jobs at once: where the event goes,
+     * and the `audience` claim baked into the ID token that authenticates it.
+     * The receiver compares that claim against its own URL exactly, so a
+     * trailing slash or the wrong host is a 401 rather than a routing error.
+     */
+    get url() {
+      return required("COMPANY_OS_URL");
+    },
+    /** Present without throwing, for the health probe. */
+    get configured() {
+      return Boolean(optional("COMPANY_OS_URL"));
+    },
+    /**
+     * How far back the sweeper looks. A ceiling, not a retention policy: a row
+     * that has failed for this long needs a person, and retrying it forever
+     * would bury the failure under identical log lines. Rows past it stay in
+     * the table with delivered_at still null, which is the signal.
+     */
+    sweepWindowDays: Number(optional("COMPANY_OS_SWEEP_WINDOW_DAYS") ?? 7),
+    /** Rows per sweep. Bounds one Cloud Run request, not the backlog. */
+    sweepBatchSize: Number(optional("COMPANY_OS_SWEEP_BATCH_SIZE") ?? 50),
+    /**
+     * The service account Cloud Scheduler presents when it calls the sweeper.
+     *
+     * The sweeper is a public URL on a public Cloud Run service; without this
+     * anybody could drive it. Unset means the endpoint refuses every request
+     * rather than running unauthenticated — the failure of a misconfigured
+     * deploy should be "nothing is delivered", never "anyone can trigger it".
+     */
+    schedulerServiceAccount: optional("COMPANY_OS_SCHEDULER_SERVICE_ACCOUNT"),
+    /**
+     * The audience Cloud Scheduler was told to mint its token for — this
+     * service's own sweeper URL. Falls back to ZOL_PUBLIC_URL, since that is
+     * already the canonical origin.
+     */
+    get sweepAudience() {
+      return optional("COMPANY_OS_SWEEP_AUDIENCE") ?? optional("ZOL_PUBLIC_URL");
+    },
+  },
 } as const;

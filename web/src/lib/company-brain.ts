@@ -1,35 +1,149 @@
 import "server-only";
 
-import type { WaitlistEntry } from "@/lib/waitlist";
+import { GoogleAuth } from "google-auth-library";
+
+import { env } from "@/lib/env";
+import { waitlistEventPayload, type WaitlistEntry } from "@/lib/waitlist";
 
 /**
- * ⚠️  NOT IMPLEMENTED, AND DELIBERATELY SO.
+ * Delivery of one waitlist entry to Company OS.
  *
- * Company Brain (the "Company OS" app that lives beside this repo) keeps its
- * records in Firestore behind Next route handlers, and every one of those
- * routes goes through `authorized()` → `requireSessionUser()`, which verifies
- * a Firebase Admin **session cookie** minted from an interactive Google
- * Sign-In and checked against an ALLOWED_EMAILS list.
+ * Called by the sweeper (`/api/waitlist/sweep`), never by the submission path.
+ * That distinction is the whole design: this function is allowed to fail,
+ * because a failure leaves `delivered_at` null and the next sweep tries again.
+ * It used to be called inline from the Server Action wrapped in a `.catch()`,
+ * where a failure meant the lead was simply gone.
  *
- * That is a human-in-a-browser door. There is no API key, no service account
- * path, no signed webhook, no machine-to-machine route of any kind — so there
- * is nothing here for a server action to call. Building one would mean adding
- * an authentication mode to that app, which is its own decision and not this
- * feature's to make.
- *
- * This function is the single place that integration goes when it exists.
- * It is called for every waitlist entry, it does nothing, and it must keep
- * doing nothing quietly rather than failing a submission.
- *
- * When Company Brain grows a service credential, the shape wanted is almost
- * certainly a `client` record (shop name, contact, phone) — its
- * `POST /api/clients` route already takes one, it just won't take one from us.
+ * Authentication is a Google-signed OIDC ID token minted from the Cloud Run
+ * metadata server, with `audience` set to Company OS's own URL. It is the only
+ * credential path here — no Workload Identity Federation, no Vercel branch.
+ * `lib/db.ts` does have a federated path for reaching Cloud SQL from Vercel,
+ * but that is the database and is unrelated; the sweeper runs on Cloud Run and
+ * nowhere else, and off Cloud Run this fails loudly rather than degrading into
+ * an unauthenticated POST.
  */
+
+/**
+ * `delivered` is the only outcome that stamps the row.
+ *
+ * `rejected` is separated from `failed` on purpose. A 4xx that isn't 401/429
+ * is the receiver saying this payload is wrong — a malformed phone number, a
+ * field it does not accept — and retrying it every five minutes until the
+ * seven-day window closes just prints the same error 2,000 times. It stays
+ * undelivered either way; the distinction is what the log says, and whether
+ * the sweeper bothers with the rest of the batch.
+ */
+export type DeliveryResult =
+  | { status: "delivered" }
+  | { status: "rejected"; code: number; detail: string }
+  | { status: "failed"; detail: string };
+
+/** One `POST /api/events` envelope. */
+interface EventEnvelope {
+  event_id: string;
+  revision: number;
+  type: string;
+  occurred_at: string;
+  source: string;
+  payload: ReturnType<typeof waitlistEventPayload>;
+}
+
+/**
+ * Memoised across invocations on a warm instance.
+ *
+ * `getIdTokenClient` does a metadata-server round trip to work out the service
+ * account's identity; the client it returns caches the token itself and
+ * refreshes it before expiry. Building a new one per row would mean a fetch
+ * per lead for no benefit.
+ */
+let client: Promise<Awaited<ReturnType<GoogleAuth["getIdTokenClient"]>>> | undefined;
+
+function idTokenClient(audience: string) {
+  client ??= new GoogleAuth().getIdTokenClient(audience).catch((error: unknown) => {
+    // Don't cache a failed handshake — a transient metadata-server blip would
+    // otherwise poison every delivery until the instance recycled.
+    client = undefined;
+    throw error;
+  });
+  return client;
+}
+
 export async function pushWaitlistEntryToCompanyBrain(
   entry: WaitlistEntry,
-): Promise<void> {
-  // Intentionally does nothing. See the note above before filling this in —
-  // the discard keeps the parameter in the signature, which is the half of
-  // this function that is actually load-bearing today.
-  void entry;
+): Promise<DeliveryResult> {
+  const base = env.companyOs.url.replace(/\/+$/, "");
+
+  const envelope: EventEnvelope = {
+    /*
+      Both halves, separately. The receiver keys its deduplication marker on
+      `${event_id}:${revision}` — but it also needs the bare event_id, to
+      record which submission a contact came from. Sending only the joined
+      string would lose that.
+    */
+    event_id: entry.event_id,
+    revision: entry.revision,
+    type: "waitlist.submitted",
+    /*
+      When the shop owner submitted, not when we got round to sending it. A
+      retry three days later must not claim the lead arrived three days late,
+      and `updated_at` is the moment of the submission that produced this
+      revision.
+    */
+    occurred_at: new Date(entry.updated_at).toISOString(),
+    source: "tryzol.com",
+    payload: waitlistEventPayload(entry),
+  };
+
+  let response: { status: number; body: string };
+
+  try {
+    const auth = await idTokenClient(base);
+    const result = await auth.request<unknown>({
+      url: `${base}/api/events`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: envelope,
+      // We interpret every status ourselves; the library throwing on 4xx would
+      // collapse "your payload is wrong" and "the network broke" into one
+      // catch block that can only guess which happened.
+      validateStatus: () => true,
+      timeout: 10_000,
+      responseType: "text",
+    });
+    response = {
+      status: result.status,
+      body: typeof result.data === "string" ? result.data : JSON.stringify(result.data),
+    };
+  } catch (error) {
+    // No response at all: DNS, TLS, timeout, or no metadata server to mint a
+    // token from. Always worth retrying.
+    return {
+      status: "failed",
+      detail: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  /*
+    A duplicate is a success. The receiver answers 200 to an event it has
+    already applied — that is what makes a sweeper safe to run every five
+    minutes — so there is nothing here to distinguish and nothing to do.
+  */
+  if (response.status >= 200 && response.status < 300) {
+    return { status: "delivered" };
+  }
+
+  const detail = response.body.slice(0, 500);
+
+  /*
+    401 is us, not the payload: a clock skew, a rotated service account, an
+    audience that stopped matching after a redeploy. Retrying is right, because
+    the fix happens on our side and the row should go the moment it lands.
+
+    429 is a request to come back later, which is what the next sweep is.
+  */
+  if (response.status === 401 || response.status === 429 || response.status >= 500) {
+    return { status: "failed", detail: `HTTP ${response.status}: ${detail}` };
+  }
+
+  return { status: "rejected", code: response.status, detail };
 }

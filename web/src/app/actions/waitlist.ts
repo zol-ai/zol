@@ -3,13 +3,13 @@
 import { headers } from "next/headers";
 
 import { query } from "@/lib/db";
-import { pushWaitlistEntryToCompanyBrain } from "@/lib/company-brain";
 import { OPERATOR_EMAIL, sendEmail } from "@/lib/notify";
 import { formatPhone, toE164 } from "@/lib/phone";
 import { site } from "@/lib/site";
 import {
   HONEYPOT,
   UTM_KEYS,
+  WAITLIST_REVISION_COLUMNS,
   ZIP,
   isBayBand,
   type WaitlistEntry,
@@ -40,6 +40,27 @@ const MAX_SUBMISSIONS = 5;
 const WINDOW_MINUTES = 60;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/**
+ * "Did anything the receiver cares about actually change?", as SQL.
+ *
+ * Built from the column list rather than typed out, so a field added to the
+ * event payload is compared here automatically instead of being silently
+ * omitted — the failure mode of a hand-maintained second list is that a new
+ * field stops triggering redelivery and nobody notices for months.
+ *
+ * Row-wise IS DISTINCT FROM rather than a chain of ORs: it is null-safe on
+ * both sides, and a nullable column that goes from a value to null is a change
+ * like any other.
+ *
+ * The identifiers are compile-time constants from `lib/waitlist.ts`, never
+ * anything a caller supplied.
+ */
+const CHANGED = (() => {
+  const stored = WAITLIST_REVISION_COLUMNS.map((c) => `waitlist_entries.${c}`);
+  const incoming = WAITLIST_REVISION_COLUMNS.map((c) => `EXCLUDED.${c}`);
+  return `(${stored.join(", ")}) IS DISTINCT FROM (${incoming.join(", ")})`;
+})();
 
 function text(form: FormData, name: string): string {
   const value = form.get(name);
@@ -184,6 +205,42 @@ export async function joinWaitlist(
        ON CONFLICT (lower(email)) DO UPDATE
           SET full_name        = EXCLUDED.full_name,
               phone            = EXCLUDED.phone,
+              /*
+                The number being replaced is kept, not discarded. Phone is the
+                match key on the receiving side, so a correction would
+                otherwise match nothing there and quietly create a second
+                record while the first kept the old number. Appending here is
+                what lets the receiver recognise the person it already has.
+
+                Every SET expression on this statement reads the pre-update
+                row, so this appends the number being replaced rather than the
+                one replacing it, regardless of the order these lines appear
+                in.
+              */
+              phone_history    = CASE
+                                   WHEN waitlist_entries.phone IS DISTINCT FROM EXCLUDED.phone
+                                   THEN array_append(
+                                          waitlist_entries.phone_history,
+                                          waitlist_entries.phone)
+                                   ELSE waitlist_entries.phone_history
+                                 END,
+              /*
+                The revision moves only when something material changed, and
+                delivered_at is cleared by the same condition. The two belong
+                together: a bump without the reset is a correction that never
+                ships, and a reset without the bump redelivers under an event
+                key the receiver has already recorded, which it will discard as
+                a duplicate.
+
+                Somebody filling the form in twice with identical answers
+                trips neither, and so sends nothing.
+              */
+              revision         = waitlist_entries.revision
+                                 + (CASE WHEN ${CHANGED} THEN 1 ELSE 0 END),
+              delivered_at     = CASE
+                                   WHEN ${CHANGED} THEN NULL
+                                   ELSE waitlist_entries.delivered_at
+                                 END,
               shop_name        = EXCLUDED.shop_name,
               zip              = EXCLUDED.zip,
               bays             = EXCLUDED.bays,
@@ -239,9 +296,16 @@ export async function joinWaitlist(
     console.error("[waitlist] notification failed", error);
   });
 
-  await pushWaitlistEntryToCompanyBrain(entry).catch((error: unknown) => {
-    console.error("[waitlist] company brain push failed", error);
-  });
+  /*
+    Company OS is deliberately not called from here.
+
+    It used to be, as a best-effort push wrapped in a .catch() — which meant a
+    failed delivery left no trace anywhere except a log line nobody reads, and
+    the lead simply never appeared. The row above now carries delivered_at, and
+    `/api/waitlist/sweep` drains what hasn't gone yet every five minutes. An
+    outage costs a delay instead of a lead, and the backlog is a query rather
+    than an unknown.
+  */
 
   return { ok: true };
 }
