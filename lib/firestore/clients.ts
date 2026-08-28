@@ -118,7 +118,15 @@ const INBOUND_FIELDS = {
   email: "contactEmail",
   zip: "zip",
   bays: "bays",
-  consent_at: "consentAt",
+  /*
+    consent_at is deliberately NOT here. It is machine-stamped, never
+    human-curated, and every resubmission restamps it — so routing it through
+    the conflict check queued a review item on every repeat submission,
+    asking a person to adjudicate between two timestamps no person wrote.
+    The first live run demonstrated exactly that. It updates unconditionally
+    in the merge below instead: the newest consent grant is the record we
+    would have to produce if anyone ever asks.
+  */
 } as const satisfies Partial<Record<keyof WaitlistSubmittedPayload, keyof Client>>;
 
 export type IngestOutcome =
@@ -249,6 +257,9 @@ export async function ingestWaitlistSubmission(input: {
       // Unconditional, even when the event changes nothing else. It is the
       // answer to "has this shop been back", which is worth knowing on its own.
       lastInboundAt: now,
+      // Also unconditional — the newest grant of permission is the truth, and
+      // no human ever edits this field. See the note on INBOUND_FIELDS.
+      consentAt: payload.consent_at,
       updatedAt: FieldValue.serverTimestamp(),
     };
     const pending: Record<string, PendingReviewEntry> = {};
@@ -364,8 +375,14 @@ export async function resolvePendingReview(
   if (!entry) throw new Error("Nothing is awaiting review on that field");
 
   // Only fields an event could have flagged can be settled here, so a crafted
-  // field name cannot reach an unrelated part of the document.
-  const writable = new Set<string>([...Object.values(INBOUND_FIELDS), "phone"]);
+  // field name cannot reach an unrelated part of the document. "consentAt"
+  // stays resolvable even though events no longer flag it — entries written
+  // before that change still exist on live documents and need a way out.
+  const writable = new Set<string>([
+    ...Object.values(INBOUND_FIELDS),
+    "phone",
+    "consentAt",
+  ]);
   if (!writable.has(field)) throw new Error("That field cannot be reviewed");
 
   await reference.update({
