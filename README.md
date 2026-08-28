@@ -174,7 +174,7 @@ Cloud Run must be publicly reachable so Google Sign-In can load, but every works
 
 Events are idempotent. Each delivery is keyed `${event_id}:${revision}` in the `ingest_events` collection and written in the same transaction as the change it describes, so the sender's five-minute retry is free and a correction to an already-delivered row is not mistaken for a duplicate.
 
-Inbound events never overwrite a human edit. They fill fields that are empty, append additional people to `contacts`, always update `lastInboundAt`, and record any disagreement in `pendingReview` for somebody to settle in the CRM view. Waitlist leads are `clients` with `status: 'lead'` and `source: 'waitlist'`; there is no separate leads collection, and promotion is a status change rather than a copy.
+Inbound events never overwrite a human edit. They fill fields that are empty, append additional people to `contacts`, always update `lastInboundAt` and `consentAt`, and record any disagreement in `pendingReview` for somebody to settle in the CRM view. Waitlist leads are `clients` with `status: 'lead'` and `source: 'waitlist'`, shown in the CRM directly with a `waitlist` badge; there is no separate leads collection, and promotion is a status change rather than a copy.
 
 Setup, including the Cloud Scheduler job on the sending side, is in [SETUP.md](SETUP.md).
 

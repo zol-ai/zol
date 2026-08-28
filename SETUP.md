@@ -171,10 +171,9 @@ A new shop creates one document in `clients`:
 
 and one in `ingest_events`, keyed `${event_id}:${revision}`.
 
-Unreviewed waitlist leads are hidden in `/clients` by default — the toggle is
-above the table. A record with anything in `pendingReview` shows regardless of
-that filter, because a disagreement on a record somebody already cared about is
-not the same thing as unreviewed noise.
+Waitlist leads appear in `/clients` directly, marked with a `waitlist` badge —
+there is no unreviewed filter. A record with anything in `pendingReview` also
+raises a banner above the table asking for a decision.
 
 **Promotion is a status change**, not a copy: set `status` to `active` on the
 same document. There is no `leads` collection, nothing moves between
