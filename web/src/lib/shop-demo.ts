@@ -225,15 +225,21 @@ export type Story = {
   stats: { value: string; label: string }[];
 };
 
+/*
+ * Story photography is Unsplash stock (free for commercial use, no
+ * attribution required) — generic shop scenes, not the named shops:
+ *   story-engine-bay.jpg  unsplash.com/photos/1625047509248-ec889cbff17f
+ *   story-lift.jpg        unsplash.com/photos/1786490001670-b2f1009030e2
+ *   story-workshop.jpg    unsplash.com/photos/1676018366904-c083ed678e60
+ */
 export const featuredStory: Story = {
   shop: shop.name,
   city: shop.location,
   owner: "Ray Delgado",
   role: "Owner",
   initials: "RD",
-  image: "/images/shop-01.svg",
-  imageAlt:
-    "Two technicians looking over an open engine bay beside a two-post lift",
+  image: "/images/stories/story-engine-bay.jpg",
+  imageAlt: "A mechanic leaning over an open hood, working on the engine",
   quote:
     "The 9:41 PM call used to be a voicemail I found at 7 the next morning — if the guy hadn't already called the shop up the street. Now it's a booked slot with the complaint and the VIN already on the ticket. I didn't hire anybody. I just stopped losing the nights.",
   stats: [
@@ -250,8 +256,9 @@ export const stories: Story[] = [
     owner: "Tony Reyes",
     role: "Owner",
     initials: "TR",
-    image: "/images/shop-02.svg",
-    imageAlt: "A vehicle raised on a two-post lift with a technician working underneath",
+    image: "/images/stories/story-lift.jpg",
+    imageAlt:
+      "A mechanic working beside a car raised on stands in an independent garage",
     quote:
       "Estimates used to die in voicemail. Now the quote goes out with a photo, ZOL nudges once, and my writer only picks up the phone for the ones that actually need a conversation.",
     stats: [{ value: "41m", label: "median time to approval" }],
@@ -262,9 +269,9 @@ export const stories: Story[] = [
     owner: "Priya Nathan",
     role: "Owner",
     initials: "PN",
-    image: "/images/shop-03.svg",
+    image: "/images/stories/story-workshop.jpg",
     imageAlt:
-      "The service counter of an auto repair shop, with the phone ringing and the bay visible behind",
+      "A wide view of an independent workshop, with a technician at the bench",
     quote:
       "We were paying for shop software, an answering service and a texting add-on, and the three of them never agreed on what happened. It's one system now, and one bill.",
     stats: [{ value: "3", label: "tools replaced by one" }],

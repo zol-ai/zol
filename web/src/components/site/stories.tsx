@@ -140,7 +140,7 @@ export function Stories() {
         </div>
 
         <Fig n="04">
-          Pilot shop stories — names, photos and numbers are placeholders
+          Pilot shop stories — names, numbers and photography are illustrative
         </Fig>
       </div>
     </section>
