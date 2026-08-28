@@ -12,33 +12,8 @@
 export const BAY_BANDS = ["1-3", "4-6", "7-10", "10+"] as const;
 export type BayBand = (typeof BAY_BANDS)[number];
 
-/**
- * Value is the stable key that goes in the column; label is what the page
- * says. They are separate because the wording will change and the rows have
- * to stay comparable.
- */
-export const SHOP_SOFTWARE = [
-  { value: "tekmetric", label: "Tekmetric" },
-  { value: "shopmonkey", label: "Shopmonkey" },
-  { value: "shop-ware", label: "Shop-Ware" },
-  { value: "mitchell1", label: "Mitchell 1" },
-  { value: "autoleap", label: "AutoLeap" },
-  { value: "other", label: "Something else" },
-  { value: "paper", label: "Paper & spreadsheets" },
-] as const;
-
-export type ShopSoftware = (typeof SHOP_SOFTWARE)[number]["value"];
-
-export const SOFTWARE_LABEL: Record<ShopSoftware, string> = Object.fromEntries(
-  SHOP_SOFTWARE.map((option) => [option.value, option.label]),
-) as Record<ShopSoftware, string>;
-
 export function isBayBand(value: string): value is BayBand {
   return (BAY_BANDS as readonly string[]).includes(value);
-}
-
-export function isShopSoftware(value: string): value is ShopSoftware {
-  return SHOP_SOFTWARE.some((option) => option.value === value);
 }
 
 /** US ZIP. Five digits — ZIP+4 is more than we need and more to get wrong. */
@@ -72,7 +47,6 @@ export interface WaitlistEntry {
   shop_name: string;
   zip: string;
   bays: BayBand;
-  current_software: ShopSoftware;
   consent: boolean;
   consent_at: string;
   source_page: string | null;

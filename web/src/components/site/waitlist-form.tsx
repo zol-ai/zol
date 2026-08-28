@@ -5,13 +5,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { joinWaitlist, type WaitlistState } from "@/app/actions/waitlist";
 import { Checkbox, Field, FormError, Select, Submit } from "@/components/app/field";
 import { site } from "@/lib/site";
-import {
-  BAY_BANDS,
-  HONEYPOT,
-  SHOP_SOFTWARE,
-  UTM_KEYS,
-  type UtmKey,
-} from "@/lib/waitlist";
+import { BAY_BANDS, HONEYPOT, UTM_KEYS, type UtmKey } from "@/lib/waitlist";
 
 /**
  * The waitlist form.
@@ -189,11 +183,11 @@ export function WaitlistForm({
         {/*
           The key is doing real work. `defaultValue` on an uncontrolled select
           only applies at mount, so when a rejected submit re-renders this form
-          the two dropdowns snap back to "How many?" while every text field
+          the dropdown would snap back to "How many?" while every text field
           keeps what was typed — the shop owner fixes their ZIP and silently
-          loses two answers. Keying on the echoed value remounts the select so
-          the default is applied again. The alternative is making these two
-          controlled, which would be the only controlled inputs in the repo and
+          loses that answer. Keying on the echoed value remounts the select so
+          the default is applied again. The alternative is making this
+          controlled, which would be the only controlled input in the repo and
           would stop working with scripting off.
         */}
         <Select
@@ -214,24 +208,6 @@ export function WaitlistForm({
           ))}
         </Select>
       </div>
-
-      <Select
-        key={`software-${state?.values?.current_software ?? ""}`}
-        label="What you run now"
-        name="current_software"
-        required
-        defaultValue={state?.values?.current_software ?? ""}
-        error={state?.fields?.current_software}
-      >
-        <option value="" disabled>
-          Pick the closest one
-        </option>
-        {SHOP_SOFTWARE.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </Select>
 
       {/*
         Consent, in the open and unticked.

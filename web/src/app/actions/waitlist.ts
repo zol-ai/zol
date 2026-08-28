@@ -9,11 +9,9 @@ import { formatPhone, toE164 } from "@/lib/phone";
 import { site } from "@/lib/site";
 import {
   HONEYPOT,
-  SOFTWARE_LABEL,
   UTM_KEYS,
   ZIP,
   isBayBand,
-  isShopSoftware,
   type WaitlistEntry,
 } from "@/lib/waitlist";
 import type { FormState } from "./auth";
@@ -74,7 +72,6 @@ export async function joinWaitlist(
   const shopName = text(form, "shop_name");
   const zip = text(form, "zip");
   const bays = text(form, "bays");
-  const software = text(form, "current_software");
   const consent = form.get("consent") === "on";
 
   // Echoed back so a rejected submit doesn't wipe six fields of typing.
@@ -85,7 +82,6 @@ export async function joinWaitlist(
     shop_name: shopName,
     zip,
     bays,
-    current_software: software,
     consent: consent ? "on" : "",
   };
 
@@ -116,7 +112,6 @@ export async function joinWaitlist(
   if (shopName.length > 200) fields.shop_name = "That's longer than we can store.";
   if (!ZIP.test(zip)) fields.zip = "Five digits.";
   if (!isBayBand(bays)) fields.bays = "Pick the closest one.";
-  if (!isShopSoftware(software)) fields.current_software = "Pick the closest one.";
 
   /*
     Not a formality. We are asking permission to phone and text a business
@@ -180,19 +175,18 @@ export async function joinWaitlist(
 
     rows = await query<WaitlistEntry>(
       `INSERT INTO waitlist_entries
-         (full_name, email, phone, shop_name, zip, bays, current_software,
+         (full_name, email, phone, shop_name, zip, bays,
           consent, consent_at, source_page,
           utm_source, utm_medium, utm_campaign, utm_term, utm_content,
           ip, user_agent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, true, now(), $8,
-               $9, $10, $11, $12, $13, $14, $15)
+       VALUES ($1, $2, $3, $4, $5, $6, true, now(), $7,
+               $8, $9, $10, $11, $12, $13, $14)
        ON CONFLICT (lower(email)) DO UPDATE
           SET full_name        = EXCLUDED.full_name,
               phone            = EXCLUDED.phone,
               shop_name        = EXCLUDED.shop_name,
               zip              = EXCLUDED.zip,
               bays             = EXCLUDED.bays,
-              current_software = EXCLUDED.current_software,
               consent          = true,
               consent_at       = now(),
               source_page      = EXCLUDED.source_page,
@@ -214,7 +208,6 @@ export async function joinWaitlist(
         shopName,
         zip,
         bays,
-        software,
         nullable(text(form, "source_page"), 200),
         ...utm,
         ip,
@@ -276,7 +269,6 @@ async function notify(entry: WaitlistEntry): Promise<void> {
       `Email         ${entry.email}`,
       `ZIP           ${entry.zip}`,
       `Bays          ${entry.bays}`,
-      `Running now   ${SOFTWARE_LABEL[entry.current_software]}`,
       "",
       `Consented     yes, at ${entry.consent_at}`,
       `Source        ${entry.source_page ?? "—"}`,
