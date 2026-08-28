@@ -1,4 +1,5 @@
 import { jobs } from "@/lib/shop-demo";
+import { jobWidgets } from "./job-widgets";
 import { Reveal } from "./reveal";
 import { SectionHead } from "./section-head";
 
@@ -20,23 +21,31 @@ export function RunsItself() {
         />
 
         <div className="mt-12 grid gap-5 md:grid-cols-2">
-          {jobs.map((job, i) => (
-            <Reveal key={job.title} delay={i * 70}>
-              <div className="card h-full p-6 transition-shadow duration-200 hover:shadow-[0_2px_8px_rgb(25_23_20/0.06)] sm:p-7">
-                <h3 className="t-h3 text-[1.1875rem]">{job.title}</h3>
-                <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-2">
-                  {job.body}
-                </p>
-                <p className="t-data mt-5 flex items-start gap-2.5 border-t border-line pt-4 text-[0.75rem] leading-relaxed text-emerald-deep">
-                  <span
-                    className="dot mt-1.5 bg-emerald"
-                    aria-hidden="true"
-                  />
-                  {job.event}
-                </p>
-              </div>
-            </Reveal>
-          ))}
+          {jobs.map((job, i) => {
+            const Widget = jobWidgets[i];
+            return (
+              <Reveal key={job.title} delay={i * 70}>
+                <div className="card flex h-full flex-col p-6 transition-shadow duration-200 hover:shadow-[0_2px_8px_rgb(25_23_20/0.06)] sm:p-7">
+                  <h3 className="t-h3 text-[1.1875rem]">{job.title}</h3>
+                  <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-2">
+                    {job.body}
+                  </p>
+                  {Widget && (
+                    <div className="mt-5">
+                      <Widget />
+                    </div>
+                  )}
+                  {/* mt-auto pins every card's event line to one baseline. */}
+                  <div className="mt-auto pt-5">
+                    <p className="t-data flex items-start gap-2.5 border-t border-line pt-4 text-[0.75rem] leading-relaxed text-emerald-deep">
+                      <span className="dot mt-1.5 bg-emerald" aria-hidden="true" />
+                      {job.event}
+                    </p>
+                  </div>
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
     </section>

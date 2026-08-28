@@ -1,4 +1,5 @@
 import { ticket } from "@/lib/shop-demo";
+import { Fig } from "./fig";
 import { Reveal } from "./reveal";
 import { SectionHead } from "./section-head";
 import { AttributionLegend, Tag } from "./tag";
@@ -119,9 +120,7 @@ export function OneRecord() {
           </Reveal>
         </div>
 
-        <p className="t-data mt-6 text-[0.5625rem] uppercase tracking-[0.14em] text-ink-3">
-          Sample repair order — illustrative data
-        </p>
+        <Fig n="03">Sample repair order RO-4471 — illustrative data</Fig>
       </div>
     </section>
   );

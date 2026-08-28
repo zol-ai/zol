@@ -1,4 +1,5 @@
 import { Board } from "./board";
+import { Fig } from "./fig";
 import { Reveal } from "./reveal";
 import { AttributionLegend } from "./tag";
 
@@ -21,6 +22,9 @@ export function BoardSection() {
             <AttributionLegend />
           </div>
           <Board />
+          <Fig n="01">
+            The live board at Fifth Street Auto — illustrative data
+          </Fig>
         </Reveal>
       </div>
     </section>

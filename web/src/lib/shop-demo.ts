@@ -204,6 +204,85 @@ export const jobs = [
   },
 ];
 
+/**
+ * Pilot-shop stories. Every name, photo and number here is a placeholder to
+ * be swapped for a real shop before launch — which is why the section that
+ * renders these carries the same "illustrative" caption as the board and the
+ * ticket. The featured story is Fifth Street Auto on purpose: it is the same
+ * fictional shop the whole page describes, so the story closes the loop the
+ * hero opened.
+ */
+export type Story = {
+  shop: string;
+  city: string;
+  owner: string;
+  role: string;
+  /** Initials for the avatar chip, since there is no photo yet. */
+  initials: string;
+  image: string;
+  imageAlt: string;
+  quote: string;
+  stats: { value: string; label: string }[];
+};
+
+export const featuredStory: Story = {
+  shop: shop.name,
+  city: shop.location,
+  owner: "Ray Delgado",
+  role: "Owner",
+  initials: "RD",
+  image: "/images/shop-01.svg",
+  imageAlt:
+    "Two technicians looking over an open engine bay beside a two-post lift",
+  quote:
+    "The 9:41 PM call used to be a voicemail I found at 7 the next morning — if the guy hadn't already called the shop up the street. Now it's a booked slot with the complaint and the VIN already on the ticket. I didn't hire anybody. I just stopped losing the nights.",
+  stats: [
+    { value: "0", label: "calls missed in 60 days" },
+    { value: "+9", label: "cars a week on the board" },
+    { value: "38", label: "after-hours calls booked" },
+  ],
+};
+
+export const stories: Story[] = [
+  {
+    shop: "Reyes Bros Garage",
+    city: "Fresno, CA",
+    owner: "Tony Reyes",
+    role: "Owner",
+    initials: "TR",
+    image: "/images/shop-02.svg",
+    imageAlt: "A vehicle raised on a two-post lift with a technician working underneath",
+    quote:
+      "Estimates used to die in voicemail. Now the quote goes out with a photo, ZOL nudges once, and my writer only picks up the phone for the ones that actually need a conversation.",
+    stats: [{ value: "41m", label: "median time to approval" }],
+  },
+  {
+    shop: "Hilltop Automotive",
+    city: "Visalia, CA",
+    owner: "Priya Nathan",
+    role: "Owner",
+    initials: "PN",
+    image: "/images/shop-03.svg",
+    imageAlt:
+      "The service counter of an auto repair shop, with the phone ringing and the bay visible behind",
+    quote:
+      "We were paying for shop software, an answering service and a texting add-on, and the three of them never agreed on what happened. It's one system now, and one bill.",
+    stats: [{ value: "3", label: "tools replaced by one" }],
+  },
+];
+
+/** The strip of pilot shops — fictional names until the real ones sign off. */
+export const pilotShops = [
+  { name: "Fifth Street Auto", city: "Bakersfield" },
+  { name: "Reyes Bros Garage", city: "Fresno" },
+  { name: "Hilltop Automotive", city: "Visalia" },
+  { name: "Kern River Tire & Auto", city: "Bakersfield" },
+  { name: "Golden State Motors", city: "Modesto" },
+  { name: "Ochoa's Auto Care", city: "Delano" },
+  { name: "Blue Oak Automotive", city: "Paso Robles" },
+  { name: "Miller & Sons Garage", city: "Tulare" },
+];
+
 /** The shop management systems ZOL is built to take over from. */
 export const replaces = [
   "Tekmetric",

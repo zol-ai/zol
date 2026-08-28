@@ -10,6 +10,7 @@ import { OneRecord } from "@/components/site/one-record";
 import { Reveal } from "@/components/site/reveal";
 import { RunsItself } from "@/components/site/runs-itself";
 import { Stats } from "@/components/site/stats";
+import { Stories } from "@/components/site/stories";
 import { WhySwitch } from "@/components/site/why-switch";
 import { site } from "@/lib/site";
 
@@ -60,6 +61,7 @@ export default function Home() {
         </section>
 
         <WhySwitch />
+        <Stories />
         <Faq />
         <Cta />
       </main>

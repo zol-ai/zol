@@ -124,10 +124,6 @@ export function Board() {
           </li>
         ))}
       </ul>
-
-      <p className="t-data border-t border-line bg-paper-2 px-4 py-2 text-[0.5625rem] uppercase tracking-[0.14em] text-ink-3">
-        Sample shop — illustrative data
-      </p>
     </div>
   );
 }

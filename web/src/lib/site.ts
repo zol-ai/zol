@@ -25,4 +25,5 @@ export const nav = [
   { label: "One record", href: "#one-record" },
   { label: "What it does", href: "#runs-itself" },
   { label: "Why switch", href: "#why-switch" },
+  { label: "Stories", href: "#stories" },
 ] as const;
