@@ -41,6 +41,20 @@ export const teamMemberUpdateSchema = teamMemberCreateSchema.partial().refine(
 
 const clientColorSchema = z.enum(["blue", "green", "amber", "rose", "violet", "slate"]);
 
+/**
+ * E.164, the same rule the sending side enforces with a CHECK constraint.
+ *
+ * Validated, never normalised. The sender is responsible for sending a number
+ * in this shape; quietly reformatting whatever arrives would mean two systems
+ * with two ideas of what a phone number looks like, and phone is the key
+ * inbound events are matched on — a disagreement there is a duplicate client,
+ * not a cosmetic difference.
+ */
+export const e164Schema = z
+  .string()
+  .trim()
+  .regex(/^\+[1-9]\d{7,14}$/, "Phone must be E.164, e.g. +15555550148");
+
 export const clientCreateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(160),
   contactName: z.string().trim().max(160).optional().transform((value) => value || undefined),
@@ -48,6 +62,14 @@ export const clientCreateSchema = z.object({
   status: z.enum(["lead", "active", "paused", "closed"]).default("lead"),
   color: clientColorSchema.default("blue"),
   notes: optionalText,
+  phone: e164Schema.optional().or(z.literal("").transform(() => undefined)),
+  zip: z.string().trim().max(16).optional().transform((value) => value || undefined),
+  bays: z.string().trim().max(16).optional().transform((value) => value || undefined),
+  /*
+    Anything created through the API is somebody typing it in. Only the ingest
+    route sets "waitlist", and it does not go through this schema.
+  */
+  source: z.enum(["manual", "waitlist"]).default("manual"),
 });
 
 export const clientUpdateSchema = z.object({
@@ -57,6 +79,10 @@ export const clientUpdateSchema = z.object({
   status: z.enum(["lead", "active", "paused", "closed"]).optional(),
   color: clientColorSchema.optional(),
   notes: optionalText,
+  phone: e164Schema.optional().or(z.literal("").transform(() => undefined)),
+  zip: z.string().trim().max(16).optional().transform((value) => value || undefined),
+  bays: z.string().trim().max(16).optional().transform((value) => value || undefined),
+  // `source` is absent on purpose. It is immutable after creation.
 }).refine(
   (value) => Object.keys(value).length > 0,
   "At least one field is required",

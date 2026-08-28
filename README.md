@@ -85,6 +85,8 @@ Copy `.env.example` to `.env.local` and configure:
 - `FIREBASE_PROJECT_ID`: required server-side project identifier
 - `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: optional fallback credentials; leave blank when using local ADC or the Cloud Run service identity
 - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`: Firebase web app identifiers
+- `EVENTS_AUDIENCE`: this service's own public URL, compared exactly against the `aud` claim on inbound event tokens
+- `EVENTS_ALLOWED_SERVICE_ACCOUNTS`: comma-separated service accounts permitted to `POST /api/events`. Separate from `ALLOWED_EMAILS`; unset means nobody
 
 If a private key is used, keep it quoted with escaped `\n` line breaks. Public Firebase web identifiers are expected in the browser; authorization does not rely on hiding them.
 
@@ -160,7 +162,17 @@ gcloud run deploy company-os \
   --set-secrets OPENAI_API_KEY=openai-api-key:latest
 ```
 
-Cloud Run must be publicly reachable so Google Sign-In can load, but every workspace page and API route still requires an approved authenticated session. Add the resulting hostname to Firebase Authorized domains.
+Cloud Run must be publicly reachable so Google Sign-In can load, but every workspace page and API route still requires an approved authenticated session, with the single deliberate exception of `POST /api/events` — see below. Add the resulting hostname to Firebase Authorized domains.
+
+## Inbound waitlist events
+
+`POST /api/events` receives waitlist submissions from tryzol.com. It is the only route that does not go through `authorized()`, because its caller is a Cloud Run service rather than a person in a browser: it verifies a Google-signed OIDC ID token, checks the `aud` claim against `EVENTS_AUDIENCE`, and requires the caller's service account to appear in `EVENTS_ALLOWED_SERVICE_ACCOUNTS`.
+
+Events are idempotent. Each delivery is keyed `${event_id}:${revision}` in the `ingest_events` collection and written in the same transaction as the change it describes, so the sender's five-minute retry is free and a correction to an already-delivered row is not mistaken for a duplicate.
+
+Inbound events never overwrite a human edit. They fill fields that are empty, append additional people to `contacts`, always update `lastInboundAt`, and record any disagreement in `pendingReview` for somebody to settle in the CRM view. Waitlist leads are `clients` with `status: 'lead'` and `source: 'waitlist'`; there is no separate leads collection, and promotion is a status change rather than a copy.
+
+Setup, including the Cloud Scheduler job on the sending side, is in [SETUP.md](SETUP.md).
 
 ## Security notes
 

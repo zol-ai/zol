@@ -23,6 +23,19 @@ service cloud.firestore {
       allow read, write: if isAllowedUser();
     }
 
+    // Deduplication markers for inbound events, written only by the Admin SDK
+    // inside the ingest transaction. Denied to every browser client, including
+    // an allowlisted one: a person editing these by hand would either replay an
+    // applied event or suppress one that never arrived.
+    //
+    // The catch-all below would already deny this. Stated anyway, because
+    // "denied because nobody wrote a rule" and "denied on purpose" look
+    // identical in a rules file and only one of them survives someone adding a
+    // rule above the fallthrough.
+    match /ingest_events/{document=**} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

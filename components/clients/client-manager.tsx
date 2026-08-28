@@ -1,6 +1,16 @@
 "use client";
 
-import { Archive, BriefcaseBusiness, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Archive,
+  BriefcaseBusiness,
+  Check,
+  Inbox,
+  Pencil,
+  Plus,
+  Trash2,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState, ErrorState, LoadingState, PageHeader } from "@/components/shared";
@@ -69,6 +79,26 @@ function getClientColor(color: ClientColor) {
   return clientColors.find((item) => item.value === color) ?? clientColors[0];
 }
 
+/** Field names as they appear on a review entry, in the words the team uses. */
+const reviewFieldLabels: Record<string, string> = {
+  name: "Shop name",
+  contactName: "Contact name",
+  contactEmail: "Contact email",
+  phone: "Phone",
+  zip: "ZIP",
+  bays: "Bays",
+  consentAt: "Consent timestamp",
+};
+
+/** An unreviewed lead that arrived over the wire rather than being entered. */
+function isInboundLead(client: Client) {
+  return client.status === "lead" && client.source === "waitlist";
+}
+
+function reviewCount(client: Client) {
+  return Object.keys(client.pendingReview ?? {}).length;
+}
+
 export function ClientManager() {
   const [clients, setClients] = useState<Client[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -79,6 +109,13 @@ export function ClientManager() {
   const [confirming, setConfirming] = useState<{ client: Client; action: "archive" | "delete" } | null>(null);
   const [draft, setDraft] = useState<ClientDraft>(emptyDraft);
   const [saving, setSaving] = useState(false);
+  /*
+    Unreviewed waitlist leads are hidden by default so inbound traffic cannot
+    bury the clients the team is actually working. A default, not an access
+    rule — this toggle is where review happens, so the leads have to be one
+    click away rather than somewhere else entirely.
+  */
+  const [showInbound, setShowInbound] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -115,6 +152,47 @@ export function ClientManager() {
       },
     };
   }, [clients, tasks]);
+
+  /*
+    Every record where an inbound event disagreed with something stored.
+
+    Deliberately computed from the whole list rather than from what the filter
+    lets through: these are conflicts on records somebody already cared about,
+    and hiding them behind the same default that hides unreviewed noise is
+    exactly how a correction goes unnoticed for three months.
+  */
+  const needsReview = useMemo(
+    () => clients.filter((client) => reviewCount(client) > 0),
+    [clients],
+  );
+
+  const visibleClients = useMemo(() => {
+    if (showInbound) return clients;
+    return clients.filter(
+      (client) => !isInboundLead(client) || reviewCount(client) > 0,
+    );
+  }, [clients, showInbound]);
+
+  const hiddenCount = clients.length - visibleClients.length;
+
+  async function resolve(
+    client: Client,
+    field: string,
+    action: "accept" | "dismiss",
+  ) {
+    try {
+      const saved = await apiFetch<Client>(
+        `/api/clients/${client.id}/pending-review`,
+        { method: "POST", body: JSON.stringify({ field, action }) },
+      );
+      setClients((current) =>
+        current.map((item) => (item.id === saved.id ? saved : item)),
+      );
+      toast.success(action === "accept" ? "Value updated" : "Kept what was there");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not resolve");
+    }
+  }
 
   function openCreate() {
     setEditing(null);
@@ -234,11 +312,111 @@ export function ClientManager() {
         ))}
       </div>
 
-      {!clients.length ? (
+      {needsReview.length ? (
+        <Card className="mb-6 border-amber-200 bg-amber-50/60 p-4">
+          <div className="flex items-center gap-2">
+            <TriangleAlert size={17} className="text-amber-600" />
+            <h2 className="text-sm font-semibold text-slate-950">
+              {needsReview.length === 1
+                ? "One record needs a decision"
+                : `${needsReview.length} records need a decision`}
+            </h2>
+          </div>
+          <p className="mt-1 text-xs text-slate-600">
+            A waitlist submission disagreed with what is stored. Nothing was
+            overwritten — pick which value is right.
+          </p>
+          <div className="mt-4 space-y-3">
+            {needsReview.map((client) =>
+              Object.entries(client.pendingReview ?? {}).map(([field, entry]) => {
+                const label = reviewFieldLabels[field] ?? field;
+                const stored = (client as unknown as Record<string, unknown>)[field];
+                /*
+                  Both reasons use the same two buttons, because the mechanics
+                  are the same: accept takes the value that is waiting, dismiss
+                  keeps the one on the record. Only the sentence differs — for a
+                  phone correction the new number is already in place and the
+                  waiting value is the one it replaced.
+                */
+                const replaced = entry.reason === "replaced";
+                return (
+                  <div
+                    key={`${client.id}:${field}`}
+                    className="rounded-lg border border-amber-200 bg-white px-4 py-3"
+                  >
+                    <div className="text-sm font-semibold text-slate-950">
+                      {client.name}
+                    </div>
+                    <p className="mt-1 text-sm text-slate-700">
+                      {replaced ? (
+                        <>
+                          {label} was corrected to{" "}
+                          <span className="font-medium">{String(stored ?? "—")}</span>,
+                          replacing{" "}
+                          <span className="font-medium">{entry.incoming}</span>.
+                        </>
+                      ) : (
+                        <>
+                          The form said {label.toLowerCase()} is{" "}
+                          <span className="font-medium">{entry.incoming}</span>, you
+                          have <span className="font-medium">{String(stored ?? "—")}</span>.
+                        </>
+                      )}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => void resolve(client, field, "accept")}
+                      >
+                        <Check size={15} />
+                        {replaced ? `Put ${entry.incoming} back` : "Use the form's value"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => void resolve(client, field, "dismiss")}
+                      >
+                        <X size={15} /> Keep what is there
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }),
+            )}
+          </div>
+        </Card>
+      ) : null}
+
+      {hiddenCount > 0 || showInbound ? (
+        <div className="mb-4 flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Inbox size={17} className="text-slate-400" />
+            {showInbound
+              ? "Showing unreviewed waitlist leads."
+              : `${hiddenCount} unreviewed waitlist ${
+                  hiddenCount === 1 ? "lead is" : "leads are"
+                } hidden.`}
+          </div>
+          <Button variant="ghost" onClick={() => setShowInbound((value) => !value)}>
+            {showInbound ? "Hide unreviewed" : "Show them"}
+          </Button>
+        </div>
+      ) : null}
+
+      {!visibleClients.length ? (
         <EmptyState
-          title="No clients yet"
-          description="Add a client to start building your CRM pipeline."
-          action={<Button onClick={openCreate}>Add client</Button>}
+          title={clients.length ? "Nothing to show" : "No clients yet"}
+          description={
+            clients.length
+              ? "Every client here is an unreviewed waitlist lead. Show them to review."
+              : "Add a client to start building your CRM pipeline."
+          }
+          action={
+            clients.length ? (
+              <Button onClick={() => setShowInbound(true)}>Show them</Button>
+            ) : (
+              <Button onClick={openCreate}>Add client</Button>
+            )
+          }
         />
       ) : (
         <Card className="overflow-hidden p-0">
@@ -257,7 +435,7 @@ export function ClientManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {clients.map((client) => {
+                {visibleClients.map((client) => {
                   const related = tasks.filter((task) => task.clientId === client.id);
                   const openRelated = related.filter((task) => task.status !== "completed");
                   const color = getClientColor(client.color ?? "blue");
@@ -268,12 +446,31 @@ export function ClientManager() {
                         <div className="mt-1 text-xs text-slate-500">{related.length} total tasks</div>
                       </td>
                       <td className="px-4 py-4">
-                        <Badge tone={statusTone[client.status]}>{client.status}</Badge>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge tone={statusTone[client.status]}>{client.status}</Badge>
+                          {/*
+                            Where the record came from, shown because it changes
+                            how much the values can be trusted — a waitlist row
+                            is what somebody typed into a form, not what the
+                            team confirmed.
+                          */}
+                          {client.source === "waitlist" ? (
+                            <Badge tone="slate">waitlist</Badge>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="max-w-[220px] px-4 py-4 text-slate-600">
                         <div>{client.contactName || "No contact"}</div>
                         {client.contactEmail ? (
                           <div className="mt-1 truncate text-xs text-slate-500">{client.contactEmail}</div>
+                        ) : null}
+                        {client.phone ? (
+                          <div className="mt-1 text-xs text-slate-500">{client.phone}</div>
+                        ) : null}
+                        {(client.contacts?.length ?? 0) > 1 ? (
+                          <div className="mt-1 text-xs text-slate-500">
+                            +{(client.contacts?.length ?? 1) - 1} more at this shop
+                          </div>
                         ) : null}
                       </td>
                       <td className="px-4 py-4">

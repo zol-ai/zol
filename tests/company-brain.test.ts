@@ -64,6 +64,7 @@ const clients: Client[] = [
     contactEmail: "private@client.example",
     status: "active",
     color: "blue",
+    source: "manual",
     createdAt: timestamp,
     updatedAt: timestamp,
   },
