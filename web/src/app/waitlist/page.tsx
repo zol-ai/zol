@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Nav } from "@/components/site/nav";
 import { WaitlistForm } from "@/components/site/waitlist-form";
 import { site } from "@/lib/site";
 import { UTM_KEYS, type UtmKey } from "@/lib/waitlist";
@@ -12,11 +13,12 @@ export const metadata: Metadata = {
 };
 
 /**
- * The waitlist, on its own — no nav, no pitch, no footer.
+ * The waitlist, on its own — no pitch, no footer, just the nav and the form.
  *
  * Whoever lands here already decided to sign up (an ad, a link from a rep, a
  * QR code on a flyer); re-selling them the product on the way in is friction,
- * not context. The form is the whole page.
+ * not context. The nav stays only so there's a way back to the rest of the
+ * site rather than a dead end.
  */
 export default async function WaitlistPage(props: PageProps<"/waitlist">) {
   const params = await props.searchParams;
@@ -36,18 +38,22 @@ export default async function WaitlistPage(props: PageProps<"/waitlist">) {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-paper-2 px-5 py-12">
-      <div className="w-full max-w-lg">
-        <h1 className="t-h2 text-[1.75rem] sm:text-[2rem]">Have us call you</h1>
-        <p className="mt-3 max-w-prose text-[0.9375rem] leading-relaxed text-ink-2">
-          {/* PLACEHOLDER COPY — yours to write. One line. */}
-          Six boxes. We&rsquo;ll ring the shop when a slot opens up.
-        </p>
+    <div className="flex min-h-dvh flex-col">
+      <Nav />
 
-        <div className="mt-7">
-          <WaitlistForm sourcePage="/waitlist" utm={utm} />
+      <main className="flex flex-1 items-center justify-center bg-paper-2 px-5 py-12">
+        <div className="w-full max-w-lg">
+          <h1 className="t-h2 text-[1.75rem] sm:text-[2rem]">Have us call you</h1>
+          <p className="mt-3 max-w-prose text-[0.9375rem] leading-relaxed text-ink-2">
+            {/* PLACEHOLDER COPY — yours to write. One line. */}
+            Six boxes. We&rsquo;ll ring the shop when a slot opens up.
+          </p>
+
+          <div className="mt-7">
+            <WaitlistForm sourcePage="/waitlist" utm={utm} />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
