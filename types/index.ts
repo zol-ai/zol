@@ -177,3 +177,36 @@ export type WorkspaceNoteDocument = Omit<WorkspaceNote, "id" | "createdAt" | "up
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
 };
+
+export type ScheduleColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+
+/**
+ * One entry on the team schedule.
+ *
+ * Dates are calendar days (YYYY-MM-DD) and times are HH:MM in the company's
+ * local day. Nothing here is an instant: a 9am standup is 9am wherever the
+ * team happens to be reading it, which is what a shared calendar means.
+ */
+export type ScheduleEvent = {
+  id: string;
+  title: string;
+  description?: string;
+  /** First (or only) day. */
+  date: string;
+  /** Last day of a multi-day entry. Absent means the event is a single day. */
+  endDate?: string;
+  allDay: boolean;
+  /** Absent when allDay. */
+  startTime?: string;
+  endTime?: string;
+  assignedToId?: string;
+  assignedToName?: string;
+  color: ScheduleColor;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ScheduleEventDocument = Omit<ScheduleEvent, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};

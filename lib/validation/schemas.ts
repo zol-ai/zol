@@ -134,6 +134,114 @@ export const cardUpdateSchema = z.object({
   "At least one field is required",
 );
 
+// --- Schedule ----------------------------------------------------------------
+
+const scheduleColorSchema = z.enum(["blue", "green", "amber", "rose", "violet", "slate"]);
+
+/** A real calendar day, not just digits in the right places: 2026-02-30 is rejected. */
+function isCalendarDay(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  return (
+    probe.getUTCFullYear() === year &&
+    probe.getUTCMonth() === month - 1 &&
+    probe.getUTCDate() === day
+  );
+}
+
+const calendarDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
+  .refine(isCalendarDay, "Date must be a real calendar day");
+
+const clockTime = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, "Time must be HH:MM");
+
+const optionalDay = calendarDay.optional().or(z.literal("").transform(() => undefined));
+const optionalTime = clockTime.optional().or(z.literal("").transform(() => undefined));
+const optionalId = z.string().trim().optional().transform((value) => value || undefined);
+
+const scheduleEventFields = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200),
+  description: optionalText,
+  date: calendarDay,
+  endDate: optionalDay,
+  allDay: z.boolean().default(false),
+  startTime: optionalTime,
+  endTime: optionalTime,
+  assignedToId: optionalId,
+  color: scheduleColorSchema.default("blue"),
+});
+
+/**
+ * The full-record schema. Updates go through it too: the Firestore helper
+ * merges a PATCH onto the stored document and re-parses the result here, so
+ * the cross-field rules below hold no matter which half of a window changed.
+ */
+export const scheduleEventCreateSchema = scheduleEventFields
+  .superRefine((value, ctx) => {
+    if (value.endDate && value.endDate < value.date) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after the start date",
+      });
+    }
+    if (!value.allDay && !value.startTime) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["startTime"],
+        message: "Start time is required unless the event is all day",
+      });
+    }
+    const singleDay = !value.endDate || value.endDate === value.date;
+    if (
+      !value.allDay &&
+      value.startTime &&
+      value.endTime &&
+      singleDay &&
+      value.endTime <= value.startTime
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time must be after the start time",
+      });
+    }
+  })
+  .transform((value) =>
+    // An all-day event has no clock times, whatever the form sent along with it.
+    value.allDay ? { ...value, startTime: undefined, endTime: undefined } : value,
+  );
+
+export const scheduleEventUpdateSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required").max(200).optional(),
+    description: optionalText,
+    date: calendarDay.optional(),
+    endDate: optionalDay,
+    allDay: z.boolean().optional(),
+    startTime: optionalTime,
+    endTime: optionalTime,
+    assignedToId: optionalId,
+    color: scheduleColorSchema.optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required");
+
+export const scheduleQuerySchema = z
+  .object({
+    from: calendarDay.optional(),
+    to: calendarDay.optional(),
+    assignedToId: optionalId,
+  })
+  .refine((value) => !value.from || !value.to || value.from <= value.to, {
+    path: ["to"],
+    message: "to must be on or after from",
+  });
+
+export type ScheduleEventInput = z.infer<typeof scheduleEventCreateSchema>;
+export type ScheduleEventUpdateInput = z.infer<typeof scheduleEventUpdateSchema>;
+export type ScheduleQuery = z.infer<typeof scheduleQuerySchema>;
+
 export type TaskInput = z.infer<typeof taskCreateSchema>;
 export type TeamMemberInput = z.infer<typeof teamMemberCreateSchema>;
 export type ClientInput = z.infer<typeof clientCreateSchema>;

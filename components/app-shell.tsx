@@ -2,6 +2,7 @@
 
 import {
   BriefcaseBusiness,
+  CalendarDays,
   CheckSquare2,
   FileText,
   LayoutDashboard,
@@ -20,6 +21,7 @@ import { cn, initials } from "@/lib/utils";
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tasks", label: "Tasks", icon: CheckSquare2 },
+  { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/cards", label: "Cards", icon: PanelsTopLeft },
   { href: "/team", label: "Team", icon: Users },
   { href: "/clients", label: "CRM", icon: BriefcaseBusiness },

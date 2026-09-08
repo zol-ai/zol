@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Card } from "@/components/ui/core";
 import { CompanyBrainChat } from "@/components/company-brain/company-brain-chat";
+import { TodaySchedule } from "@/components/dashboard/today-schedule";
 import {
   ErrorState,
   LoadingState,
@@ -96,6 +97,8 @@ export function DashboardView() {
           </Card>
         ))}
       </div>
+
+      <TodaySchedule />
 
       <CompanyBrainChat />
     </>

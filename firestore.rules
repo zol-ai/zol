@@ -19,6 +19,10 @@ service cloud.firestore {
       allow read, write: if isAllowedUser();
     }
 
+    match /scheduleEvents/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
     match /clients/{document=**} {
       allow read, write: if isAllowedUser();
     }
