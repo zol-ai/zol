@@ -7,9 +7,9 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   PanelsTopLeft,
   Menu,
-  StickyNote,
   Users,
   X,
 } from "lucide-react";
@@ -25,7 +25,7 @@ const navigation = [
   { href: "/cards", label: "Cards", icon: PanelsTopLeft },
   { href: "/team", label: "Team", icon: Users },
   { href: "/clients", label: "CRM", icon: BriefcaseBusiness },
-  { href: "/notes", label: "Notes", icon: StickyNote },
+  { href: "/marketing", label: "Marketing ideas", icon: Megaphone },
 ];
 
 export function AppShell({
