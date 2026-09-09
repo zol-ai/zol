@@ -15,7 +15,7 @@ import type {
   MarketingIdeaStatus,
   TeamMember,
 } from "@/types";
-import { channels, contentTypes, marketingStatuses } from "./config";
+import { channels, contentTypes } from "./config";
 
 export type MarketingIdeaDraft = {
   title: string;
@@ -86,7 +86,7 @@ export function MarketingIdeaForm({
       </div>
 
       <div>
-        <Label htmlFor="marketing-brief">Creative brief</Label>
+        <Label htmlFor="marketing-brief">Explain it</Label>
         <Textarea
           id="marketing-brief"
           maxLength={2000}
@@ -179,25 +179,6 @@ export function MarketingIdeaForm({
             value={draft.targetDate}
             onChange={(event) => setDraft({ ...draft, targetDate: event.target.value })}
           />
-        </div>
-        <div className="sm:col-span-2">
-          <Label htmlFor="marketing-status">Stage</Label>
-          <Select
-            id="marketing-status"
-            value={draft.status}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                status: event.target.value as MarketingIdeaStatus,
-              })
-            }
-          >
-            {marketingStatuses.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </Select>
         </div>
       </div>
 

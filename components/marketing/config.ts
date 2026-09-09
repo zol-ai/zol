@@ -1,21 +1,4 @@
-import type {
-  MarketingChannel,
-  MarketingContentType,
-  MarketingIdeaStatus,
-} from "@/types";
-
-export const marketingStatuses: Array<{
-  value: MarketingIdeaStatus;
-  label: string;
-  description: string;
-  dot: string;
-}> = [
-  { value: "idea", label: "Ideas", description: "Fresh concepts", dot: "bg-violet-500" },
-  { value: "planned", label: "Planned", description: "Approved next steps", dot: "bg-blue-500" },
-  { value: "creating", label: "Creating", description: "Production in progress", dot: "bg-amber-500" },
-  { value: "ready", label: "Ready", description: "Ready to publish", dot: "bg-emerald-500" },
-  { value: "posted", label: "Posted", description: "Published work", dot: "bg-slate-500" },
-];
+import type { MarketingChannel, MarketingContentType } from "@/types";
 
 export const contentTypes: Array<{ value: MarketingContentType; label: string }> = [
   { value: "video", label: "Video" },

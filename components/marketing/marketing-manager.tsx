@@ -1,38 +1,26 @@
 "use client";
 
-import { CheckCircle2, Lightbulb, Plus, Rocket, Search } from "lucide-react";
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Plus, Search } from "lucide-react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ErrorState, LoadingState, PageHeader } from "@/components/shared";
-import {
-  Button,
-  Card,
-  ConfirmDialog,
-  Input,
-  Modal,
-  Select,
-} from "@/components/ui/core";
+import { EmptyState, ErrorState, LoadingState, PageHeader } from "@/components/shared";
+import { Button, Card, ConfirmDialog, Input, Modal, Select } from "@/components/ui/core";
 import { apiFetch } from "@/lib/api";
-import type {
-  MarketingIdea,
-  MarketingIdeaStatus,
-  TeamMember,
-} from "@/types";
+import type { MarketingIdea, TeamMember } from "@/types";
 import { channels, contentTypes } from "./config";
-import { MarketingBoard } from "./marketing-board";
+import { MarketingIdeaCard } from "./marketing-idea-card";
 import {
   emptyMarketingIdeaDraft,
   MarketingIdeaForm,
   type MarketingIdeaDraft,
 } from "./marketing-idea-form";
 
-type Visibility = "active" | "posted" | "all";
+/*
+  One list. Ideas used to move through five stage columns; the team decided
+  the stages were more ceremony than the work needed, so every idea now sits
+  in a single column, newest first. The `status` field is still stored (older
+  documents keep whatever stage they had) but nothing in the UI reads it.
+*/
 
 function draftFromIdea(idea: MarketingIdea): MarketingIdeaDraft {
   return {
@@ -53,18 +41,8 @@ function payloadFromDraft(draft: MarketingIdeaDraft) {
   return {
     ...draft,
     title: draft.title.trim(),
-    brief: draft.brief,
-    hook: draft.hook,
-    callToAction: draft.callToAction,
-    channel: draft.channel,
-    ownerId: draft.ownerId,
-    targetDate: draft.targetDate,
     links: draft.links
-      .map((link) => ({
-        ...link,
-        label: link.label.trim(),
-        url: link.url.trim(),
-      }))
+      .map((link) => ({ ...link, label: link.label.trim(), url: link.url.trim() }))
       .filter((link) => link.label && link.url),
   };
 }
@@ -83,7 +61,6 @@ export function MarketingManager() {
   const [owner, setOwner] = useState("");
   const [contentType, setContentType] = useState("");
   const [channel, setChannel] = useState("");
-  const [visibility, setVisibility] = useState<Visibility>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -107,29 +84,25 @@ export function MarketingManager() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
-  const filteredIdeas = useMemo(() => {
+  const visibleIdeas = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
-    return ideas.filter((idea) => {
-      if (visibility === "active" && idea.status === "posted") return false;
-      if (visibility === "posted" && idea.status !== "posted") return false;
-      if (owner && idea.ownerId !== owner) return false;
-      if (contentType && idea.contentType !== contentType) return false;
-      if (channel && idea.channel !== channel) return false;
-      if (
-        query &&
-        ![
-          idea.title,
-          idea.brief,
-          idea.hook,
-          idea.callToAction,
-          idea.ownerName,
-        ].some((value) => value?.toLocaleLowerCase().includes(query))
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [ideas, visibility, owner, contentType, channel, search]);
+    return ideas
+      .filter((idea) => {
+        if (owner && idea.ownerId !== owner) return false;
+        if (contentType && idea.contentType !== contentType) return false;
+        if (channel && idea.channel !== channel) return false;
+        if (
+          query &&
+          ![idea.title, idea.brief, idea.hook, idea.callToAction, idea.ownerName].some(
+            (value) => value?.toLocaleLowerCase().includes(query),
+          )
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [ideas, owner, contentType, channel, search]);
 
   function openCreate() {
     setEditing(null);
@@ -157,36 +130,14 @@ export function MarketingManager() {
       setIdeas((current) =>
         editing
           ? current.map((idea) => (idea.id === saved.id ? saved : idea))
-          : [...current, saved],
+          : [saved, ...current],
       );
       setModalOpen(false);
-      toast.success(editing ? "Marketing idea updated" : "Marketing idea added");
+      toast.success(editing ? "Idea updated" : "Idea added");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not save the idea");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function move(idea: MarketingIdea, status: MarketingIdeaStatus) {
-    const previous = idea;
-    setIdeas((current) =>
-      current.map((item) => (item.id === idea.id ? { ...item, status } : item)),
-    );
-    try {
-      const saved = await apiFetch<MarketingIdea>(`/api/marketing/${idea.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
-      setIdeas((current) =>
-        current.map((item) => (item.id === saved.id ? saved : item)),
-      );
-      toast.success(status === "posted" ? "Marked as posted" : "Idea stage updated");
-    } catch (cause) {
-      setIdeas((current) =>
-        current.map((item) => (item.id === previous.id ? previous : item)),
-      );
-      toast.error(cause instanceof Error ? cause.message : "Could not move the idea");
     }
   }
 
@@ -197,24 +148,22 @@ export function MarketingManager() {
     try {
       await apiFetch(`/api/marketing/${target.id}`, { method: "DELETE" });
       setIdeas((current) => current.filter((idea) => idea.id !== target.id));
-      toast.success("Marketing idea deleted");
+      toast.success("Idea deleted");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not delete the idea");
     }
   }
 
-  if (loading) return <LoadingState label="Loading marketing ideas..." />;
+  if (loading) return <LoadingState label="Loading marketing ideas" />;
   if (error) return <ErrorState message={error} retry={load} />;
 
-  const activeCount = ideas.filter((idea) => idea.status !== "posted").length;
-  const readyCount = ideas.filter((idea) => idea.status === "ready").length;
-  const postedCount = ideas.filter((idea) => idea.status === "posted").length;
+  const filtering = Boolean(search.trim() || owner || contentType || channel);
 
   return (
     <>
       <PageHeader
         title="Marketing"
-        description="Capture ideas, shape the creative angle, and move every concept from spark to published."
+        description="Every idea for getting the word out, in one list. Add one, explain it, and keep its links together."
         actions={
           <Button onClick={openCreate}>
             <Plus size={17} /> Add idea
@@ -222,39 +171,9 @@ export function MarketingManager() {
         }
       />
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <Card className="flex items-center gap-3 p-4">
-          <div className="grid size-10 place-items-center rounded-lg bg-violet-50 text-violet-600">
-            <Lightbulb size={20} />
-          </div>
-          <div>
-            <p className="text-2xl font-semibold">{activeCount}</p>
-            <p className="text-xs text-slate-500">Active ideas</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-3 p-4">
-          <div className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
-            <Rocket size={20} />
-          </div>
-          <div>
-            <p className="text-2xl font-semibold">{readyCount}</p>
-            <p className="text-xs text-slate-500">Ready to publish</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-3 p-4">
-          <div className="grid size-10 place-items-center rounded-lg bg-slate-100 text-slate-600">
-            <CheckCircle2 size={20} />
-          </div>
-          <div>
-            <p className="text-2xl font-semibold">{postedCount}</p>
-            <p className="text-xs text-slate-500">Posted</p>
-          </div>
-        </Card>
-      </div>
-
-      <Card className="mt-4 p-3">
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          <div className="relative sm:col-span-2 xl:col-span-1">
+      <Card className="p-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="relative">
             <Search
               aria-hidden="true"
               size={16}
@@ -265,18 +184,9 @@ export function MarketingManager() {
               className="pl-9"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search ideas..."
+              placeholder="Search ideas…"
             />
           </div>
-          <Select
-            aria-label="Filter by visibility"
-            value={visibility}
-            onChange={(event) => setVisibility(event.target.value as Visibility)}
-          >
-            <option value="active">Active pipeline</option>
-            <option value="posted">Posted only</option>
-            <option value="all">All ideas</option>
-          </Select>
           <Select
             aria-label="Filter by owner"
             value={owner}
@@ -316,20 +226,44 @@ export function MarketingManager() {
         </div>
       </Card>
 
-      <div className="mt-5">
-        <MarketingBoard
-          ideas={filteredIdeas}
-          onEdit={openEdit}
-          onDelete={setDeleting}
-          onMove={(idea, status) => void move(idea, status)}
-        />
-      </div>
+      <section className="mt-5 rounded-xl border bg-slate-50/80 p-3 sm:p-4">
+        <div className="mb-3 flex items-start justify-between gap-3 px-1">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <span aria-hidden="true" className="size-2 rounded-full bg-violet-500" />
+              Ideas
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">Everything the team wants to try</p>
+          </div>
+          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-600 shadow-sm">
+            {visibleIdeas.length}
+          </span>
+        </div>
+
+        {visibleIdeas.length ? (
+          <div className="space-y-3">
+            {visibleIdeas.map((idea) => (
+              <MarketingIdeaCard key={idea.id} idea={idea} onEdit={openEdit} onDelete={setDeleting} />
+            ))}
+          </div>
+        ) : filtering ? (
+          <p className="rounded-lg border border-dashed bg-white/60 px-4 py-8 text-center text-sm text-slate-500">
+            No ideas match these filters.
+          </p>
+        ) : (
+          <EmptyState
+            title="No marketing ideas yet"
+            description="Add the first one. A rough idea with a sentence of explanation is enough to start."
+            action={<Button onClick={openCreate}>Add idea</Button>}
+          />
+        )}
+      </section>
 
       <Modal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        title={editing ? "Edit marketing idea" : "Add marketing idea"}
-        description="Build enough clarity for the next person to move this idea forward."
+        title={editing ? "Edit idea" : "Add idea"}
+        description="Enough detail for the next person to pick this up."
       >
         <MarketingIdeaForm
           draft={draft}
@@ -343,8 +277,8 @@ export function MarketingManager() {
       <ConfirmDialog
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title="Delete marketing idea?"
-        description={`This permanently deletes “${deleting?.title ?? "this idea"}” and its creative links.`}
+        title="Delete idea?"
+        description={`This permanently deletes “${deleting?.title ?? "this idea"}” and its links.`}
         onConfirm={() => void remove()}
       />
     </>
