@@ -23,6 +23,10 @@ service cloud.firestore {
       allow read, write: if isAllowedUser();
     }
 
+    match /marketingIdeas/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
     match /clients/{document=**} {
       allow read, write: if isAllowedUser();
     }

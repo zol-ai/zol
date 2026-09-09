@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   cardCreateSchema,
   clientCreateSchema,
+  marketingIdeaCreateSchema,
+  marketingIdeaUpdateSchema,
   noteCreateSchema,
   taskCreateSchema,
   teamMemberCreateSchema,
@@ -55,6 +57,48 @@ describe("card validation", () => {
     expect(() =>
       cardCreateSchema.parse({ title: "", todos: [{ id: "one", text: "", done: false }] }),
     ).toThrow();
+  });
+});
+
+describe("marketing idea validation", () => {
+  it("supplies useful defaults for a quick idea", () => {
+    expect(marketingIdeaCreateSchema.parse({ title: "Founder video" })).toMatchObject({
+      title: "Founder video",
+      contentType: "social_post",
+      status: "idea",
+      links: [],
+    });
+  });
+
+  it("accepts a posted video with a valid creative link", () => {
+    const result = marketingIdeaCreateSchema.parse({
+      title: "Customer story",
+      contentType: "video",
+      channel: "youtube",
+      status: "posted",
+      targetDate: "2026-09-18",
+      links: [{ id: "draft", label: "Video draft", url: "https://youtu.be/example" }],
+    });
+    expect(result.status).toBe("posted");
+    expect(result.links).toHaveLength(1);
+  });
+
+  it("rejects invalid links, dates, and stages", () => {
+    expect(() =>
+      marketingIdeaCreateSchema.parse({
+        title: "Broken",
+        targetDate: "2026-02-30",
+        status: "published",
+        links: [{ id: "draft", label: "Draft", url: "not-a-url" }],
+      }),
+    ).toThrow();
+  });
+
+  it("allows a focused stage transition and rejects empty updates", () => {
+    expect(marketingIdeaUpdateSchema.parse({ status: "ready" })).toEqual({
+      status: "ready",
+    });
+    expect(() => marketingIdeaUpdateSchema.parse({})).toThrow();
   });
 });
 

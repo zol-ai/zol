@@ -4,6 +4,23 @@ export type ClientStatus = "lead" | "active" | "paused" | "closed";
 export type ClientColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 export type WorkCardColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
 export type NoteColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+export type MarketingIdeaStatus = "idea" | "planned" | "creating" | "ready" | "posted";
+export type MarketingContentType =
+  | "video"
+  | "social_post"
+  | "blog"
+  | "email"
+  | "campaign"
+  | "other";
+export type MarketingChannel =
+  | "instagram"
+  | "linkedin"
+  | "youtube"
+  | "tiktok"
+  | "x"
+  | "email"
+  | "website"
+  | "other";
 
 export type TeamMember = {
   id: string;
@@ -149,6 +166,30 @@ export type WorkspaceNote = {
   updatedAt: string;
 };
 
+export type MarketingIdeaLink = {
+  id: string;
+  label: string;
+  url: string;
+};
+
+export type MarketingIdea = {
+  id: string;
+  title: string;
+  brief?: string;
+  hook?: string;
+  callToAction?: string;
+  contentType: MarketingContentType;
+  channel?: MarketingChannel;
+  ownerId?: string;
+  ownerName?: string;
+  targetDate?: string;
+  links: MarketingIdeaLink[];
+  status: MarketingIdeaStatus;
+  createdAt: string;
+  updatedAt: string;
+  postedAt?: string | null;
+};
+
 export type TeamMemberDocument = Omit<TeamMember, "id" | "createdAt" | "updatedAt"> & {
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
@@ -176,6 +217,15 @@ export type WorkCardDocument = Omit<WorkCard, "id" | "createdAt" | "updatedAt"> 
 export type WorkspaceNoteDocument = Omit<WorkspaceNote, "id" | "createdAt" | "updatedAt"> & {
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type MarketingIdeaDocument = Omit<
+  MarketingIdea,
+  "id" | "createdAt" | "updatedAt" | "postedAt"
+> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+  postedAt?: FirebaseFirestore.Timestamp | null;
 };
 
 export type ScheduleColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";

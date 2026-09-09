@@ -23,9 +23,9 @@ const navigation = [
   { href: "/tasks", label: "Tasks", icon: CheckSquare2 },
   { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/cards", label: "Cards", icon: PanelsTopLeft },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
   { href: "/team", label: "Team", icon: Users },
   { href: "/clients", label: "CRM", icon: BriefcaseBusiness },
-  { href: "/marketing", label: "Marketing ideas", icon: Megaphone },
 ];
 
 export function AppShell({

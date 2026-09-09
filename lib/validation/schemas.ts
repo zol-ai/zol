@@ -238,9 +238,76 @@ export const scheduleQuerySchema = z
     message: "to must be on or after from",
   });
 
+const marketingLinkSchema = z
+  .object({
+    id: z.string().trim().min(1).max(120),
+    label: z.string().trim().min(1, "Link label is required").max(120),
+    url: z.string().trim().url("Enter a valid URL").max(2000),
+  })
+  .strict();
+
+const marketingContentTypeSchema = z.enum([
+  "video",
+  "social_post",
+  "blog",
+  "email",
+  "campaign",
+  "other",
+]);
+
+const marketingChannelSchema = z.enum([
+  "instagram",
+  "linkedin",
+  "youtube",
+  "tiktok",
+  "x",
+  "email",
+  "website",
+  "other",
+]);
+
+const marketingStatusSchema = z.enum(["idea", "planned", "creating", "ready", "posted"]);
+
+export const marketingIdeaCreateSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required").max(200),
+    brief: optionalText,
+    hook: z.string().trim().max(1000).optional().transform((value) => value || undefined),
+    callToAction: z.string().trim().max(500).optional().transform((value) => value || undefined),
+    contentType: marketingContentTypeSchema.default("social_post"),
+    channel: marketingChannelSchema
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    ownerId: optionalId,
+    targetDate: optionalDay,
+    links: z.array(marketingLinkSchema).max(10).default([]),
+    status: marketingStatusSchema.default("idea"),
+  })
+  .strict();
+
+export const marketingIdeaUpdateSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required").max(200).optional(),
+    brief: optionalText,
+    hook: z.string().trim().max(1000).optional().transform((value) => value || undefined),
+    callToAction: z.string().trim().max(500).optional().transform((value) => value || undefined),
+    contentType: marketingContentTypeSchema.optional(),
+    channel: marketingChannelSchema
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    ownerId: optionalId,
+    targetDate: optionalDay,
+    links: z.array(marketingLinkSchema).max(10).optional(),
+    status: marketingStatusSchema.optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required");
+
 export type ScheduleEventInput = z.infer<typeof scheduleEventCreateSchema>;
 export type ScheduleEventUpdateInput = z.infer<typeof scheduleEventUpdateSchema>;
 export type ScheduleQuery = z.infer<typeof scheduleQuerySchema>;
+export type MarketingIdeaInput = z.infer<typeof marketingIdeaCreateSchema>;
+export type MarketingIdeaUpdateInput = z.infer<typeof marketingIdeaUpdateSchema>;
 
 export type TaskInput = z.infer<typeof taskCreateSchema>;
 export type TeamMemberInput = z.infer<typeof teamMemberCreateSchema>;

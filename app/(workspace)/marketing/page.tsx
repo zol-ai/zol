@@ -1,5 +1,5 @@
-import { MarketingIdeas } from "@/components/marketing/marketing-ideas";
+import { MarketingManager } from "@/components/marketing/marketing-manager";
 
 export default function MarketingPage() {
-  return <MarketingIdeas />;
+  return <MarketingManager />;
 }
