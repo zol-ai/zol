@@ -4,6 +4,7 @@ import { updateDeclined } from "@/app/actions/declined";
 import { PageHead } from "@/components/app/shell";
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { formatDate } from "@/lib/format";
 import { formatCents } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 
@@ -53,6 +54,22 @@ export default async function DeclinedPage() {
   return (
     <>
       <PageHead eyebrow={user.shopName} title="Declined work" />
+
+      {/* The recall list is the CRM's second tab: the same person works both. */}
+      <nav aria-label="CRM sections" className="mb-5 flex gap-1 border-b border-line">
+        <Link
+          href="/app/crm"
+          className="px-3 py-2 text-[0.875rem] font-medium text-ink-2 hover:text-ink"
+        >
+          Follow-ups
+        </Link>
+        <span
+          aria-current="page"
+          className="border-b-2 border-emerald-deep px-3 py-2 text-[0.875rem] font-semibold text-ink"
+        >
+          Declined work
+        </span>
+      </nav>
 
       <p className="mb-6 max-w-2xl text-[0.9375rem] text-ink-2">
         Everything a customer said no to, and when to bring it up again.{" "}
@@ -120,12 +137,7 @@ function Group({
                   <span className="t-data">{formatPhone(item.phone)}</span>
                   {item.vehicle && ` · ${item.vehicle}`}
                   {" · declined "}
-                  {new Date(item.declined_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    timeZone: timezone,
-                  })}
+                  {formatDate(item.declined_at, timezone)}
                 </p>
                 {/*
                   A customer who has texted STOP must never be queued for an
@@ -149,13 +161,9 @@ function Group({
               {!highlight && (
                 <span className="w-32 text-right text-[0.8125rem] text-ink-3">
                   {item.reminded_at
-                    ? "raised already"
+                    ? `raised ${formatDate(item.reminded_at, timezone)}`
                     : item.remind_after
-                      ? new Date(item.remind_after).toLocaleDateString("en-US", {
-                          month: "short",
-                          year: "numeric",
-                          timeZone: timezone,
-                        })
+                      ? formatDate(item.remind_after, timezone)
                       : "no reminder"}
                 </span>
               )}

@@ -1,40 +1,62 @@
 # ZOL
 
-The AI front desk for independent auto repair shops. It answers every call
-night and weekend, books the job, texts the estimate, chases the approval and
-flags vendor delays — **on top of** the shop management software the shop
-already runs (Tekmetric, Shopmonkey, Shop-Ware, Mitchell 1, AutoLeap), rather
-than replacing it. No rip and replace is the core positioning.
+Shop management software that does the work instead of just recording it.
+ZOL answers the phone night and weekend, books the job, checks the car in,
+helps the tech diagnose and inspect it, texts the estimate, takes the approval
+from the customer's phone, tracks the parts, invoices, takes payment and
+follows up afterwards — one record from the first call to the next visit.
 
 ```
 zol/
-├── web/          Next.js 16 — landing page, the app, Twilio webhooks
+├── web/          Next.js 16 — landing page, the app, the customer portal, webhooks, jobs
 ├── db/           PostgreSQL schema and migrations
 ├── infra/        Scripts that provision Cloud SQL and wire Vercel
-├── docs/         Architecture, roadmap, deploy runbook
+├── docs/         Architecture, roadmap, deploy runbook, telephony
 └── .env.example  Every environment variable the app reads
 ```
 
 ## What's behind sign-in
 
-A shop signs up at `/signup`, which creates the shop, its owner and a default
-week of opening hours. The owner invites advisors and techs from **Team** and
-hands over the link — there's no outbound email yet, and warming a sending
-domain is the same carrier-reputation problem the SMS side is waiting on.
+A shop signs up at `/signup`, which creates the shop, its owner, a default week
+of opening hours and a public handle (`/talk/<slug>`, where its customers can
+reach the receptionist from the web). The owner invites advisors and techs from
+**Team** and hands over the link.
 
-| Screen | What it does |
+| Section | What it does |
 | --- | --- |
-| Today | Counts, and what's still missing before ZOL can answer a call |
-| Schedule | A day per bay. The database refuses to double-book one |
-| Repair orders | The board, and a ticket with lines, totals and the quote cap |
-| Customers | Name, phone, plate, VIN or make — one search box over all of it |
-| Declined | What customers said no to, and when to raise it again |
-| Team | Invites and who has an account |
-| Settings | Labour rate, parts margin, tax, hours, and the quote cap |
+| Today | The day at a glance: appointments, what's in the shop, what needs a person, revenue, technician load |
+| Calls | Every conversation ZOL has had — transcript, what it extracted, what it booked. A test-call button runs the real pipeline on a scripted call |
+| Schedule | A day per bay, with technicians. Arrive → check-in → the ticket opens itself |
+| Repair orders | The board, and the workbench: diagnostics, digital inspection, lines and approvals, estimate, parts, invoice, conversation, history |
+| Inspections · Estimates · Parts · Invoices · Payments | Shop-wide views of the same records |
+| Technicians | Each tech's queue, with one-tap status moves |
+| Customers · Vehicles | The connected record: visits, messages, calls, declined work, lifetime value |
+| Messages | Every thread with a customer, texts and portal messages alike |
+| Follow-ups | The CRM: declined work, inspection recommendations, post-repair check-ins, birthdays, win-backs — drafted by ZOL, sent by the worker |
+| Ask ZOL | Questions about the shop answered from its own data, with links to the record |
+| Team · Settings | People, pricing, hours, the quote cap, and which integrations are live |
+
+The customer never signs in. Every estimate and invoice text carries a link to
+`/portal/<token>`: their car, its status, the inspection, the estimate to
+approve line by line, and the invoice to pay.
 
 Sessions are rows in Postgres, not signed tokens, so disabling somebody or
 signing out takes effect on the very next request. Passwords are scrypt from
 Node's standard library — no native module to fail at build time on Vercel.
+
+## What runs without keys, and what lights up with them
+
+Everything above works with only a database. Three integrations are seams
+with a labelled fallback behind each:
+
+| Integration | Without it | With it |
+| --- | --- | --- |
+| OpenAI (`OPENAI_API_KEY`) | Diagnostics, inspection summaries, estimate wording, follow-up drafts and the receptionist use deterministic, clearly labelled fallbacks | The same features answer through the model, validated against a schema before anything is stored |
+| Twilio (`ZOL_TELEPHONY_ENABLED` + credentials) | Customer messages land on the customer's portal page only; nothing leaves the building | The same queued messages go out as texts; inbound texts reach the receptionist; STOP is honoured either way |
+| Stripe (`STRIPE_SECRET_KEY`) | The portal records a clearly labelled demo payment so the paid → closed → follow-up chain can be exercised | Stripe Checkout, confirmed by webhook. ZOL never sees a card number |
+
+Photos on inspections need a Cloud Storage bucket (`GCS_BUCKET`); without one
+the upload controls simply don't render.
 
 ## Changing the schema
 
@@ -47,7 +69,8 @@ cd web && npm run db:migrate
 
 A Vercel build has no reliable route to Cloud SQL, and migrating from CI
 races every preview deployment against production's schema. `npm run
-db:status` lists what has and hasn't been applied.
+db:status` lists what has and hasn't been applied. Migrations are additive and
+safe to apply ahead of the code that uses them.
 
 ## Run it
 
@@ -55,48 +78,33 @@ db:status` lists what has and hasn't been applied.
 cd web && npm install && npm run dev
 ```
 
-The landing page renders with no configuration. Only the API routes need keys —
-copy `.env.example` to `web/.env.local` and fill in what you need.
+The landing page renders with no configuration. For the app, point
+`DATABASE_URL` at a Postgres 16, load the schema and migrations, and seed a
+demo shop to click around in:
 
-## Swapping the hero photos
+```bash
+cd web && npm run db:load && npm run db:migrate && node scripts/seed-demo.mjs
+```
 
-The hero rotates through five images. The ones in `web/public/images/shop-0*.svg`
-are hand-drawn placeholders — replace them with real photographs of your shops
-(or licensed stock) whenever you have them.
-
-1. Drop five landscape files, around 2000px wide, into `web/public/images/`.
-2. Update the `src` extensions in `web/src/components/site/hero-media.tsx` and
-   rewrite each `alt` to describe the actual photo.
-3. Remove `unoptimized` from the `<Image>` in that file so Next.js resizes and
-   serves WebP — that flag exists only because SVGs gain nothing from it.
-
-Timing, crossfade, preloading and the dot controls all stay as they are.
+Sign in as `owner@demo.zol` / `DemoShop2026!`. The seed refuses to run against
+Cloud SQL. Unit tests: `npm test`. Types: `npm run typecheck`.
 
 ## Deploy
 
-Full runbook in [docs/DEPLOY.md](docs/DEPLOY.md). The short version, once
-`gcloud auth login`, `gcloud auth application-default login` and `vercel login`
-have been run:
+Full runbook in [docs/DEPLOY.md](docs/DEPLOY.md); the Cloud Scheduler jobs
+(waitlist sweep, follow-up worker) are in [SETUP.md](SETUP.md).
 
-```bash
-pwsh ./infra/gcp-setup.ps1
-```
-
-```bash
-pwsh ./infra/load-schema.ps1
-```
-
-```bash
-pwsh ./infra/vercel-env.ps1
-```
-
-**Vercel** — project root `web/`. Every branch gets a preview URL.
+**Vercel** — project root `web/`, deploys from `main`. This is tryzol.com: the
+landing page, the app and the customer portal.
 
 **Cloud Run** — the same commit builds a container:
 
 ```bash
 gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
 ```
+
+This is where the scheduled jobs run and where Twilio's webhooks point, because
+a phone call needs a socket held open longer than a serverless function lives.
 
 ## Telephony is deliberately switched off
 
@@ -105,14 +113,18 @@ closed while it is. Twilio's carrier registration (A2P 10DLC) hasn't cleared
 yet, and running an unregistered number gets messages filtered and numbers
 blocked — with the damage landing on the shop's phone number.
 
-Signature verification, STOP/HELP handling, and the voicemail fallback all work
-today. Flipping the flag is the go-live step.
+Signature verification, STOP/HELP handling, the receptionist engine and the
+messaging seam all work today. Flipping the flag is the go-live step for
+texting; the voice path additionally needs the realtime media service
+described in [docs/TELEPHONY.md](docs/TELEPHONY.md).
 
 ## Documentation
 
 - [Deploy](docs/DEPLOY.md) — the three cloud connections and how to make them
-- [Architecture](docs/ARCHITECTURE.md) — how the pieces fit, and why the call
-  path can't live on serverless
+- [Architecture](docs/ARCHITECTURE.md) — how the pieces fit, and the seams
+  the integrations plug into
+- [Telephony](docs/TELEPHONY.md) — what the flag flips on, and what the
+  realtime service must call
 - [Roadmap](docs/ROADMAP.md) — what's built, what's next, what the risks are
 
 ## Book a demo

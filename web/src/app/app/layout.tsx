@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AppShell } from "@/components/app/shell";
 import { requireUser } from "@/lib/auth";
+import { unreadNotifications } from "@/lib/notifications";
 
 export const metadata: Metadata = {
   // Nothing behind sign-in belongs in an index, and the shop's customer names
@@ -19,5 +20,11 @@ export const metadata: Metadata = {
  */
 export default async function AppLayout({ children }: LayoutProps<"/app">) {
   const user = await requireUser();
-  return <AppShell user={user}>{children}</AppShell>;
+  // Best-effort: the bell must never keep a page from rendering.
+  const unread = await unreadNotifications(user.shopId, user.staffId).catch(() => 0);
+  return (
+    <AppShell user={user} unread={unread}>
+      {children}
+    </AppShell>
+  );
 }

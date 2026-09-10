@@ -4,7 +4,7 @@ import { useActionState } from "react";
 
 import type { FormState } from "@/app/actions/auth";
 import { saveCustomer, saveVehicle } from "@/app/actions/customers";
-import { Field, FormError, Submit } from "@/components/app/field";
+import { Field, FormError, Select, Submit } from "@/components/app/field";
 
 export interface CustomerRecord {
   id: string;
@@ -12,6 +12,8 @@ export interface CustomerRecord {
   phone: string;
   email: string | null;
   birthday: string | null;
+  preferred_contact: string;
+  address: string | null;
   notes: string | null;
 }
 
@@ -21,10 +23,16 @@ export interface VehicleRecord {
   make: string | null;
   model: string | null;
   trim: string | null;
+  engine: string | null;
+  color: string | null;
   vin: string | null;
   plate: string | null;
   mileage: number | null;
+  notes: string | null;
 }
+
+const TEXTAREA =
+  "w-full rounded-[var(--radius)] border border-line-2 bg-paper px-3 py-2.5 text-[0.9375rem] text-ink";
 
 export function CustomerForm({
   customer,
@@ -80,6 +88,29 @@ export function CustomerForm({
           error={state?.fields?.birthday}
           hint="Only if they offer it."
         />
+        {/*
+          A preference, not a rule: sms_opted_out still wins over everything,
+          and ZOL only texts. This tells the person working the CRM whether to
+          pick up the phone instead.
+        */}
+        <Select
+          label="Prefers to hear from you by"
+          name="preferred_contact"
+          defaultValue={v?.preferred_contact ?? customer?.preferred_contact ?? "sms"}
+          error={state?.fields?.preferred_contact}
+        >
+          <option value="sms">Text message</option>
+          <option value="email">Email</option>
+          <option value="phone">Phone call</option>
+        </Select>
+        <Field
+          label="Address"
+          name="address"
+          autoComplete="off"
+          defaultValue={v?.address ?? customer?.address ?? ""}
+          error={state?.fields?.address}
+          hint="For the invoice, and for knowing who's local."
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -91,7 +122,7 @@ export function CustomerForm({
           name="notes"
           rows={3}
           defaultValue={v?.notes ?? customer?.notes ?? ""}
-          className="w-full rounded-[var(--radius)] border border-line-2 bg-paper px-3 py-2.5 text-[0.9375rem] text-ink"
+          className={TEXTAREA}
         />
       </div>
 
@@ -152,20 +183,20 @@ export function VehicleForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {/* Seventeen characters need the whole width of a phone. */}
-        <div className="col-span-2 sm:col-span-1">
-          <Field
-            label="VIN"
-            name="vin"
-            maxLength={17}
-            autoCapitalize="characters"
-            spellCheck={false}
-            defaultValue={v?.vin ?? vehicle?.vin ?? ""}
-            error={state?.fields?.vin}
-            hint="17 characters, off the door jamb."
-          />
-        </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Field
+          label="Engine"
+          name="engine"
+          placeholder="2.5L I4"
+          defaultValue={v?.engine ?? vehicle?.engine ?? ""}
+          error={state?.fields?.engine}
+        />
+        <Field
+          label="Colour"
+          name="color"
+          defaultValue={v?.color ?? vehicle?.color ?? ""}
+          error={state?.fields?.color}
+        />
         <Field
           label="Plate"
           name="plate"
@@ -180,6 +211,35 @@ export function VehicleForm({
           inputMode="numeric"
           defaultValue={v?.mileage ?? vehicle?.mileage ?? ""}
           error={state?.fields?.mileage}
+        />
+      </div>
+
+      {/* Seventeen characters need the whole width of a phone. */}
+      <Field
+        label="VIN"
+        name="vin"
+        maxLength={17}
+        autoCapitalize="characters"
+        spellCheck={false}
+        defaultValue={v?.vin ?? vehicle?.vin ?? ""}
+        error={state?.fields?.vin}
+        hint="17 characters, off the door jamb."
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor={vehicle ? `vehicle-notes-${vehicle.id}` : "vehicle-notes"}
+          className="text-[0.8125rem] font-semibold text-ink-2"
+        >
+          Notes
+        </label>
+        <textarea
+          id={vehicle ? `vehicle-notes-${vehicle.id}` : "vehicle-notes"}
+          name="notes"
+          rows={2}
+          placeholder="Aftermarket alarm, wheel lock key in the glovebox…"
+          defaultValue={v?.notes ?? vehicle?.notes ?? ""}
+          className={TEXTAREA}
         />
       </div>
 

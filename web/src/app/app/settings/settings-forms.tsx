@@ -5,15 +5,20 @@ import { useActionState } from "react";
 import { changePassword, type FormState } from "@/app/actions/auth";
 import { saveHours, saveShop } from "@/app/actions/shop";
 import { Field, FormError, Submit } from "@/components/app/field";
+import { formatPhone } from "@/lib/phone";
 
 export interface ShopSettings {
   name: string;
+  slug: string;
   timezone: string;
   bay_count: number;
   labor_rate_cents: number;
   parts_margin_pct: string;
   tax_rate_pct: string;
   auto_quote_cap_cents: number;
+  address: string | null;
+  public_phone: string | null;
+  email: string | null;
 }
 
 export interface DayHours {
@@ -43,6 +48,7 @@ export function ShopForm({ shop }: { shop: ShopSettings }) {
     saveShop,
     undefined,
   );
+  const v = state?.values;
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -64,6 +70,38 @@ export function ShopForm({ shop }: { shop: ShopSettings }) {
           error={state?.fields?.timezone}
           hint="IANA name, e.g. America/Los_Angeles."
         />
+        <Field
+          label="Public phone"
+          name="public_phone"
+          type="tel"
+          inputMode="tel"
+          // Stored E.164, shown the way the owner would write it on a card;
+          // the action normalises whatever comes back.
+          defaultValue={v?.public_phone ?? (shop.public_phone ? formatPhone(shop.public_phone) : "")}
+          error={state?.fields?.public_phone}
+          hint="The number customers dial. It goes in every text ZOL sends."
+        />
+        <Field
+          label="Email"
+          name="email"
+          type="email"
+          autoCapitalize="off"
+          spellCheck={false}
+          defaultValue={v?.email ?? shop.email ?? ""}
+          error={state?.fields?.email}
+          hint="Printed on estimates and invoices."
+        />
+      </div>
+
+      <Field
+        label="Address"
+        name="address"
+        autoComplete="street-address"
+        defaultValue={v?.address ?? shop.address ?? ""}
+        error={state?.fields?.address}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="Bays"
           name="bay_count"

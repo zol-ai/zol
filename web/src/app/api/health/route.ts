@@ -1,4 +1,5 @@
 import { env } from "@/lib/env";
+import { messagingStatus } from "@/lib/messaging/provider";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +8,8 @@ export const dynamic = "force-dynamic";
  * configured without ever echoing a secret — only whether one is present.
  */
 export function GET() {
+  const messaging = messagingStatus();
+
   return Response.json(
     {
       status: "ok",
@@ -14,8 +17,16 @@ export function GET() {
       time: new Date().toISOString(),
       subsystems: {
         telephony: env.telephonyEnabled ? "enabled" : "awaiting-carrier-registration",
-        twilioConfigured: Boolean(process.env.TWILIO_AUTH_TOKEN),
-        openaiConfigured: Boolean(process.env.OPENAI_API_KEY),
+        twilioConfigured: env.twilio.configured,
+        // Where a customer message actually goes today: "twilio" or the
+        // customer's portal page only.
+        messaging: messaging.mode,
+        openaiConfigured: env.openai.configured,
+        stripeConfigured: env.stripe.configured,
+        photoStorageConfigured: env.storage.configured,
+        followUpWorkerConfigured: Boolean(
+          env.jobs.audience && env.jobs.schedulerServiceAccount,
+        ),
         // Whether credentials are present, not whether the server answers —
         // that costs a round trip and lives at /api/health/db.
         databaseConfigured: env.database.configured,

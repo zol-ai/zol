@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth";
 import { query, tx } from "@/lib/db";
+import { toE164 } from "@/lib/phone";
 import { recalculateOpen } from "@/lib/ro-totals";
 import type { FormState } from "./auth";
 
@@ -37,6 +38,8 @@ function percent(raw: string): number | undefined {
   return value >= 0 && value <= 100 ? value : undefined;
 }
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export async function saveShop(
   _state: FormState | undefined,
   form: FormData,
@@ -50,7 +53,11 @@ export async function saveShop(
   const margin = percent(text(form, "parts_margin_pct"));
   const tax = percent(text(form, "tax_rate_pct"));
   const cap = cents(text(form, "auto_quote_cap"));
+  const address = text(form, "address");
+  const rawPublicPhone = text(form, "public_phone");
+  const email = text(form, "email");
 
+  const values = { address, public_phone: rawPublicPhone, email };
   const fields: Record<string, string> = {};
   if (name.length < 2) fields.name = "The shop needs a name.";
   if (!Number.isInteger(bays) || bays < 1 || bays > 60) {
@@ -60,6 +67,19 @@ export async function saveShop(
   if (margin === undefined) fields.parts_margin_pct = "A percentage, 0 to 100.";
   if (tax === undefined) fields.tax_rate_pct = "A percentage, 0 to 100.";
   if (cap === undefined) fields.auto_quote_cap = "A dollar amount, like 1000.00.";
+
+  /*
+    The public number is what goes in every text ("or call (661) 555-0100")
+    and on the invoice, so it is stored E.164 like every other number and
+    rendered for humans at the edge. It is not the Twilio line ZOL answers
+    on — that one is provisioned, not typed.
+  */
+  const publicPhone = rawPublicPhone ? toE164(rawPublicPhone) : null;
+  if (rawPublicPhone && !publicPhone) {
+    fields.public_phone = "Ten digits, or + and a country code.";
+  }
+  if (email && !EMAIL.test(email)) fields.email = "That doesn't look like an email.";
+  if (address.length > 200) fields.address = "That's too long for an address.";
 
   // Postgres will reject an unknown zone anyway; catching it here gives the
   // owner a sentence instead of a 500.
@@ -71,7 +91,7 @@ export async function saveShop(
     if (!known[0]?.ok) fields.timezone = "Not a time zone Postgres knows.";
   }
 
-  if (Object.keys(fields).length > 0) return { fields };
+  if (Object.keys(fields).length > 0) return { fields, values };
 
   /*
     The CTE captures the rate as it was before the UPDATE — RETURNING alone
@@ -86,11 +106,24 @@ export async function saveShop(
      UPDATE shops
         SET name = $2, timezone = $3, bay_count = $4,
             labor_rate_cents = $5, parts_margin_pct = $6,
-            tax_rate_pct = $7, auto_quote_cap_cents = $8
+            tax_rate_pct = $7, auto_quote_cap_cents = $8,
+            address = $9, public_phone = $10, email = $11
        FROM before
       WHERE shops.id = $1
       RETURNING before.tax_rate_pct <> $7 AS tax_changed`,
-    [user.shopId, name, timezone, bays, labor, margin, tax, cap],
+    [
+      user.shopId,
+      name,
+      timezone,
+      bays,
+      labor,
+      margin,
+      tax,
+      cap,
+      address || null,
+      publicPhone,
+      email || null,
+    ],
   );
 
   /*

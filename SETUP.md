@@ -302,3 +302,97 @@ The cursor is keyset on `(updated_at, event_id)` ascending, which makes the
 walk at-least-once rather than at-most-once: a row updated mid-walk moves
 *behind* the cursor and is visited twice, never skipped. Duplicates are free —
 the receiver discards them on the dedupe marker. Treat the cursor as opaque.
+
+---
+
+# Setup — the follow-up worker
+
+`POST /api/jobs/follow-ups` drains the shop's outbound queue: every row in
+`follow_ups` that is `pending` and due goes out through the messaging
+provider (Twilio when `ZOL_TELEPHONY_ENABLED=true` and the credentials are
+set; otherwise onto the customer's portal page), and the calendar-driven
+rows — declined-work recalls whose reminder date has arrived, birthday texts
+— are queued first so they go out in the same pass. The code is
+`web/src/lib/jobs/follow-ups.ts`; the CRM's "Send now" button calls the same
+delivery function directly, so nothing a person sends from the screen takes
+a different path from what the scheduler sends at 2am.
+
+Same door as the waitlist sweeper above, and the same two strings that must
+match character for character: the audience the scheduler mints its token
+for, and the audience the route checks. **Reuse the `zol-scheduler` service
+account from step 3** — it is Cloud Scheduler's identity, and one identity
+for "Cloud Scheduler calling this service" is the right number. The route's
+own allowlist is a separate variable so the two jobs can be split later
+without touching code.
+
+```
+Cloud Scheduler ──(OIDC, every 5 min)──▶ zol-web /api/jobs/follow-ups
+                                              │
+                                              │ FOR UPDATE SKIP LOCKED, one row per transaction
+                                              ▼
+                                          Cloud SQL ──▶ Twilio (or the portal)
+```
+
+## 1. Configure the service
+
+`--update-env-vars`, never `--set-env-vars` — the latter replaces the whole
+variable set and strips the database credentials.
+
+```bash
+gcloud run services update zol-web --region us-west1 --update-env-vars "JOBS_SCHEDULER_SERVICE_ACCOUNT=zol-scheduler@PROJECT_ID.iam.gserviceaccount.com,JOBS_AUDIENCE=https://zol-web-XXXXXX.REGION.run.app/api/jobs/follow-ups,ZOL_CUSTOMER_URL=https://tryzol.com"
+```
+
+`JOBS_AUDIENCE` is the full worker URL, path included, exactly as the
+scheduler job below mints it. `ZOL_CUSTOMER_URL` is where the links inside
+those messages point — the portal lives on the Vercel deployment, and the
+worker has no browser request to read a host from. Leave `ZOL_PUBLIC_URL` as
+the run.app origin: Twilio's signature check needs it to match the webhook
+URL, which is why the two are separate variables. The route fails closed while either variable is
+unset: it answers 401 to everyone and the queue simply waits — visible on the
+CRM as a growing "Due now" count, never as a stranger texting a shop's
+customers.
+
+## 2. Create the schedule
+
+```bash
+gcloud scheduler jobs create http follow-ups --location us-west1 --schedule "*/5 * * * *" --uri "https://zol-web-XXXXXX.REGION.run.app/api/jobs/follow-ups" --http-method POST --oidc-service-account-email "zol-scheduler@PROJECT_ID.iam.gserviceaccount.com" --oidc-token-audience "https://zol-web-XXXXXX.REGION.run.app/api/jobs/follow-ups" --attempt-deadline 300s
+```
+
+`--oidc-token-audience` and `JOBS_AUDIENCE` are the same string. A trailing
+slash on one and not the other is a 401 on every run.
+
+## 3. Check it
+
+```bash
+gcloud scheduler jobs run follow-ups --location us-west1
+```
+
+```bash
+gcloud run services logs read zol-web --region us-west1 --limit 50
+```
+
+A working run logs one line:
+
+```
+[follow-ups] 3 considered, 3 sent, 0 retrying, 0 failed, 0 cancelled, 0 skipped · queued 1 declined-work recall, 0 birthdays
+```
+
+and the response body carries the same counts as JSON. Each row is one
+transaction, so a row that throws is logged, has its attempt counted, and
+does not stop the rest of the batch. After five failed attempts (or one
+permanent failure — an invalid number, a customer who texted STOP) the row is
+marked `failed` and the shop gets a notification to call instead.
+
+| Symptom | Cause |
+| --- | --- |
+| `401` from the scheduler job | `--oidc-token-audience` ≠ `JOBS_AUDIENCE` |
+| `[follow-ups] rejected caller: JOBS_AUDIENCE is not set` | Step 1 was skipped, or `--set-env-vars` wiped it |
+| `[follow-ups] rejected caller: caller … is not allowed` | `JOBS_SCHEDULER_SERVICE_ACCOUNT` doesn't match `zol-scheduler@…` |
+| Rows stay `pending` with `last_error` set | Twilio rejected them; the reason is on the row and in the CRM card. Transient errors retry on the next pass |
+| Everything goes out `via portal` | `ZOL_TELEPHONY_ENABLED` is not `true`, or the Twilio variables are missing — expected until carrier registration clears |
+
+What's due right now, and what gave up, is a query:
+
+```bash
+psql "$DATABASE_URL" -c "SELECT id, kind, status, attempts, last_error, scheduled_for FROM follow_ups WHERE status = 'pending' AND scheduled_for <= now() OR status = 'failed' ORDER BY scheduled_for"
+```

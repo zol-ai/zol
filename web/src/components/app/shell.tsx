@@ -1,68 +1,31 @@
-import Link from "next/link";
+import type { ReactNode } from "react";
 
-import { signOut } from "@/app/actions/auth";
-import { Wordmark } from "@/components/site/mark";
 import type { Session } from "@/lib/auth";
-import { AppNav } from "./app-nav";
+import { AppChrome } from "./app-chrome";
 
 /**
- * The chrome around every signed-in screen.
- *
- * A single top bar rather than a sidebar: the shop's counter machine is often
- * a laptop or a tablet held sideways, and horizontal space is the scarce one
- * once a repair order with parts lines is on screen.
+ * The chrome around every signed-in screen. The interactive part — the
+ * drawer, the ⌘K handler, the user menu — lives in `app-chrome.tsx` as a
+ * client component; this is the server-side seam that decides what it's
+ * told about the person and the shop.
  */
 export function AppShell({
   user,
+  unread = 0,
   children,
 }: {
   user: Session;
-  children: React.ReactNode;
+  /** Unread notifications for the bell. */
+  unread?: number;
+  children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-paper-2">
-      <header className="sticky top-0 z-40 border-b border-line bg-paper">
-        <div className="shell flex h-[60px] items-center justify-between gap-3 sm:gap-6">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <Link href="/app" aria-label="ZOL" className="flex-none">
-              <Wordmark size={26} />
-            </Link>
-            <span className="h-5 w-px flex-none bg-line-2" />
-            {/* Kept on a phone too: it is the only thing up here that says
-                which shop you are looking at. It truncates rather than
-                pushing Sign out off the edge. */}
-            <span className="truncate text-[0.875rem] font-semibold text-ink-2">
-              {user.shopName}
-            </span>
-          </div>
-
-          <div className="flex flex-none items-center gap-3">
-            <span className="hidden text-right text-[0.8125rem] leading-tight text-ink-3 md:block">
-              <span className="block font-semibold text-ink-2">
-                {user.fullName}
-              </span>
-              <span className="t-data text-[0.6875rem] uppercase tracking-wider">
-                {user.role}
-              </span>
-            </span>
-            {/*
-              A form, not a link: signing out is a state change, and a GET that
-              mutates gets fired by every link prefetcher and antivirus proxy
-              that walks the page.
-            */}
-            <form action={signOut}>
-              <button type="submit" className="btn btn-ghost btn-sm">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <AppNav role={user.role} />
-      </header>
-
-      <main className="shell w-full flex-1 py-6 sm:py-8">{children}</main>
-    </div>
+    <AppChrome
+      user={{ fullName: user.fullName, role: user.role, shopName: user.shopName }}
+      unread={unread}
+    >
+      {children}
+    </AppChrome>
   );
 }
 
@@ -70,17 +33,22 @@ export function AppShell({
 export function PageHead({
   eyebrow,
   title,
+  description,
   children,
 }: {
-  eyebrow?: string;
-  title: string;
-  children?: React.ReactNode;
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
+      <div className="min-w-0">
         {eyebrow && <p className="t-eyebrow mb-1.5">{eyebrow}</p>}
-        <h1 className="t-h2 text-[1.75rem] sm:text-[2rem]">{title}</h1>
+        <h1 className="t-h2 text-[1.625rem] sm:text-[1.875rem]">{title}</h1>
+        {description && (
+          <p className="mt-1.5 max-w-2xl text-[0.9375rem] text-ink-2">{description}</p>
+        )}
       </div>
       {children && (
         <div className="flex flex-wrap items-center gap-2">{children}</div>

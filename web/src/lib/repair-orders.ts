@@ -1,31 +1,20 @@
 /**
  * The statuses a ticket moves through, and what a human calls each one.
  *
- * Kept out of the actions file because a "use server" module may only export
- * async functions — a constant exported from one is a build error, not a
- * runtime surprise. Pages and forms need these strings too, so they live here
- * where both sides can import them.
+ * The definitions moved to `lib/statuses.ts` when the rest of the product
+ * grew its own vocabularies; these names stay so the screens written against
+ * them keep compiling. Kept out of the actions file for the reason it always
+ * was: a "use server" module may only export async functions, and a constant
+ * exported from one is a build error rather than a runtime surprise.
  */
 
-export const STATUSES = [
-  "open",
-  "awaiting_approval",
-  "awaiting_parts",
-  "in_progress",
-  "ready",
-  "closed",
-  "cancelled",
-] as const;
+export {
+  RO_STATUSES as STATUSES,
+  RO_STATUS_LABEL as STATUS_LABEL,
+  RO_STATUS_TONE as STATUS_TONE,
+  RO_PIPELINE as PIPELINE,
+  RO_OPEN_STATUSES as OPEN_STATUSES,
+  isRoStatus as isStatus,
+} from "./statuses";
 
-export type Status = (typeof STATUSES)[number];
-
-/** Shop language, not database language. Nobody says "awaiting_parts" out loud. */
-export const STATUS_LABEL: Record<Status, string> = {
-  open: "Open",
-  awaiting_approval: "Needs approval",
-  awaiting_parts: "Waiting on parts",
-  in_progress: "On the lift",
-  ready: "Ready",
-  closed: "Closed",
-  cancelled: "Cancelled",
-};
+export type { RoStatus as Status } from "./statuses";

@@ -1,154 +1,183 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { approveRepairOrder, removeLine } from "@/app/actions/repair-orders";
-import { STATUS_LABEL, type Status } from "@/lib/repair-orders";
-import {
-  AddLineForm,
-  RepairOrderForm,
-  type RepairOrderRecord,
-} from "@/components/app/ro-forms";
+import { approveRepairOrder } from "@/app/actions/repair-orders";
 import { DeclinedForm } from "@/components/app/declined-form";
+import { AssignmentForm, RepairOrderForm } from "@/components/app/ro-forms";
+import { ConversationPanel } from "@/components/app/ro/conversation-panel";
+import { DiagnosticsPanel } from "@/components/app/ro/diagnostics-panel";
+import { EstimatePanel } from "@/components/app/ro/estimate-panel";
+import { InspectionPanel } from "@/components/app/ro/inspection-panel";
+import { InvoicePanel } from "@/components/app/ro/invoice-panel";
+import { LinesPanel } from "@/components/app/ro/lines-panel";
+import { PartsPanel } from "@/components/app/ro/parts-panel";
+import { RoTimeline } from "@/components/app/ro/ro-timeline";
+import { StatusControls } from "@/components/app/ro/status-controls";
+import { Stepper } from "@/components/app/ro/stepper";
 import { PageHead } from "@/components/app/shell";
+import { Facts, Notice, Section, StatusBadge } from "@/components/app/ui";
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { formatDateTime, formatMiles } from "@/lib/format";
 import { formatCents } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { loadRepairOrder } from "@/lib/ro-context";
+import { zonedDate, zonedTime } from "@/lib/schedule";
+import { RO_STATUS_LABEL, SOURCE_LABEL } from "@/lib/statuses";
 
-export async function generateMetadata(
-  props: PageProps<"/app/repair-orders/[id]">,
-) {
+export async function generateMetadata(props: PageProps<"/app/repair-orders/[id]">) {
   const { id } = await props.params;
   const user = await requireUser();
-  const rows = await query<{ number: number }>(
-    "SELECT number FROM repair_orders WHERE id = $1 AND shop_id = $2",
-    [id, user.shopId],
-  );
-  return { title: rows[0] ? `RO #${rows[0].number}` : "Repair order" };
+  const ro = await loadRepairOrder(id, user);
+  return { title: ro ? `RO #${ro.number}` : "Repair order" };
 }
 
-const KIND_LABEL: Record<string, string> = {
-  labor: "Labour",
-  part: "Part",
-  fee: "Fee",
-  discount: "Discount",
-};
-
-export default async function RepairOrderPage(
-  props: PageProps<"/app/repair-orders/[id]">,
-) {
+/**
+ * The workbench.
+ *
+ * One screen, composed from panels that each own their rows. The header is
+ * the ticket: who, what car, who has it, where it is on the line, and the
+ * buttons that move it. Below, the main column is the work — the three C's,
+ * the diagnosis, the inspection, the lines, the estimate, the parts — and
+ * the side column is the paperwork: the facts, the invoice, the conversation
+ * and the history. On a phone the side column follows the main one.
+ */
+export default async function RepairOrderPage(props: PageProps<"/app/repair-orders/[id]">) {
   const user = await requireUser();
   const { id } = await props.params;
-  const { saved } = await props.searchParams;
+  const { saved, pay } = await props.searchParams;
 
-  const rows = await query<
-    RepairOrderRecord & {
-      number: number;
-      customer_id: string;
-      vehicle_id: string | null;
-      customer_name: string | null;
-      phone: string;
-      vehicle: string | null;
-      plate: string | null;
-      created_at: string;
-      approved_at: string | null;
-      approved_by_name: string | null;
-      total_cents: number;
-      labor_rate_cents: number;
-      tax_rate_pct: string;
-      auto_quote_cap_cents: number;
-    }
-  >(
-    `SELECT ro.id, ro.number, ro.status, ro.complaint, ro.cause, ro.correction,
-            ro.mileage_in, ro.total_cents, ro.created_at::text, ro.approved_at::text,
-            ro.customer_id, ro.vehicle_id,
-            c.full_name AS customer_name, c.phone,
-            concat_ws(' ', v.year::text, v.make, v.model, v.trim) AS vehicle,
-            v.plate,
-            approver.full_name AS approved_by_name,
-            s.labor_rate_cents, s.tax_rate_pct, s.auto_quote_cap_cents
-       FROM repair_orders ro
-       JOIN customers c ON c.id = ro.customer_id
-       JOIN shops s ON s.id = ro.shop_id
-       LEFT JOIN vehicles v ON v.id = ro.vehicle_id
-       LEFT JOIN staff approver ON approver.id = ro.approved_by
-      WHERE ro.id = $1 AND ro.shop_id = $2`,
-    [id, user.shopId],
-  );
+  // A payment the invoice refused, said in place. The reason rides in the URL
+  // from actions/payments.ts; the card's own notification carries the amounts.
+  const PAY_REFUSED: Record<string, string> = {
+    already_paid: "That payment wasn't recorded — the invoice was already paid in full.",
+    over_balance: "That payment wasn't recorded — it was more than the balance still owed.",
+    void: "That payment wasn't recorded — the invoice is void.",
+    duplicate: "That payment was already recorded; nothing was added twice.",
+    bad_amount: "That payment wasn't recorded — the amount wasn't a valid dollar figure.",
+    no_invoice: "There's no invoice on this ticket to record a payment against.",
+  };
+  const payNotice = typeof pay === "string" ? PAY_REFUSED[pay] : undefined;
 
-  const ro = rows[0];
+  const ro = await loadRepairOrder(id, user);
   if (!ro) notFound();
 
-  const lines = await query<{
-    id: string;
-    kind: string;
-    description: string;
-    quantity: string;
-    unit_cents: number;
-    total_cents: number;
-    quoted_by_agent: boolean;
-  }>(
-    `SELECT id, kind, description, quantity, unit_cents, total_cents,
-            quoted_by_agent
-       FROM repair_order_lines
-      WHERE repair_order_id = $1
-      ORDER BY position, created_at`,
-    [id],
+  const technicians = await query<{ id: string; full_name: string }>(
+    `SELECT id, full_name FROM staff
+      WHERE shop_id = $1 AND role = 'tech' AND disabled_at IS NULL
+      ORDER BY full_name`,
+    [user.shopId],
   );
 
-  // Derived here rather than stored: the header keeps one number, the total,
-  // and the breakdown is whatever the lines currently say.
-  const subtotal = lines.reduce((sum, line) => sum + line.total_cents, 0);
-  const taxable = lines
-    .filter((line) => line.kind === "part" || line.kind === "fee")
-    .reduce((sum, line) => sum + line.total_cents, 0);
-  const tax = ro.total_cents - subtotal;
-  const overCap = ro.total_cents > ro.auto_quote_cap_cents;
+  const overCap = ro.totalCents > ro.autoQuoteCapCents;
+  const closed = ro.status === "closed" || ro.status === "cancelled";
+  const promised = ro.promisedAt ? new Date(ro.promisedAt) : null;
+  const promisedLate = ro.promisedLate;
 
   return (
     <>
-      <PageHead eyebrow={`Repair order #${ro.number}`} title={ro.customer_name ?? "Unnamed"}>
+      <PageHead
+        eyebrow={`Repair order #${ro.number} · ${RO_STATUS_LABEL[ro.status]}`}
+        title={ro.customerName ?? "Unnamed"}
+      >
         <Link href="/app/repair-orders" className="btn btn-ghost btn-sm">
           Board
         </Link>
-        <Link
-          href={`/app/schedule/new?customer=${ro.customer_id}`}
-          className="btn btn-ghost btn-sm"
-        >
+        <Link href={`/app/customers/${ro.customerId}`} className="btn btn-ghost btn-sm">
+          Customer
+        </Link>
+        <Link href={`/app/schedule/new?customer=${ro.customerId}`} className="btn btn-ghost btn-sm">
           Book a bay
         </Link>
       </PageHead>
 
       {saved && (
-        <p
-          role="status"
-          className="mb-6 rounded-[var(--radius)] border border-emerald-line bg-emerald-wash px-3 py-2.5 text-[0.875rem] font-semibold text-emerald-deep"
-        >
+        <Notice tone="zol" className="mb-5 font-semibold">
           Saved.
-        </p>
+        </Notice>
+      )}
+      {payNotice && (
+        <Notice tone="person" className="mb-5 font-semibold">
+          {payNotice}
+        </Notice>
       )}
 
-      <div className="card mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 p-4">
-        <Link
-          href={`/app/customers/${ro.customer_id}`}
-          className="text-[0.9375rem] font-semibold text-ink underline-offset-4 hover:underline"
-        >
-          {ro.customer_name ?? "Unnamed"}
-        </Link>
-        <a href={`tel:${ro.phone}`} className="t-data text-[0.9375rem] text-ink-2">
-          {formatPhone(ro.phone)}
-        </a>
-        {ro.vehicle && (
-          <span className="text-[0.9375rem] text-ink-2">
-            {ro.vehicle}
-            {ro.plate && (
-              <span className="t-data ml-2 text-[0.8125rem] text-ink-3">
-                {ro.plate}
-              </span>
+      <div className="card mb-6 flex flex-col gap-5 p-4 sm:p-5">
+        <Stepper status={ro.status} />
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.9375rem]">
+          <StatusBadge kind="ro" value={ro.status} />
+          {ro.vehicleLabel ? (
+            <span className="text-ink">
+              {ro.vehicleId ? (
+                <Link href={`/app/vehicles/${ro.vehicleId}`} className="font-semibold underline-offset-4 hover:underline">
+                  {ro.vehicleLabel}
+                </Link>
+              ) : (
+                <span className="font-semibold">{ro.vehicleLabel}</span>
+              )}
+              {ro.plate && <span className="t-data ml-2 text-[0.8125rem] text-ink-3">{ro.plate}</span>}
+              {ro.mileageIn !== null && (
+                <span className="t-data ml-2 text-[0.8125rem] text-ink-3">{formatMiles(ro.mileageIn)}</span>
+              )}
+            </span>
+          ) : (
+            <span className="text-ink-3">No vehicle on the ticket</span>
+          )}
+          <a href={`tel:${ro.customerPhone}`} className="t-data text-ink-2 underline-offset-4 hover:underline">
+            {formatPhone(ro.customerPhone)}
+          </a>
+          {ro.smsOptedOut && <span className="tag tag-person">Texts stopped</span>}
+          {(ro.priority === "high" || ro.priority === "urgent") && (
+            <StatusBadge kind="priority" value={ro.priority} />
+          )}
+          <span className="text-[0.875rem] text-ink-2">
+            {ro.technicianName ? (
+              <>
+                <span className="text-ink-3">Tech </span>
+                {ro.technicianName}
+              </>
+            ) : (
+              <span className="text-ink-3">Unassigned</span>
             )}
           </span>
+          {promised && (
+            <span className={`text-[0.875rem] ${promisedLate ? "font-semibold text-amber-deep" : "text-ink-2"}`}>
+              <span className="text-ink-3">Promised </span>
+              {formatDateTime(promised, user.timezone)}
+              {promisedLate && " — overdue"}
+            </span>
+          )}
+        </div>
+
+        {!closed && (
+          <div className="flex flex-col gap-4 border-t border-line pt-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <AssignmentForm
+                key={`${ro.technicianId ?? ""}-${ro.priority}-${ro.promisedAt ?? ""}`}
+                repairOrderId={ro.id}
+                technicianId={ro.technicianId}
+                priority={ro.priority}
+                promisedAt={
+                  promised ? `${zonedDate(promised, user.timezone)}T${zonedTime(promised, user.timezone)}` : null
+                }
+                technicians={technicians.map((tech) => ({ id: tech.id, name: tech.full_name }))}
+              />
+            </div>
+            <div className="flex-none">
+              <StatusControls repairOrderId={ro.id} status={ro.status} />
+            </div>
+          </div>
         )}
-        <span className="tag tag-neutral">{STATUS_LABEL[ro.status as Status]}</span>
+        {closed && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <p className="text-[0.875rem] text-ink-2">
+              {ro.status === "closed" ? "Closed" : "Cancelled"}
+              {ro.closedAt && ` ${formatDateTime(ro.closedAt, user.timezone)}`}.
+            </p>
+            <StatusControls repairOrderId={ro.id} status={ro.status} />
+          </div>
+        )}
       </div>
 
       {/*
@@ -157,16 +186,14 @@ export default async function RepairOrderPage(
         whole risk of an agent quoting sits behind, so it's stated plainly at
         the top of the ticket rather than buried in settings.
       */}
-      {overCap && !ro.approved_at && (
+      {overCap && !ro.approvedAt && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius)] border border-amber-line bg-amber-wash p-4">
           <div>
             <p className="text-[0.9375rem] font-semibold text-amber-deep">
-              {formatCents(ro.total_cents)} is over your{" "}
-              {formatCents(ro.auto_quote_cap_cents)} cap.
+              {formatCents(ro.totalCents)} is over your {formatCents(ro.autoQuoteCapCents)} cap.
             </p>
             <p className="mt-0.5 text-[0.875rem] text-ink-2">
-              Nothing goes to the customer at this price until somebody here
-              approves it.
+              Nothing goes to the customer at this price until somebody here approves it.
             </p>
           </div>
           <form action={approveRepairOrder}>
@@ -178,204 +205,103 @@ export default async function RepairOrderPage(
         </div>
       )}
 
-      {ro.approved_at && (
+      {ro.approvedAt && (
         <p className="mb-6 text-[0.875rem] text-ink-2">
           <span className="tag tag-person mr-2">Approved</span>
-          {ro.approved_by_name ?? "Someone"} on{" "}
-          {new Date(ro.approved_at).toLocaleString("en-US", {
-            dateStyle: "medium",
-            timeStyle: "short",
-            timeZone: user.timezone,
-          })}
+          {ro.approvedByName ?? "Someone"} on {formatDateTime(ro.approvedAt, user.timezone)}
         </p>
       )}
 
-      <section className="card mb-6 p-5 sm:p-6">
-        <h2 className="t-h3 mb-4 text-[1.125rem]">Lines</h2>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <Section title="The ticket" detail="Complaint, cause, correction.">
+            <RepairOrderForm
+              ro={{
+                id: ro.id,
+                complaint: ro.complaint,
+                cause: ro.cause,
+                correction: ro.correction,
+                mileage_in: ro.mileageIn,
+              }}
+            />
+          </Section>
 
-        {lines.length === 0 ? (
-          <p className="text-[0.875rem] text-ink-2">
-            Nothing on the ticket yet. Labour is hours × your rate; a part is
-            count × what you charge for it.
-          </p>
-        ) : (
-          <>
+          <DiagnosticsPanel ro={ro} />
+          <InspectionPanel ro={ro} />
+          <LinesPanel ro={ro} />
+          <EstimatePanel ro={ro} />
+          <PartsPanel ro={ro} />
+
           {/*
-            Six columns of numbers do not fit a phone, and a table scrolled
-            sideways hides the money column — the one thing anybody opens a
-            ticket to check. Below sm the same lines are stacked instead, with
-            the total on the right of each one.
+            Recorded from the ticket because that is the moment it happens —
+            the advisor is on the phone hearing "not today", and anywhere else
+            means it never gets written down.
           */}
-          <ul className="divide-y divide-line border-y border-line sm:hidden">
-            {lines.map((line) => (
-              <li key={line.id} className="flex items-start gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[0.9375rem] text-ink">
-                    {line.description}
-                    {line.quoted_by_agent && (
-                      <span className="tag tag-zol ml-2">ZOL</span>
-                    )}
-                  </p>
-                  <p className="mt-0.5 text-[0.8125rem] text-ink-3">
-                    {KIND_LABEL[line.kind]}
-                    {" · "}
-                    <span className="t-data">
-                      {Number(line.quantity)} × {formatCents(line.unit_cents)}
-                    </span>
-                  </p>
-                  <form action={removeLine} className="mt-1">
-                    <input type="hidden" name="line_id" value={line.id} />
-                    <input type="hidden" name="repair_order_id" value={ro.id} />
-                    <button
-                      type="submit"
-                      className="text-[0.8125rem] text-ink-3 underline underline-offset-2"
-                      aria-label={`Remove ${line.description}`}
-                    >
-                      Remove
-                    </button>
-                  </form>
-                </div>
-                <span className="t-data flex-none text-[0.9375rem] text-ink">
-                  {formatCents(line.total_cents)}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <dl className="mt-3 flex flex-col gap-1 text-[0.875rem] sm:hidden">
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-ink-2">Subtotal</dt>
-              <dd className="t-data text-ink">{formatCents(subtotal)}</dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-ink-2">
-                Tax, {ro.tax_rate_pct}% on {formatCents(taxable)} of parts and
-                fees
-              </dt>
-              <dd className="t-data flex-none text-ink">{formatCents(tax)}</dd>
-            </div>
-            <div className="mt-1 flex items-baseline justify-between gap-4 border-t border-line-2 pt-2">
-              <dt className="font-semibold text-ink">Total</dt>
-              <dd className="t-data text-[1.0625rem] font-semibold text-ink">
-                {formatCents(ro.total_cents)}
-              </dd>
-            </div>
-          </dl>
-
-          <table className="hidden w-full text-left text-[0.875rem] sm:table">
-            <thead>
-              <tr className="border-b border-line">
-                <th className="t-eyebrow pb-2 font-semibold">Kind</th>
-                <th className="t-eyebrow pb-2 font-semibold">Description</th>
-                <th className="t-eyebrow pb-2 text-right font-semibold">Qty</th>
-                <th className="t-eyebrow pb-2 text-right font-semibold">Unit</th>
-                <th className="t-eyebrow pb-2 text-right font-semibold">Total</th>
-                <th className="pb-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {lines.map((line) => (
-                <tr key={line.id}>
-                  <td className="py-2.5 text-ink-3">{KIND_LABEL[line.kind]}</td>
-                  <td className="py-2.5 text-ink">
-                    {line.description}
-                    {/* Emerald means ZOL did it with nobody watching — the
-                        page's one colour system, used here too. */}
-                    {line.quoted_by_agent && (
-                      <span className="tag tag-zol ml-2">ZOL</span>
-                    )}
-                  </td>
-                  <td className="t-data py-2.5 text-right text-ink-2">
-                    {Number(line.quantity)}
-                  </td>
-                  <td className="t-data py-2.5 text-right text-ink-2">
-                    {formatCents(line.unit_cents)}
-                  </td>
-                  <td className="t-data py-2.5 text-right text-ink">
-                    {formatCents(line.total_cents)}
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <form action={removeLine}>
-                      <input type="hidden" name="line_id" value={line.id} />
-                      <input type="hidden" name="repair_order_id" value={ro.id} />
-                      <button
-                        type="submit"
-                        className="text-[0.8125rem] text-ink-3 underline-offset-2 hover:text-amber-deep hover:underline"
-                        aria-label={`Remove ${line.description}`}
-                      >
-                        Remove
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="border-t border-line-2">
-              <tr>
-                <td colSpan={4} className="pt-3 text-right text-ink-2">
-                  Subtotal
-                </td>
-                <td className="t-data pt-3 text-right text-ink">
-                  {formatCents(subtotal)}
-                </td>
-                <td />
-              </tr>
-              <tr>
-                <td colSpan={4} className="pt-1 text-right text-ink-2">
-                  Tax, {ro.tax_rate_pct}% on {formatCents(taxable)} of parts and
-                  fees
-                </td>
-                <td className="t-data pt-1 text-right text-ink">
-                  {formatCents(tax)}
-                </td>
-                <td />
-              </tr>
-              <tr>
-                <td colSpan={4} className="pt-2 text-right font-semibold text-ink">
-                  Total
-                </td>
-                <td className="t-data pt-2 text-right text-[1.0625rem] font-semibold text-ink">
-                  {formatCents(ro.total_cents)}
-                </td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
-          </>
-        )}
-
-        <div className="mt-6 border-t border-line pt-5">
-          <AddLineForm
-            repairOrderId={ro.id}
-            laborRate={(ro.labor_rate_cents / 100).toFixed(2)}
-          />
+          <Section
+            title="Turned something down?"
+            detail="Write it here and it lands on the recall list instead of being forgotten."
+          >
+            <DeclinedForm customerId={ro.customerId} vehicleId={ro.vehicleId} repairOrderId={ro.id} />
+          </Section>
         </div>
-      </section>
 
-      <section className="card mb-6 p-5 sm:p-6">
-        <h2 className="t-h3 mb-4 text-[1.125rem]">The ticket</h2>
-        <RepairOrderForm ro={ro} />
-      </section>
+        <aside className="flex min-w-0 flex-col gap-6">
+          <Section title="Facts">
+            <Facts
+              items={[
+                { label: "Source", value: SOURCE_LABEL[ro.source] ?? ro.source },
+                { label: "Opened", value: formatDateTime(ro.createdAt, user.timezone) },
+                {
+                  label: "Checked in",
+                  value: ro.checkedInAt ? formatDateTime(ro.checkedInAt, user.timezone) : "Not yet",
+                },
+                ...(ro.appointment
+                  ? [
+                      {
+                        label: "Appointment",
+                        value: (
+                          <Link href={`/app/schedule?date=${zonedDate(new Date(ro.appointment.startsAt), user.timezone)}`} className="underline-offset-4 hover:underline">
+                            {formatDateTime(ro.appointment.startsAt, user.timezone)}
+                            {ro.appointment.bay ? ` · bay ${ro.appointment.bay}` : ""}
+                          </Link>
+                        ),
+                      },
+                    ]
+                  : []),
+                { label: "Fuel", value: ro.fuelLevel === null ? "—" : `${ro.fuelLevel}%` },
+                {
+                  label: "Promised",
+                  value: promised ? formatDateTime(promised, user.timezone) : "—",
+                },
+                ...(ro.completedAt
+                  ? [{ label: "Completed", value: formatDateTime(ro.completedAt, user.timezone) }]
+                  : []),
+                ...(ro.vin ? [{ label: "VIN", value: <span className="t-data text-[0.8125rem]">{ro.vin}</span> }] : []),
+              ]}
+            />
+            {(ro.visibleDamage || ro.checkInNotes) && (
+              <dl className="mt-4 flex flex-col gap-3 border-t border-line pt-4 text-[0.875rem]">
+                {ro.visibleDamage && (
+                  <div>
+                    <dt className="t-eyebrow mb-0.5">Visible damage at check-in</dt>
+                    <dd className="text-ink-2">{ro.visibleDamage}</dd>
+                  </div>
+                )}
+                {ro.checkInNotes && (
+                  <div>
+                    <dt className="t-eyebrow mb-0.5">Check-in notes</dt>
+                    <dd className="text-ink-2">{ro.checkInNotes}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
+          </Section>
 
-      {/*
-        Recorded from the ticket because that is the moment it happens — the
-        advisor is on the phone hearing "not today", and anywhere else means
-        it never gets written down.
-      */}
-      <section className="card p-5 sm:p-6">
-        <h2 className="t-h3 text-[1.125rem]">Turned something down?</h2>
-        <p className="mt-1 text-[0.9375rem] text-ink-2">
-          Write it here and it lands on the recall list instead of being
-          forgotten.
-        </p>
-        <div className="mt-4">
-          <DeclinedForm
-            customerId={ro.customer_id}
-            vehicleId={ro.vehicle_id}
-            repairOrderId={ro.id}
-          />
-        </div>
-      </section>
+          <InvoicePanel ro={ro} />
+          <ConversationPanel ro={ro} />
+          <RoTimeline ro={ro} />
+        </aside>
+      </div>
     </>
   );
 }

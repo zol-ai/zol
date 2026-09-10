@@ -19,19 +19,27 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   hint?: ReactNode;
 };
 
-export function Field({ label, name, error, hint, ...input }: FieldProps) {
-  const describedBy = error ? `${name}-error` : hint ? `${name}-hint` : undefined;
+/**
+ * The id defaults to the name, which is right for a page with one form and
+ * wrong the moment two forms share a page — the ticket has an add-line box
+ * and a declined-work box that both post a `description`. Pass `id` there;
+ * `name` stays what the action reads, and the label, the error and the hint
+ * all follow the id so they point at the box they belong to.
+ */
+export function Field({ label, name, id: idProp, error, hint, ...input }: FieldProps) {
+  const id = idProp ?? name;
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
 
   return (
     <div className="flex flex-col gap-1.5">
       <label
-        htmlFor={name}
+        htmlFor={id}
         className="text-[0.8125rem] font-semibold text-ink-2"
       >
         {label}
       </label>
       <input
-        id={name}
+        id={id}
         name={name}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
@@ -41,11 +49,11 @@ export function Field({ label, name, error, hint, ...input }: FieldProps) {
         {...input}
       />
       {error ? (
-        <p id={`${name}-error`} className="text-[0.8125rem] text-amber-deep">
+        <p id={`${id}-error`} className="text-[0.8125rem] text-amber-deep">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${name}-hint`} className="text-[0.8125rem] text-ink-3">
+        <p id={`${id}-hint`} className="text-[0.8125rem] text-ink-3">
           {hint}
         </p>
       ) : null}
@@ -56,6 +64,7 @@ export function Field({ label, name, error, hint, ...input }: FieldProps) {
 export function Select({
   label,
   name,
+  id: idProp,
   error,
   children,
   defaultValue,
@@ -64,21 +73,32 @@ export function Select({
 }: {
   label: string;
   name: string;
+  /** Defaults to `name`; pass one when two forms on a page share a name. */
+  id?: string;
   error?: string;
   children: ReactNode;
   defaultValue?: string;
   required?: boolean;
   hint?: ReactNode;
 }) {
-  const describedBy = error ? `${name}-error` : hint ? `${name}-hint` : undefined;
+  const id = idProp ?? name;
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={name} className="text-[0.8125rem] font-semibold text-ink-2">
+      <label htmlFor={id} className="text-[0.8125rem] font-semibold text-ink-2">
         {label}
       </label>
+      {/*
+        Keyed on the default so a rejected submit shows what was chosen. React
+        resets the form when an action returns and re-applies a text input's
+        new `defaultValue`, but it never re-applies a changed `defaultValue`
+        on a <select>, which would snap back to the first option on top of
+        the error message. A new key remounts it with the right choice.
+      */}
       <select
-        id={name}
+        key={defaultValue ?? ""}
+        id={id}
         name={name}
         defaultValue={defaultValue}
         required={required}
@@ -91,11 +111,11 @@ export function Select({
         {children}
       </select>
       {error ? (
-        <p id={`${name}-error`} className="text-[0.8125rem] text-amber-deep">
+        <p id={`${id}-error`} className="text-[0.8125rem] text-amber-deep">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${name}-hint`} className="text-[0.8125rem] text-ink-3">
+        <p id={`${id}-hint`} className="text-[0.8125rem] text-ink-3">
           {hint}
         </p>
       ) : null}
@@ -168,14 +188,24 @@ export function Submit({
   children,
   pendingLabel,
   className = "btn btn-emerald w-full",
+  name,
+  value,
 }: {
   children: ReactNode;
   pendingLabel?: string;
   className?: string;
+  /**
+   * A name/value pair the action sees only when this button was what
+   * submitted the form — a `requestSubmit()` from a select carries no
+   * submitter, so the pair is absent. It is how one form can tell "the person
+   * pressed Save" from "a control saved itself".
+   */
+  name?: string;
+  value?: string;
 }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className={className} disabled={pending}>
+    <button type="submit" className={className} disabled={pending} name={name} value={value}>
       {pending ? (pendingLabel ?? "Working…") : children}
     </button>
   );

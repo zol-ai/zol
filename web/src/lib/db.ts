@@ -202,6 +202,19 @@ export function db(): Promise<Pool> {
   return pending;
 }
 
+/**
+ * Anything that can run one parameterised statement: the pool itself, or the
+ * client handed to a `tx` callback. Helpers that write a row as part of
+ * somebody else's transaction (numbering, events, follow-ups) take this, so
+ * the caller decides whether the write is atomic with theirs.
+ */
+export interface Queryable {
+  query<T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[],
+  ): Promise<{ rows: T[]; rowCount: number | null }>;
+}
+
 /** Parameterised query. Never interpolate values into the SQL string. */
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,

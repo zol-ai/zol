@@ -10,20 +10,22 @@ import { zonedDate } from "@/lib/schedule";
 
 export const metadata = { title: "Book a bay" };
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default async function BookPage(props: PageProps<"/app/schedule/new">) {
   const user = await requireUser();
   const { customer, date } = await props.searchParams;
 
   // An appointment is somebody's. Without a customer there's nothing to book.
-  if (typeof customer !== "string" || !customer) redirect("/app/customers");
+  if (typeof customer !== "string" || !UUID.test(customer)) redirect("/app/customers");
 
-  const rows = await query<{ full_name: string | null; phone: string }>(
-    "SELECT full_name, phone FROM customers WHERE id = $1 AND shop_id = $2",
+  const rows = await query<{ full_name: string | null; phone: string; sms_opted_out: boolean }>(
+    "SELECT full_name, phone, sms_opted_out FROM customers WHERE id = $1 AND shop_id = $2",
     [customer, user.shopId],
   );
   if (rows.length === 0) notFound();
 
-  const [vehicles, repairOrders, shops] = await Promise.all([
+  const [vehicles, repairOrders, shops, technicians] = await Promise.all([
     query<{ id: string; year: number | null; make: string | null; model: string | null }>(
       `SELECT id, year, make, model FROM vehicles
         WHERE customer_id = $1 AND shop_id = $2
@@ -37,9 +39,13 @@ export default async function BookPage(props: PageProps<"/app/schedule/new">) {
         ORDER BY created_at DESC`,
       [customer, user.shopId],
     ),
-    query<{ bay_count: number }>("SELECT bay_count FROM shops WHERE id = $1", [
-      user.shopId,
-    ]),
+    query<{ bay_count: number }>("SELECT bay_count FROM shops WHERE id = $1", [user.shopId]),
+    query<{ id: string; full_name: string; specialties: string[] }>(
+      `SELECT id, full_name, specialties FROM staff
+        WHERE shop_id = $1 AND role = 'tech' AND disabled_at IS NULL
+        ORDER BY full_name`,
+      [user.shopId],
+    ),
   ]);
 
   return (
@@ -50,8 +56,11 @@ export default async function BookPage(props: PageProps<"/app/schedule/new">) {
         </Link>
       </PageHead>
 
-      <p className="t-data mb-5 text-[0.9375rem] text-ink-2">
-        {formatPhone(rows[0].phone)}
+      <p className="mb-5 flex flex-wrap items-center gap-3 text-[0.9375rem] text-ink-2">
+        <span className="t-data">{formatPhone(rows[0].phone)}</span>
+        {rows[0].sms_opted_out && (
+          <span className="tag tag-person">Texts stopped — no confirmation will be sent</span>
+        )}
       </p>
 
       <section className="card max-w-2xl p-5 sm:p-6">
@@ -73,6 +82,13 @@ export default async function BookPage(props: PageProps<"/app/schedule/new">) {
           repairOrders={repairOrders.map((ro) => ({
             id: ro.id,
             label: `#${ro.number} — ${ro.complaint ?? "no complaint recorded"}`,
+          }))}
+          technicians={technicians.map((tech) => ({
+            id: tech.id,
+            label:
+              tech.specialties.length > 0
+                ? `${tech.full_name} — ${tech.specialties.join(", ")}`
+                : tech.full_name,
           }))}
         />
       </section>

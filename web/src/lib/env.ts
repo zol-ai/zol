@@ -62,11 +62,24 @@ export const env = {
     },
     /** The shop-facing number, once a registered one exists. */
     phoneNumber: optional("TWILIO_PHONE_NUMBER"),
+    /**
+     * WebSocket endpoint of the realtime media service that will hold a live
+     * call. Unset until that service exists — the voice webhook takes a
+     * voicemail instead. See docs/TELEPHONY.md.
+     */
+    mediaStreamUrl: optional("ZOL_MEDIA_STREAM_URL"),
+    /** Present without throwing, for the health probe and the settings screen. */
+    get configured() {
+      return Boolean(optional("TWILIO_ACCOUNT_SID") && optional("TWILIO_AUTH_TOKEN"));
+    },
   },
 
   openai: {
     get apiKey() {
       return required("OPENAI_API_KEY");
+    },
+    get configured() {
+      return Boolean(optional("OPENAI_API_KEY"));
     },
     /** Overridable so a model swap is a deploy, not a code change. */
     model: optional("OPENAI_MODEL") ?? "gpt-4o",
@@ -92,6 +105,16 @@ export const env = {
    * silently fails every signature check.
    */
   publicUrl: optional("ZOL_PUBLIC_URL"),
+
+  /**
+   * Where a customer goes when they tap a link: the portal, the receipt, the
+   * estimate. On Vercel this is the same origin as everything else and can
+   * stay unset. On Cloud Run — where the follow-up worker mints those links
+   * with no browser request to read a host from — ZOL_PUBLIC_URL has to be
+   * the run.app origin for Twilio's signature check, while customers belong
+   * on tryzol.com. Two jobs, two variables; this one wins for links.
+   */
+  customerUrl: optional("ZOL_CUSTOMER_URL"),
 
   /** Waitlist events out to Company OS, and the sweeper that sends them. */
   companyOs: {
@@ -187,5 +210,49 @@ export const env = {
      * Required. The endpoint refuses to serve without it.
      */
     minUpdatedAt: optional("WAITLIST_READ_MIN_UPDATED_AT"),
+  },
+
+  /**
+   * Customer payments. Without a key the app records a clearly labelled demo
+   * payment so the rest of the flow (invoice paid, ticket closed, receipt,
+   * post-repair follow-up) can be exercised end to end; with one, the portal
+   * sends the customer to Stripe Checkout and the webhook confirms the charge.
+   * ZOL never sees a card number either way.
+   */
+  stripe: {
+    get secretKey() {
+      return required("STRIPE_SECRET_KEY");
+    },
+    get configured() {
+      return Boolean(optional("STRIPE_SECRET_KEY"));
+    },
+    /** Signs the webhook. Without it the webhook route refuses every call. */
+    webhookSecret: optional("STRIPE_WEBHOOK_SECRET"),
+  },
+
+  /**
+   * Inspection photos. A Cloud Storage bucket the runtime service account can
+   * write to; unset means the upload controls don't render and the inspection
+   * works on notes and measurements alone.
+   */
+  storage: {
+    bucket: optional("GCS_BUCKET"),
+    /** Where objects are served from, if not the default storage.googleapis.com host. */
+    publicBaseUrl: optional("GCS_PUBLIC_BASE_URL"),
+    get configured() {
+      return Boolean(optional("GCS_BUCKET"));
+    },
+  },
+
+  /**
+   * `POST /api/jobs/follow-ups` — the worker that drains due follow-ups.
+   * Same door as the waitlist sweeper: Cloud Scheduler presents an OIDC token,
+   * and the route checks the caller against these. Unset means the route
+   * refuses everyone; nothing about a misconfigured deploy should let a
+   * stranger text a shop's customers.
+   */
+  jobs: {
+    schedulerServiceAccount: optional("JOBS_SCHEDULER_SERVICE_ACCOUNT"),
+    audience: optional("JOBS_AUDIENCE"),
   },
 } as const;

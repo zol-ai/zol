@@ -2,10 +2,14 @@ import { headers } from "next/headers";
 
 import { revokeInvite } from "@/app/actions/auth";
 import { PageHead } from "@/components/app/shell";
+import { Notice, Tag } from "@/components/app/ui";
 import { requireRole } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { formatDate } from "@/lib/format";
+import { formatPhone } from "@/lib/phone";
 import { InviteForm } from "./invite-form";
 import { InviteLink } from "./invite-link";
+import { ProfileForm } from "./profile-form";
 
 export const metadata = { title: "Team" };
 
@@ -17,7 +21,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default async function TeamPage(props: PageProps<"/app/team">) {
   const user = await requireRole("owner");
-  const { invited } = await props.searchParams;
+  const { invited, saved } = await props.searchParams;
 
   const [staff, invites] = await Promise.all([
     query<{
@@ -25,10 +29,12 @@ export default async function TeamPage(props: PageProps<"/app/team">) {
       full_name: string;
       email: string;
       role: string;
+      specialties: string[];
+      phone: string | null;
       last_login_at: string | null;
       password_hash: string | null;
     }>(
-      `SELECT id, full_name, email, role, last_login_at, password_hash
+      `SELECT id, full_name, email, role, specialties, phone, last_login_at, password_hash
          FROM staff
         WHERE shop_id = $1 AND disabled_at IS NULL
         ORDER BY CASE role WHEN 'owner' THEN 0 WHEN 'advisor' THEN 1 ELSE 2 END,
@@ -73,6 +79,12 @@ export default async function TeamPage(props: PageProps<"/app/team">) {
         </div>
       )}
 
+      {saved === "profile" && (
+        <Notice tone="zol" className="mb-6">
+          Saved.
+        </Notice>
+      )}
+
       <section className="card p-5 sm:p-6">
         <h2 className="t-h3 text-[1.125rem]">Invite someone</h2>
         <p className="mt-1 text-[0.9375rem] text-ink-2">
@@ -101,12 +113,7 @@ export default async function TeamPage(props: PageProps<"/app/team">) {
                     </span>
                   </p>
                   <p className="t-data text-[0.8125rem] text-ink-3">
-                    {invite.email} · expires{" "}
-                    {new Date(invite.expires_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      timeZone: user.timezone,
-                    })}
+                    {invite.email} · expires {formatDate(invite.expires_at, user.timezone)}
                   </p>
                 </div>
                 <form action={revokeInvite}>
@@ -123,35 +130,60 @@ export default async function TeamPage(props: PageProps<"/app/team">) {
 
       <section className="card mt-6 p-5 sm:p-6">
         <h2 className="t-h3 text-[1.125rem]">People</h2>
+        <p className="mt-1 text-[0.9375rem] text-ink-2">
+          Specialties are what ZOL matches a complaint against when it picks a technician for
+          a booking. The phone is how the shop reaches them, not something a customer sees.
+        </p>
         <ul className="mt-3 divide-y divide-line border-t border-line">
           {staff.map((person) => (
-            <li key={person.id} className="flex flex-wrap items-center gap-3 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-[0.9375rem] font-semibold text-ink">
-                  {person.full_name}
-                  <span className="ml-2 tag tag-neutral">
-                    {ROLE_LABEL[person.role] ?? person.role}
-                  </span>
-                  {person.id === user.staffId && (
-                    <span className="ml-1.5 text-[0.8125rem] font-normal text-ink-3">
-                      you
+            <li key={person.id} className="py-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[0.9375rem] font-semibold text-ink">
+                    {person.full_name}
+                    <span className="ml-2 tag tag-neutral">
+                      {ROLE_LABEL[person.role] ?? person.role}
                     </span>
-                  )}
-                </p>
-                <p className="t-data text-[0.8125rem] text-ink-3">
-                  {person.email}
+                    {person.id === user.staffId && (
+                      <span className="ml-1.5 text-[0.8125rem] font-normal text-ink-3">
+                        you
+                      </span>
+                    )}
+                  </p>
+                  <p className="t-data text-[0.8125rem] text-ink-3">
+                    {person.email}
+                    {person.phone && ` · ${formatPhone(person.phone)}`}
+                  </p>
+                </div>
+                <p className="text-[0.8125rem] text-ink-3">
+                  {person.last_login_at
+                    ? `last in ${formatDate(person.last_login_at, user.timezone)}`
+                    : person.password_hash
+                      ? "never signed in"
+                      : "no password set"}
                 </p>
               </div>
-              <p className="text-[0.8125rem] text-ink-3">
-                {person.last_login_at
-                  ? `last in ${new Date(person.last_login_at).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric", timeZone: user.timezone },
-                    )}`
-                  : person.password_hash
-                    ? "never signed in"
-                    : "no password set"}
-              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {person.specialties.length > 0 ? (
+                  person.specialties.map((item) => (
+                    <Tag key={item} tone="neutral">
+                      {item}
+                    </Tag>
+                  ))
+                ) : (
+                  <span className="text-[0.8125rem] text-ink-3">No specialties recorded.</span>
+                )}
+              </div>
+
+              <details className="mt-2">
+                <summary className="cursor-pointer list-none text-[0.8125rem] font-semibold text-emerald-deep [&::-webkit-details-marker]:hidden">
+                  Edit specialties and phone
+                </summary>
+                <div className="mt-3 max-w-xl">
+                  <ProfileForm staff={person} returnTo="/app/team?saved=profile" />
+                </div>
+              </details>
             </li>
           ))}
         </ul>

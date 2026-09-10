@@ -18,6 +18,18 @@ const nextConfig: NextConfig = {
   */
   output: process.env.VERCEL ? undefined : "standalone",
 
+  experimental: {
+    serverActions: {
+      /*
+        Inspection photos come in through a Server Action as multipart form
+        data. The default 1MB ceiling is smaller than one photo off a phone;
+        the action itself enforces 8MB per file, and this leaves headroom for
+        the multipart framing around it.
+      */
+      bodySizeLimit: "10mb",
+    },
+  },
+
   async headers() {
     return [
       {

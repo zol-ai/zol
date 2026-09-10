@@ -3,8 +3,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { clientIp } from "@/lib/client-ip";
 import { query, tx } from "@/lib/db";
 import { decoyHash, hashPassword, verifyPassword } from "@/lib/password";
+import { randomSuffix, slugify } from "@/lib/slug";
 import {
   endAllSessions,
   endSession,
@@ -59,7 +61,7 @@ async function requestMeta() {
     userAgent: h.get("user-agent"),
     // Vercel sets this. Behind Cloud Run it's the load balancer's list, whose
     // first entry is the client.
-    ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    ip: clientIp(h),
   };
 }
 
@@ -110,9 +112,19 @@ export async function signUp(
   const passwordHash = await hashPassword(password);
 
   const created = await tx(async (client) => {
+    /*
+      The public handle for /talk/<slug>. Derived from the name; if another
+      shop already took it, a short random suffix rather than "-2" — the
+      second Main Street Auto shouldn't be told it was second. The unique
+      index is the real guard; this check just avoids the common case.
+    */
+    let slug = slugify(shopName);
+    const clash = await client.query("SELECT 1 FROM shops WHERE slug = $1", [slug]);
+    if (clash.rows.length > 0) slug = `${slug}-${randomSuffix()}`;
+
     const shop = await client.query<{ id: string }>(
-      "INSERT INTO shops (name) VALUES ($1) RETURNING id",
-      [shopName],
+      "INSERT INTO shops (name, slug) VALUES ($1, $2) RETURNING id",
+      [shopName, slug],
     );
     const shopId = shop.rows[0].id;
 

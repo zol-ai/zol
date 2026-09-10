@@ -1,11 +1,12 @@
 import "server-only";
 
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { query } from "./db";
+import { hashToken } from "./tokens";
 
 /**
  * Sessions.
@@ -38,10 +39,6 @@ export interface Session {
   role: Role;
   shopName: string;
   timezone: string;
-}
-
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
 }
 
 /**
@@ -185,9 +182,4 @@ export async function requireRole(...roles: Role[]): Promise<Session> {
 }
 
 /** Token for an invite or reset link: opaque, and stored only as a hash. */
-export function newToken(): { token: string; hash: string } {
-  const token = randomBytes(32).toString("base64url");
-  return { token, hash: hashToken(token) };
-}
-
-export { hashToken };
+export { hashToken, newToken } from "./tokens";

@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 
+import { clientIp } from "@/lib/client-ip";
 import { query } from "@/lib/db";
 import { OPERATOR_EMAIL, sendEmail } from "@/lib/notify";
 import { formatPhone, toE164 } from "@/lib/phone";
@@ -79,7 +80,8 @@ async function requestMeta() {
     userAgent: h.get("user-agent")?.slice(0, 500) ?? null,
     // Vercel sets this. Behind Cloud Run it's the load balancer's list, whose
     // first entry is the client.
-    ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    // The trusted end of the forwarded chain — this feeds a rate limit.
+    ip: clientIp(h),
   };
 }
 

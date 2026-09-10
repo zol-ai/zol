@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { PageHead } from "@/components/app/shell";
+import { Tag } from "@/components/app/ui";
 import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
+import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
 
 export const metadata = { title: "Customers" };
@@ -12,9 +14,11 @@ interface Row {
   full_name: string | null;
   phone: string;
   email: string | null;
+  sms_opted_out: boolean;
   vehicles: string;
   vehicle_summary: string | null;
-  last_seen: string | null;
+  last_visit: string | null;
+  open_tickets: string;
 }
 
 export default async function CustomersPage(props: PageProps<"/app/customers">) {
@@ -31,18 +35,23 @@ export default async function CustomersPage(props: PageProps<"/app/customers">) 
   const digits = search.replace(/\D/g, "");
 
   const rows = await query<Row>(
-    `SELECT c.id, c.full_name, c.phone, c.email,
-            count(v.id)::text AS vehicles,
+    `SELECT c.id, c.full_name, c.phone, c.email, c.sms_opted_out,
+            (SELECT count(*) FROM vehicles v WHERE v.customer_id = c.id)::text AS vehicles,
             (SELECT concat_ws(' ', v2.year::text, v2.make, v2.model)
                FROM vehicles v2
               WHERE v2.customer_id = c.id
-              ORDER BY v2.created_at DESC LIMIT 1) AS vehicle_summary,
-            greatest(c.first_seen_at, c.updated_at)::text AS last_seen
+              ORDER BY v2.updated_at DESC LIMIT 1) AS vehicle_summary,
+            (SELECT max(coalesce(ro.closed_at, ro.created_at))
+               FROM repair_orders ro
+              WHERE ro.customer_id = c.id)::text AS last_visit,
+            (SELECT count(*) FROM repair_orders ro
+              WHERE ro.customer_id = c.id
+                AND ro.status NOT IN ('closed', 'cancelled'))::text AS open_tickets
        FROM customers c
-       LEFT JOIN vehicles v ON v.customer_id = c.id
       WHERE c.shop_id = $1
         AND ($2 = '' OR
              c.full_name ILIKE '%' || $2 || '%' OR
+             c.email ILIKE '%' || $2 || '%' OR
              ($3 <> '' AND c.phone LIKE '%' || $3 || '%') OR
              EXISTS (SELECT 1 FROM vehicles vs
                       WHERE vs.customer_id = c.id
@@ -50,8 +59,10 @@ export default async function CustomersPage(props: PageProps<"/app/customers">) 
                              vs.model ILIKE '%' || $2 || '%' OR
                              vs.plate ILIKE '%' || $2 || '%' OR
                              vs.vin ILIKE '%' || $2 || '%')))
-      GROUP BY c.id
-      ORDER BY greatest(c.first_seen_at, c.updated_at) DESC
+      ORDER BY coalesce(
+                 (SELECT max(coalesce(ro.closed_at, ro.created_at))
+                    FROM repair_orders ro WHERE ro.customer_id = c.id),
+                 c.first_seen_at) DESC
       LIMIT 100`,
     [user.shopId, search, digits],
   );
@@ -73,7 +84,7 @@ export default async function CustomersPage(props: PageProps<"/app/customers">) 
           defaultValue={search}
           placeholder="Name, phone, plate, VIN, or make"
           aria-label="Search customers"
-          className="w-full max-w-md rounded-[var(--radius)] border border-line-2 bg-paper px-3 py-2.5 text-[0.9375rem]"
+          className="input max-w-md"
         />
         <button type="submit" className="btn btn-ghost">
           Search
@@ -98,25 +109,43 @@ export default async function CustomersPage(props: PageProps<"/app/customers">) 
         </div>
       ) : (
         <ul className="card divide-y divide-line">
-          {rows.map((row) => (
-            <li key={row.id}>
-              <Link
-                href={`/app/customers/${row.id}`}
-                className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 transition-colors hover:bg-paper-2"
-              >
-                <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold text-ink">
-                  {row.full_name ?? "Unnamed"}
-                </span>
-                <span className="t-data text-[0.875rem] text-ink-2">
-                  {formatPhone(row.phone)}
-                </span>
-                <span className="w-full text-[0.8125rem] text-ink-3 sm:w-auto sm:min-w-[14rem] sm:text-right">
-                  {row.vehicle_summary ?? "No vehicle on file"}
-                  {Number(row.vehicles) > 1 && ` +${Number(row.vehicles) - 1}`}
-                </span>
-              </Link>
-            </li>
-          ))}
+          {rows.map((row) => {
+            const open = Number(row.open_tickets);
+            return (
+              <li key={row.id}>
+                <Link
+                  href={`/app/customers/${row.id}`}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3.5 transition-colors hover:bg-paper-2"
+                >
+                  <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold text-ink">
+                    {row.full_name ?? "Unnamed"}
+                    {row.sms_opted_out && (
+                      <Tag tone="person" className="ml-2 align-middle">
+                        Texts stopped
+                      </Tag>
+                    )}
+                  </span>
+                  <span className="t-data text-[0.875rem] text-ink-2">
+                    {formatPhone(row.phone)}
+                  </span>
+                  {open > 0 && (
+                    <Tag tone="blue">
+                      {open} open {open === 1 ? "ticket" : "tickets"}
+                    </Tag>
+                  )}
+                  <span className="w-full text-[0.8125rem] text-ink-3 sm:w-auto sm:min-w-[13rem]">
+                    {row.vehicle_summary ?? "No vehicle on file"}
+                    {Number(row.vehicles) > 1 && ` +${Number(row.vehicles) - 1}`}
+                  </span>
+                  <span className="t-data w-full text-[0.75rem] text-ink-3 sm:w-28 sm:text-right">
+                    {row.last_visit
+                      ? `last ${formatDate(row.last_visit, user.timezone)}`
+                      : "no visits yet"}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
 

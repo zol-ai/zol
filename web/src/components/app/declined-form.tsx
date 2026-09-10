@@ -42,9 +42,15 @@ export function DeclinedForm({
         <input type="hidden" name="repair_order_id" value={repairOrderId} />
       )}
 
+      {/*
+        Ids are prefixed because this form shares the ticket page with the
+        add-line form, which also posts a `description`; the names stay bare
+        because that is what the action reads.
+      */}
       <Field
         label="What they turned down"
         name="description"
+        id="declined-description"
         required
         placeholder="Front struts, both sides — leaking"
         defaultValue={state?.values?.description}
@@ -55,6 +61,7 @@ export function DeclinedForm({
         <Field
           label="What it would have been"
           name="estimate"
+          id="declined-estimate"
           inputMode="decimal"
           defaultValue={state?.values?.estimate}
           error={state?.fields?.estimate}
@@ -63,6 +70,7 @@ export function DeclinedForm({
         <Select
           label="Chase it"
           name="months"
+          id="declined-months"
           defaultValue={state?.values?.months ?? "6"}
           error={state?.fields?.months}
         >

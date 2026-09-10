@@ -1156,3 +1156,152 @@ body {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   The app behind sign-in
+
+   Three more hues for the badges, because a shop's day has more states than
+   "ZOL did it" and "a person is needed": blue for work in motion, violet for
+   waiting on a vendor, red for the things that must not be missed. They are
+   column colours, not meaning — emerald and amber keep that job.
+   ========================================================================== */
+
+:root {
+  --blue-deep: #1d4ed8;
+  --blue-wash: #eff6ff;
+  --blue-line: #bfdbfe;
+  --violet-deep: #6d28d9;
+  --violet-wash: #f5f3ff;
+  --violet-line: #ddd6fe;
+  --red-deep: #b91c1c;
+  --red-wash: #fef2f2;
+  --red-line: #fecaca;
+}
+
+@theme inline {
+  --color-blue-deep: var(--blue-deep);
+  --color-blue-wash: var(--blue-wash);
+  --color-blue-line: var(--blue-line);
+  --color-violet-deep: var(--violet-deep);
+  --color-violet-wash: var(--violet-wash);
+  --color-violet-line: var(--violet-line);
+  --color-red-deep: var(--red-deep);
+  --color-red-wash: var(--red-wash);
+  --color-red-line: var(--red-line);
+}
+
+.tag-blue {
+  color: var(--blue-deep);
+  background: var(--blue-wash);
+  border-color: var(--blue-line);
+}
+
+.tag-violet {
+  color: var(--violet-deep);
+  background: var(--violet-wash);
+  border-color: var(--violet-line);
+}
+
+.tag-red {
+  color: var(--red-deep);
+  background: var(--red-wash);
+  border-color: var(--red-line);
+}
+
+/* A tinted square behind an icon, or behind initials. */
+.wash-zol {
+  background: var(--emerald-wash);
+  color: var(--emerald-deep);
+}
+
+.wash-person {
+  background: var(--amber-wash);
+  color: var(--amber-deep);
+}
+
+.wash-neutral {
+  background: var(--paper-3);
+  color: var(--ink-2);
+}
+
+.wash-blue {
+  background: var(--blue-wash);
+  color: var(--blue-deep);
+}
+
+.wash-violet {
+  background: var(--violet-wash);
+  color: var(--violet-deep);
+}
+
+.wash-red {
+  background: var(--red-wash);
+  color: var(--red-deep);
+}
+
+/*
+  Plain text controls behind sign-in share one look. The Field/Select
+  primitives set it inline; this is for the textareas and selects that
+  screens build by hand.
+*/
+.input {
+  width: 100%;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--paper);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.input::placeholder {
+  color: color-mix(in srgb, var(--ink-3) 70%, transparent);
+}
+
+/* The status stepper across the top of a ticket. */
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.stepper::-webkit-scrollbar {
+  display: none;
+}
+
+/* Data tables behind sign-in. */
+.table {
+  width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.table th {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-2);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: var(--paper-2);
+}
