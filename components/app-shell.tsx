@@ -6,6 +6,7 @@ import {
   CheckSquare2,
   FileText,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Megaphone,
   PanelsTopLeft,
@@ -20,6 +21,7 @@ import { cn, initials } from "@/lib/utils";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/checklist", label: "Checklist", icon: ListChecks },
   { href: "/tasks", label: "Tasks", icon: CheckSquare2 },
   { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/cards", label: "Cards", icon: PanelsTopLeft },

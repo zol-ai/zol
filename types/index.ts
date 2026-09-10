@@ -260,3 +260,63 @@ export type ScheduleEventDocument = Omit<ScheduleEvent, "id" | "createdAt" | "up
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;
 };
+
+/**
+ * A daily non-negotiable.
+ *
+ * The item is the *recurring definition*, not a to-do: it does not belong to a
+ * day and it is never "done". It simply exists, and every day each of its
+ * owners is expected to do it. What actually happened on a given day lives in
+ * ChecklistCompletion.
+ */
+export type ChecklistItem = {
+  id: string;
+  title: string;
+  detail?: string;
+  /** Team member IDs. Every owner gets their own box to tick, every day. */
+  ownerIds: string[];
+  order: number;
+  /**
+   * Retired items stop appearing without taking their history with them.
+   * Deleting is the other option and does throw the history away.
+   */
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * One person having done one item on one day.
+ *
+ * Presence is the entire record. There is no `done: false` — an unticked box
+ * is a document that does not exist, so a day nobody touched costs nothing and
+ * turning an item on does not have to pre-create anything.
+ */
+export type ChecklistCompletion = {
+  id: string;
+  date: string;
+  itemId: string;
+  ownerId: string;
+  doneAt: string;
+  /** Who ticked it, which is not necessarily the owner. */
+  doneByEmail?: string;
+};
+
+/** Everything the checklist page needs for one day, in one response. */
+export type ChecklistDay = {
+  date: string;
+  items: ChecklistItem[];
+  completions: ChecklistCompletion[];
+};
+
+export type ChecklistItemDocument = Omit<
+  ChecklistItem,
+  "id" | "createdAt" | "updatedAt"
+> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type ChecklistCompletionDocument = Omit<ChecklistCompletion, "id" | "doneAt"> & {
+  doneAt: FirebaseFirestore.Timestamp;
+};

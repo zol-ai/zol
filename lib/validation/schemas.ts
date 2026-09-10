@@ -315,3 +315,58 @@ export type ClientInput = z.infer<typeof clientCreateSchema>;
 export type CardInput = z.infer<typeof cardCreateSchema>;
 export type NoteInput = z.infer<typeof noteCreateSchema>;
 export type CrmInput = z.infer<typeof crmCreateSchema>;
+
+/*
+  Daily non-negotiables.
+
+  Owners are team member IDs and at least one is required: an item nobody owns
+  would show up on nobody's list, which makes it a note rather than a
+  checklist entry.
+*/
+const checklistOwnerIds = z
+  .array(z.string().trim().min(1))
+  .min(1, "Pick at least one person")
+  .max(20)
+  .transform((ids) => [...new Set(ids)]);
+
+export const checklistItemCreateSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required").max(200),
+    detail: optionalText,
+    ownerIds: checklistOwnerIds,
+  })
+  .strict();
+
+export const checklistItemUpdateSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required").max(200).optional(),
+    detail: optionalText,
+    ownerIds: checklistOwnerIds.optional(),
+    active: z.boolean().optional(),
+    order: z.number().int().min(0).optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required");
+
+/**
+ * Ticking or unticking one box.
+ *
+ * `done` is stated outright rather than toggled server-side. Two people
+ * looking at the same day should land on the state they can both see; a
+ * toggle would have them flipping each other's answer.
+ */
+export const checklistCompletionSchema = z
+  .object({
+    date: calendarDay,
+    ownerId: z.string().trim().min(1, "Owner is required"),
+    done: z.boolean(),
+  })
+  .strict();
+
+export const checklistDayQuerySchema = z
+  .object({ date: calendarDay.optional() })
+  .strict();
+
+export type ChecklistItemInput = z.infer<typeof checklistItemCreateSchema>;
+export type ChecklistItemUpdateInput = z.infer<typeof checklistItemUpdateSchema>;
+export type ChecklistCompletionInput = z.infer<typeof checklistCompletionSchema>;

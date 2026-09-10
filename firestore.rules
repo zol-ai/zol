@@ -27,6 +27,17 @@ service cloud.firestore {
       allow read, write: if isAllowedUser();
     }
 
+    match /checklistItems/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
+    // A tick is attributable — the document records who clicked it — so these
+    // stay as open as the rest of the workspace rather than being locked to
+    // the owner. The team ticks each other's boxes on purpose.
+    match /checklistCompletions/{document=**} {
+      allow read, write: if isAllowedUser();
+    }
+
     match /clients/{document=**} {
       allow read, write: if isAllowedUser();
     }
