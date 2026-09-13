@@ -1258,6 +1258,16 @@ body {
   color: color-mix(in srgb, var(--ink-3) 70%, transparent);
 }
 
+/*
+  An input with a glyph sitting in it. The room for the glyph belongs here
+  rather than on the element: these component rules are unlayered, so they
+  beat any padding utility Tailwind puts in @layer utilities, and a `pl-9`
+  on the input silently loses to the padding above.
+*/
+.input-icon {
+  padding-left: 2.25rem;
+}
+
 /* The status stepper across the top of a ticket. */
 .stepper {
   display: flex;

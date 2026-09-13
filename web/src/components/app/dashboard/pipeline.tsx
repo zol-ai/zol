@@ -22,6 +22,12 @@ const TONE_TEXT: Record<string, string> = {
  * The board in one line: how many tickets sit at each stop, in the order
  * work moves. Closed is left off — it is where tickets go, not where they
  * are — and every count links to the board filtered to that column.
+ *
+ * The shape follows the card's own width rather than the window's, which is
+ * why this is a container query and not a `sm:`. On the dashboard the card
+ * is the narrow column from `lg` up, so the viewport is wide exactly when
+ * there is least room for seven stops across; under about 28rem each stop
+ * takes its own row instead of squeezing "Waiting on parts" into 60 pixels.
  */
 export function PipelineStrip({ counts }: { counts: PipelineCount[] }) {
   const byStatus = new Map(counts.map((row) => [row.status, row.n]));
@@ -30,30 +36,32 @@ export function PipelineStrip({ counts }: { counts: PipelineCount[] }) {
 
   return (
     <Section title="Pipeline" detail={`${total} open ticket${total === 1 ? "" : "s"}`} flush>
-      <ol className="grid grid-cols-4 divide-x divide-line sm:grid-cols-7">
-        {stops.map((status) => {
-          const n = byStatus.get(status) ?? 0;
-          return (
-            <li key={status} className="min-w-0">
-              <Link
-                href={`/app/repair-orders?status=${status}`}
-                className="flex h-full flex-col items-center justify-start gap-1 px-1 py-3 text-center transition-colors hover:bg-paper-2"
-              >
-                <span
-                  className={`t-num text-[1.5rem] ${
-                    n === 0 ? "text-ink-3" : TONE_TEXT[RO_STATUS_TONE[status]]
-                  }`}
+      <div className="@container">
+        <ol className="divide-y divide-line @md:grid @md:grid-cols-7 @md:divide-x @md:divide-y-0">
+          {stops.map((status) => {
+            const n = byStatus.get(status) ?? 0;
+            return (
+              <li key={status} className="min-w-0">
+                <Link
+                  href={`/app/repair-orders?status=${status}`}
+                  className="flex h-full items-center justify-between gap-3 px-4 py-2.5 transition-colors hover:bg-paper-2 @md:flex-col @md:justify-start @md:gap-1.5 @md:px-1.5 @md:py-3.5"
                 >
-                  {n}
-                </span>
-                <span className="t-eyebrow text-[0.5625rem] leading-tight">
-                  {RO_STATUS_LABEL[status]}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
+                  <span className="min-w-0 text-[0.875rem] text-ink-2 @md:order-2 @md:text-center @md:text-[0.6875rem] @md:font-semibold @md:leading-[1.15] @md:text-balance @md:text-ink-3">
+                    {RO_STATUS_LABEL[status]}
+                  </span>
+                  <span
+                    className={`t-num flex-none text-[1.125rem] @md:text-[1.5rem] ${
+                      n === 0 ? "text-ink-3" : TONE_TEXT[RO_STATUS_TONE[status]]
+                    }`}
+                  >
+                    {n}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </Section>
   );
 }

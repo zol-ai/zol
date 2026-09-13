@@ -60,7 +60,7 @@ export default async function SearchPage(props: PageProps<"/app/search">) {
             autoComplete="off"
             defaultValue={raw}
             placeholder="Name, phone, plate, VIN, #ticket, or a word from the complaint"
-            className="input pl-9"
+            className="input input-icon"
           />
         </div>
         <button type="submit" className="btn btn-emerald btn-sm">
