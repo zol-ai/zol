@@ -49,7 +49,7 @@ export const founders: Founder[] = [
     links: [
       {
         label: "LinkedIn",
-        href: "https://www.linkedin.com/in/ezaz-ahamad-mohammad-abdul-821386229/",
+        href: "https://www.linkedin.com/in/ezaz-ahamad-821386229/",
       },
       { label: "GitHub", href: "https://github.com/ezazahamad2003" },
       { label: "X", href: "https://x.com/Zaz_Labs" },
