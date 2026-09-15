@@ -81,11 +81,8 @@ export function Founders() {
                   <h3 className="t-h3 mt-2 text-[1.5rem] text-ink sm:text-[1.75rem]">
                     {person.name}
                   </h3>
-                  <p className="mt-4 text-[0.9375rem] leading-relaxed text-ink-2">
-                    {person.bio}
-                  </p>
 
-                  <ul className="mt-6 grid gap-2 border-t border-line pt-5">
+                  <ul className="mt-5 grid gap-2 border-t border-line pt-5">
                     {person.facts.map((fact) => (
                       <li
                         key={fact}
@@ -102,7 +99,7 @@ export function Founders() {
 
                   {/*
                     Pushed to the foot of the card so both cards' link rows sit
-                    on the same line whatever the bios above them do.
+                    on the same line even if one fact list runs longer.
                   */}
                   <div className="mt-auto flex flex-wrap gap-2 pt-6">
                     {person.links.map((link) => (
