@@ -12,10 +12,13 @@ export const site = {
   demoUrl: "https://calendar.app.google/Q262bp3TVLBRcedm9",
   contactEmail: "zaz@tryzol.com",
   /*
-    Deliberately not in `nav` below: everything in that list is an anchor into
-    the landing page, and the footer renders it under "The product". This is a
-    route, and it belongs beside the demo button rather than among the section
-    links.
+    The waitlist route still exists — flyers and ads point at it, and the
+    sweep to Company OS runs off its table — but as of 2026-09-15 nothing on
+    the site links to it. A public "join waitlist" button reads as
+    pre-launch, and the product is live; a reviewer took the button at face
+    value and declined us for it. So: reachable by URL, out of the sitemap,
+    noindex, and no button in the nav or footer. Put a link back only if
+    that decision is reversed on purpose.
   */
   waitlistPath: "/waitlist",
 } as const;
@@ -26,4 +29,5 @@ export const nav = [
   { label: "What it does", href: "#runs-itself" },
   { label: "Why switch", href: "#why-switch" },
   { label: "Stories", href: "#stories" },
+  { label: "Founders", href: "#founders" },
 ] as const;

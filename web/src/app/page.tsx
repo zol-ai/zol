@@ -2,6 +2,7 @@ import { BoardSection } from "@/components/site/board-section";
 import { Cta } from "@/components/site/cta";
 import { Faq } from "@/components/site/faq";
 import { Footer } from "@/components/site/footer";
+import { Founders } from "@/components/site/founders";
 import { Hero } from "@/components/site/hero";
 import { HowItWorks } from "@/components/site/how-it-works";
 import { LostCalls } from "@/components/site/lost-calls";
@@ -13,23 +14,47 @@ import { Stats } from "@/components/site/stats";
 import { Stories } from "@/components/site/stories";
 import { WhySwitch } from "@/components/site/why-switch";
 import { site } from "@/lib/site";
+import { founders } from "@/lib/team";
 
+/*
+  Two nodes: the product, and the company behind it with its founders. The
+  founders carry `sameAs` links to their public profiles, so the people named
+  on the page are the same people a crawler can find elsewhere — the machine
+  side of what the Founders section does for a human reader.
+*/
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: site.name,
-  applicationCategory: "BusinessApplication",
-  description: site.description,
-  url: site.url,
-  audience: {
-    "@type": "Audience",
-    audienceType: "Independent auto repair shops",
-  },
-  offers: {
-    "@type": "Offer",
-    availability: "https://schema.org/PreOrder",
-    url: site.demoUrl,
-  },
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: site.name,
+      applicationCategory: "BusinessApplication",
+      description: site.description,
+      url: site.url,
+      audience: {
+        "@type": "Audience",
+        audienceType: "Independent auto repair shops",
+      },
+      offers: {
+        "@type": "Offer",
+        availability: "https://schema.org/PreOrder",
+        url: site.demoUrl,
+      },
+    },
+    {
+      "@type": "Organization",
+      name: site.name,
+      url: site.url,
+      email: site.contactEmail,
+      founder: founders.map((person) => ({
+        "@type": "Person",
+        name: person.name,
+        jobTitle: person.title,
+        image: `${site.url}${person.image}`,
+        sameAs: person.links.map((link) => link.href),
+      })),
+    },
+  ],
 };
 
 export default function Home() {
@@ -62,6 +87,7 @@ export default function Home() {
 
         <WhySwitch />
         <Stories />
+        <Founders />
         <Faq />
         <Cta />
       </main>

@@ -9,7 +9,12 @@ export const metadata: Metadata = {
   title: "Join the waitlist",
   description:
     "Put your shop on the list for ZOL — the AI shop management software that answers every call, writes the repair order and chases the approval.",
-  alternates: { canonical: `${site.url}/waitlist` },
+  alternates: { canonical: `${site.url}${site.waitlistPath}` },
+  /*
+    Reachable, not findable. Nothing on the site links here any more and it
+    is out of the sitemap — see `waitlistPath` in lib/site.ts.
+  */
+  robots: { index: false, follow: false },
 };
 
 /**

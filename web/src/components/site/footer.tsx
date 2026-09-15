@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { nav, site } from "@/lib/site";
 import { DemoButton } from "./demo-button";
 import { Wordmark } from "./mark";
@@ -20,7 +18,7 @@ export function Footer() {
 
           <div className="flex flex-col gap-8 sm:flex-row sm:gap-16">
             <nav aria-label="Footer">
-              <p className="t-eyebrow text-[0.5625rem]">The product</p>
+              <p className="t-eyebrow text-[0.5625rem]">On this page</p>
               {/* Padded rather than spaced, so each row is a comfortable tap target. */}
               <ul className="mt-2 space-y-0.5">
                 {nav.map((item) => (
@@ -38,15 +36,11 @@ export function Footer() {
 
             <div>
               <p className="t-eyebrow text-[0.5625rem]">Talk to us</p>
+              {/*
+                The email and the demo. "Join waitlist" used to lead this list
+                and came off on 2026-09-15 — see `waitlistPath` in lib/site.ts.
+              */}
               <ul className="mt-2 space-y-0.5">
-                <li>
-                  <Link
-                    href={site.waitlistPath}
-                    className="block py-2 text-[0.875rem] text-ink-2 transition-colors hover:text-ink"
-                  >
-                    Join waitlist
-                  </Link>
-                </li>
                 <li>
                   <a
                     href={`mailto:${site.contactEmail}`}
