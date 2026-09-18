@@ -23,7 +23,7 @@ export function BoardSection() {
           </div>
           <Board />
           <Fig n="01">
-            The live board at Fifth Street Auto — illustrative data
+            The board, on sample data — the app itself is in section 05
           </Fig>
         </Reveal>
       </div>

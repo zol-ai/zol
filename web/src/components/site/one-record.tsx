@@ -120,7 +120,7 @@ export function OneRecord() {
           </Reveal>
         </div>
 
-        <Fig n="03">Sample repair order RO-4471 — illustrative data</Fig>
+        <Fig n="03">Sample repair order RO-4471 — sample data</Fig>
       </div>
     </section>
   );

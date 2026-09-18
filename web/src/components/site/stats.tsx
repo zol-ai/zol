@@ -136,7 +136,7 @@ export function Stats() {
             })}
           </dl>
           <Fig n="02">
-            The morning in numbers — same board, illustrative data
+            The morning in numbers — same board, sample data
           </Fig>
         </Reveal>
       </div>

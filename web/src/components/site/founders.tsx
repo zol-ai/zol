@@ -1,5 +1,7 @@
 import Image from "next/image";
-import { founders, type FounderLink } from "@/lib/team";
+import Link from "next/link";
+import { founders, type Founder, type FounderLink } from "@/lib/team";
+import { site } from "@/lib/site";
 import { Fig } from "./fig";
 import { Reveal } from "./reveal";
 import { SectionHead } from "./section-head";
@@ -44,6 +46,57 @@ function ProfileLink({ link, person }: { link: FounderLink; person: string }) {
   );
 }
 
+/**
+ * One founder: the photograph, the name and role, the fact list, and the
+ * links off-site. Shared by the landing page and the About page so the two
+ * never drift apart.
+ */
+export function FounderCard({ person }: { person: Founder }) {
+  return (
+    <article className="card flex h-full flex-col overflow-hidden">
+      <div className="story-img relative aspect-[4/5] border-b border-line bg-paper-3">
+        <Image
+          src={person.image}
+          alt={person.imageAlt}
+          fill
+          sizes="(min-width: 768px) 28rem, 100vw"
+          unoptimized
+          className="object-cover object-top"
+        />
+      </div>
+
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
+        <p className="t-eyebrow text-[0.625rem]">{person.role}</p>
+        <h3 className="t-h3 mt-2 text-[1.5rem] text-ink sm:text-[1.75rem]">
+          {person.name}
+        </h3>
+
+        <ul className="mt-5 grid gap-2 border-t border-line pt-5">
+          {person.facts.map((fact) => (
+            <li
+              key={fact}
+              className="flex items-start gap-2.5 text-[0.875rem] text-ink-2"
+            >
+              <span className="dot mt-[0.45rem] bg-ink-3" aria-hidden="true" />
+              {fact}
+            </li>
+          ))}
+        </ul>
+
+        {/*
+          Pushed to the foot of the card so both cards' link rows sit on the
+          same line even if one fact list runs longer.
+        */}
+        <div className="mt-auto flex flex-wrap gap-2 pt-6">
+          {person.links.map((link) => (
+            <ProfileLink key={link.href} link={link} person={person.name} />
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function Founders() {
   return (
     <section id="founders" className="band border-t border-line bg-paper-2">
@@ -64,54 +117,7 @@ export function Founders() {
         <div className="mt-12 grid max-w-[58rem] gap-6 md:grid-cols-2 md:gap-8">
           {founders.map((person, i) => (
             <Reveal key={person.name} delay={i * 90}>
-              <article className="card flex h-full flex-col overflow-hidden">
-                <div className="story-img relative aspect-[4/5] border-b border-line bg-paper-3">
-                  <Image
-                    src={person.image}
-                    alt={person.imageAlt}
-                    fill
-                    sizes="(min-width: 768px) 28rem, 100vw"
-                    unoptimized
-                    className="object-cover object-top"
-                  />
-                </div>
-
-                <div className="flex flex-1 flex-col p-6 sm:p-7">
-                  <p className="t-eyebrow text-[0.625rem]">{person.role}</p>
-                  <h3 className="t-h3 mt-2 text-[1.5rem] text-ink sm:text-[1.75rem]">
-                    {person.name}
-                  </h3>
-
-                  <ul className="mt-5 grid gap-2 border-t border-line pt-5">
-                    {person.facts.map((fact) => (
-                      <li
-                        key={fact}
-                        className="flex items-start gap-2.5 text-[0.875rem] text-ink-2"
-                      >
-                        <span
-                          className="dot mt-[0.45rem] bg-ink-3"
-                          aria-hidden="true"
-                        />
-                        {fact}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/*
-                    Pushed to the foot of the card so both cards' link rows sit
-                    on the same line even if one fact list runs longer.
-                  */}
-                  <div className="mt-auto flex flex-wrap gap-2 pt-6">
-                    {person.links.map((link) => (
-                      <ProfileLink
-                        key={link.href}
-                        link={link}
-                        person={person.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </article>
+              <FounderCard person={person} />
             </Reveal>
           ))}
         </div>
@@ -120,6 +126,16 @@ export function Founders() {
           The founders — real names and photographs. The links go to public
           profiles off this site.
         </Fig>
+
+        <Reveal className="mt-8">
+          <Link
+            href={site.aboutPath}
+            className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink"
+          >
+            About ZOL — the company, the product, and how to reach us
+            <span aria-hidden="true">→</span>
+          </Link>
+        </Reveal>
       </div>
     </section>
   );
