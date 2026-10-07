@@ -68,11 +68,15 @@ export function Footer() {
 
             <div className="col-span-2 sm:col-span-1">
               <p className="t-eyebrow text-[0.5625rem]">Talk to us</p>
-              {/*
-                The email and the demo. "Join waitlist" used to lead this list
-                and came off on 2026-09-15 — see `waitlistPath` in lib/site.ts.
-              */}
               <ul className="mt-2 space-y-0.5">
+                <li>
+                  <Link
+                    href={site.waitlistPath}
+                    className="block py-2 text-[0.875rem] text-ink-2 transition-colors hover:text-ink"
+                  >
+                    Join waitlist
+                  </Link>
+                </li>
                 <li>
                   <a
                     href={`mailto:${site.contactEmail}`}

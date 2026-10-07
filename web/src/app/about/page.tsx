@@ -3,12 +3,10 @@ import Link from "next/link";
 
 import { DemoButton } from "@/components/site/demo-button";
 import { Footer } from "@/components/site/footer";
-import { FounderCard } from "@/components/site/founders";
 import { Nav } from "@/components/site/nav";
 import { Reveal } from "@/components/site/reveal";
 import { productSections } from "@/lib/product";
 import { site } from "@/lib/site";
-import { founders } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "About",
@@ -125,34 +123,8 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Who is behind it */}
-        <section className="band border-t border-line">
-          <div className="shell">
-            <Reveal className="max-w-2xl">
-              <p className="t-eyebrow">Founders</p>
-              <h2 className="t-h2 mt-4 text-[1.875rem] sm:text-[2.375rem]">
-                Who&rsquo;s behind {site.name}
-              </h2>
-              <p className="t-lede mt-5">
-                Two technical founders, building in {site.company.city}, who
-                spent two months embedded in independent mechanic shops before
-                writing a line of it. The names and photographs are real; every
-                link goes to a public profile on a site we don&rsquo;t control.
-              </p>
-            </Reveal>
-
-            <div className="mt-12 grid max-w-[58rem] gap-6 md:grid-cols-2 md:gap-8">
-              {founders.map((person, i) => (
-                <Reveal key={person.name} delay={i * 90}>
-                  <FounderCard person={person} />
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* How to reach us */}
-        <section className="band-tight border-t border-line bg-paper-2">
+        <section className="band-tight border-t border-line">
           <div className="shell">
             <Reveal className="grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
               <div>

@@ -3,7 +3,6 @@ import { BoardSection } from "@/components/site/board-section";
 import { Cta } from "@/components/site/cta";
 import { Faq } from "@/components/site/faq";
 import { Footer } from "@/components/site/footer";
-import { Founders } from "@/components/site/founders";
 import { Hero } from "@/components/site/hero";
 import { HowItWorks } from "@/components/site/how-it-works";
 import { LostCalls } from "@/components/site/lost-calls";
@@ -16,19 +15,18 @@ import { Stats } from "@/components/site/stats";
 import { WhySwitch } from "@/components/site/why-switch";
 import { productScreens } from "@/lib/product";
 import { site } from "@/lib/site";
-import { founders } from "@/lib/team";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
 /*
-  Two nodes: the product, and the company behind it with its founders. The
-  founders carry `sameAs` links to their public profiles, so the people named
-  on the page are the same people a crawler can find elsewhere — the machine
-  side of what the Founders section does for a human reader. The product
-  carries its screenshots and the sign-up URL, so a crawler can see it is a
-  shipped application rather than an announcement of one.
+  Two nodes: the product, and the company behind it. The product carries its
+  screenshots and the sign-up URL, so a crawler can see it is a shipped
+  application rather than an announcement of one. The company carries its
+  address, founding date and contact — and no people: the founders section
+  came off the site on 2026-10-07, and the structured data says only what
+  the page says.
 */
 const jsonLd = {
   "@context": "https://schema.org",
@@ -69,13 +67,6 @@ const jsonLd = {
         email: site.contactEmail,
         contactType: "sales",
       },
-      founder: founders.map((person) => ({
-        "@type": "Person",
-        name: person.name,
-        jobTitle: person.title,
-        image: `${site.url}${person.image}`,
-        sameAs: person.links.map((link) => link.href),
-      })),
     },
   ],
 };
@@ -116,7 +107,6 @@ export default function Home() {
           beside it. Real ones go back in when there are real ones to quote.
         */}
         <Product />
-        <Founders />
         <Faq />
         <Cta />
       </main>

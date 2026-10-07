@@ -33,13 +33,15 @@ export const site = {
   signupPath: "/signup",
   signinPath: "/signin",
   /*
-    The waitlist route still exists — flyers and ads point at it, and the
-    sweep to Company OS runs off its table — but as of 2026-09-15 nothing on
-    the site links to it. A public "join waitlist" button reads as
-    pre-launch, and the product is live; a reviewer took the button at face
-    value and declined us for it. So: reachable by URL, out of the sitemap,
-    noindex, and no button in the nav or footer. Put a link back only if
-    that decision is reversed on purpose.
+    The waitlist: a "Join waitlist" button in the nav, a link in the footer,
+    the page in the sitemap and indexable. Flyers and ads point at it, and
+    the sweep to Company OS runs off its table.
+
+    It was unlinked from 2026-09-15 to 2026-10-07 while the Google for
+    Startups review was open — a public waitlist button reads as pre-launch,
+    and a reviewer declined us for it. The credits came through, so the
+    links are back. If a review like that happens again, take the button
+    off again rather than argue the point with a checklist.
   */
   waitlistPath: "/waitlist",
 } as const;
@@ -54,6 +56,5 @@ export const nav = [
   { label: "What it does", href: "/#runs-itself" },
   { label: "Why switch", href: "/#why-switch" },
   { label: "Product", href: "/#product" },
-  { label: "Founders", href: "/#founders" },
   { label: "About", href: site.aboutPath },
 ] as const;

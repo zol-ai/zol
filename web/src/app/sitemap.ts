@@ -2,10 +2,8 @@ import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 
 /*
-  The landing page and the About page. The waitlist page is deliberately not
-  here — it is reachable by link but not something to be found; see
-  `waitlistPath` in lib/site.ts. Sign-in, sign-up, the app and the portal
-  are noindex and stay out too.
+  The landing page, the waitlist and the About page. Sign-in, sign-up, the
+  app and the portal are noindex and stay out.
 */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -15,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      url: `${site.url}${site.waitlistPath}`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
     {
       url: `${site.url}${site.aboutPath}`,
