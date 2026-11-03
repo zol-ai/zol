@@ -13,6 +13,8 @@ const company = [
   { label: "About ZOL", href: site.aboutPath },
   { label: "Set up your shop", href: site.signupPath },
   { label: "Sign in", href: site.signinPath },
+  { label: "Privacy policy", href: site.privacyPath },
+  { label: "SMS terms", href: site.smsTermsPath },
 ] as const;
 
 export function Footer() {
@@ -93,7 +95,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="t-data text-[0.75rem] text-ink-3">
-            © {new Date().getFullYear()} {site.name}. All rights reserved.
+            © {new Date().getFullYear()} {site.company.legalName}. All rights reserved.
           </p>
           <p className="t-data text-[0.75rem] text-ink-3">
             The board, ticket and call examples above use sample data. The

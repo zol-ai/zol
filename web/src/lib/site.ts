@@ -22,16 +22,26 @@ export const site = {
     The company, stated once. These are the facts on the incorporation
     paperwork and on every application form we fill in; the About page and
     the structured data read them from here so no two places disagree.
+    The legal name and city must match the IRS 147C letter: carrier review
+    for A2P 10DLC texting compares the site against the registered brand.
   */
   company: {
+    legalName: "ZOL INC",
     founded: "2025",
-    city: "San Francisco",
+    city: "Burney",
     region: "California",
     country: "US",
   },
   aboutPath: "/about",
   signupPath: "/signup",
   signinPath: "/signin",
+  /*
+    Linked from the footer on every page. Carrier reviewers open these when
+    vetting the texting campaign; the SMS terms are what the opt-in language
+    points at.
+  */
+  privacyPath: "/privacy",
+  smsTermsPath: "/sms-terms",
   /*
     The waitlist: a "Join waitlist" button in the nav, a link in the footer,
     the page in the sitemap and indexable. Flyers and ads point at it, and
