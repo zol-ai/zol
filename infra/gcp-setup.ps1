@@ -70,18 +70,22 @@ $databaseUrl = "postgres://${DatabaseUser}:${password}@/${DatabaseName}?host=/cl
 
 Step "Secrets"
 function Set-Secret($name, $value) {
-  $tmp = New-TemporaryFile
+  $path = [IO.Path]::GetTempFileName()
   try {
-    [IO.File]::WriteAllText($tmp.FullName, $value)   # no trailing newline
-    $has = gcloud secrets list --project=$ProjectId --filter="name:$name" --format='value(name)'
-    if ($has) {
-      gcloud secrets versions add $name --project=$ProjectId --data-file=$tmp.FullName | Out-Null
+    [IO.File]::WriteAllText($path, $value)   # no trailing newline
+    # Via cmd so gcloud's stderr never becomes a PowerShell terminating error.
+    cmd /c "gcloud secrets describe $name --project=$ProjectId --format=value(name) >nul 2>nul"
+    $exists = ($LASTEXITCODE -eq 0)
+    if ($exists) {
+      gcloud secrets versions add $name --project=$ProjectId --data-file="$path" | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to add a version to secret $name" }
       Write-Host "  updated $name"
     } else {
-      gcloud secrets create $name --project=$ProjectId --replication-policy=automatic --data-file=$tmp.FullName | Out-Null
+      gcloud secrets create $name --project=$ProjectId --replication-policy=automatic --data-file="$path" | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create secret $name" }
       Write-Host "  created $name"
     }
-  } finally { Remove-Item $tmp.FullName -Force }
+  } finally { Remove-Item $path -Force -ErrorAction SilentlyContinue }
 }
 Set-Secret 'zol-support-database-url'        $databaseUrl
 Set-Secret 'zol-support-twilio-account-sid'  $envMap['TWILIO_ACCOUNT_SID']
