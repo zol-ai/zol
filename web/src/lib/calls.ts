@@ -15,6 +15,9 @@ export type CallRow = {
   intent: string | null;
   outcome: string | null;
   recording_url: string | null;
+  recording_sid: string | null;
+  transferred_at: Date | null;
+  transfer_reason: string | null;
 };
 
 export type TurnRow = {
@@ -77,13 +80,44 @@ export async function finishCall(input: {
   );
 }
 
+export async function saveRecordingSid(callSid: string, recordingSid: string): Promise<void> {
+  await requirePool().query(
+    `update calls set recording_sid = $2, updated_at = now() where call_sid = $1`,
+    [callSid, recordingSid],
+  );
+}
+
+export async function saveRecording(
+  callSid: string,
+  recordingSid: string,
+  recordingUrl: string,
+): Promise<void> {
+  await requirePool().query(
+    `update calls set recording_sid = $2, recording_url = $3, updated_at = now()
+     where call_sid = $1`,
+    [callSid, recordingSid, recordingUrl],
+  );
+}
+
+export async function markTransferred(callSid: string, reason: string): Promise<void> {
+  await requirePool().query(
+    `update calls set transferred_at = now(), transfer_reason = $2, outcome = 'transferred',
+            updated_at = now()
+     where call_sid = $1`,
+    [callSid, reason],
+  );
+}
+
 export async function saveAnalysis(
   callSid: string,
   analysis: { summary: string; intent: string; outcome: string },
 ): Promise<void> {
   await requirePool().query(
-    `update calls set summary = $2, intent = $3, outcome = $4, updated_at = now()
-     where call_sid = $1`,
+    `update calls
+        set summary = $2, intent = $3,
+            outcome = case when transferred_at is not null then 'transferred' else $4 end,
+            updated_at = now()
+      where call_sid = $1`,
     [callSid, analysis.summary, analysis.intent, analysis.outcome],
   );
 }

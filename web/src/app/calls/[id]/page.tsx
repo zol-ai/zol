@@ -29,17 +29,19 @@ export default async function CallDetailPage({
         <Field label="Intent" value={call.intent ?? "—"} />
         <Field label="Outcome" value={call.outcome ?? "—"} />
         <Field label="Call SID" value={call.call_sid} mono />
-        {call.recording_url && (
-          <Field
-            label="Recording"
-            value={
-              <a href={call.recording_url} className="text-blue-700 hover:underline">
-                listen
-              </a>
-            }
-          />
+        {call.transferred_at && (
+          <Field label="Transferred" value={new Date(call.transferred_at).toLocaleTimeString()} />
         )}
       </dl>
+
+      {call.recording_url ? (
+        <div className="mt-6">
+          <div className="text-xs uppercase tracking-wide text-neutral-500">Recording</div>
+          <audio controls preload="none" src={`/api/recordings/${call.id}`} className="mt-1 w-full" />
+        </div>
+      ) : call.recording_sid ? (
+        <p className="mt-6 text-sm text-neutral-500">Recording is processing.</p>
+      ) : null}
 
       {call.summary && (
         <p className="mt-6 rounded-md border border-neutral-200 bg-neutral-50 p-4">{call.summary}</p>

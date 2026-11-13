@@ -1,7 +1,9 @@
 import WebSocket from "ws";
 import { env } from "../env";
-import { buildInstructions } from "../agent/prompt";
-import { appendTurn, attachStream } from "../calls";
+import { operationalNotes } from "../agent/prompt";
+import { getAgentSettings } from "../settings";
+import { appendTurn, attachStream, markTransferred, saveRecordingSid } from "../calls";
+import { startRecording, transferToHuman } from "../twilio/client";
 
 /**
  * One instance per phone call. Pipes Twilio Media Stream audio (G.711 mu-law,
@@ -9,10 +11,11 @@ import { appendTurn, attachStream } from "../calls";
  * and writes transcripts to Postgres as they complete.
  *
  * Twilio events: start, media, mark, stop.
- * OpenAI events used: session.created, response.output_audio.delta,
+ * OpenAI events used: session.updated, response.output_audio.delta,
  *   response.output_audio_transcript.done,
  *   conversation.item.input_audio_transcription.completed,
- *   input_audio_buffer.speech_started, error.
+ *   input_audio_buffer.speech_started, response.output_item.done (tool calls),
+ *   response.done, error.
  */
 export class CallBridge {
   private openai: WebSocket | null = null;
@@ -21,6 +24,8 @@ export class CallBridge {
   private openaiReady = false;
   private pendingAudio: string[] = [];
   private closed = false;
+  /** Set when the model asked to transfer; executed once its goodbye finishes. */
+  private pendingTransfer: { reason: string } | null = null;
 
   constructor(private readonly twilio: WebSocket) {
     twilio.on("message", (data) => this.onTwilioMessage(data.toString()));
@@ -50,17 +55,23 @@ export class CallBridge {
           attachStream(this.callSid, this.streamSid).catch((e) =>
             console.error("attachStream failed", e),
           );
+          if (env.recordCalls()) {
+            const sid = this.callSid;
+            startRecording(sid).then((recSid) => {
+              if (recSid) saveRecordingSid(sid, recSid).catch((e) => console.error(e));
+            });
+          }
         }
-        this.connectOpenAI();
+        void this.connectOpenAI();
         break;
       }
       case "media": {
         const payload = msg.media.payload;
         if (this.openaiReady && this.openai) {
           this.sendOpenAI({ type: "input_audio_buffer.append", audio: payload });
-        } else {
+        } else if (this.pendingAudio.length < 200) {
           // Buffer the first few frames while the OpenAI socket comes up.
-          if (this.pendingAudio.length < 200) this.pendingAudio.push(payload);
+          this.pendingAudio.push(payload);
         }
         break;
       }
@@ -80,7 +91,32 @@ export class CallBridge {
 
   // ---- OpenAI side -------------------------------------------------------
 
-  private connectOpenAI() {
+  private async connectOpenAI() {
+    const settings = await getAgentSettings();
+    const handoffAvailable = Boolean(env.handoffNumber());
+    const instructions =
+      settings.instructions +
+      "\n" +
+      operationalNotes({ handoffAvailable, recording: env.recordCalls() });
+
+    const tools = handoffAvailable
+      ? [
+          {
+            type: "function",
+            name: "transfer_to_human",
+            description:
+              "Transfer the caller to a human on the Zol team. Call this only after telling the caller you are connecting them.",
+            parameters: {
+              type: "object",
+              properties: {
+                reason: { type: "string", description: "One sentence on why the caller needs a person." },
+              },
+              required: ["reason"],
+            },
+          },
+        ]
+      : [];
+
     const url = `wss://api.openai.com/v1/realtime?model=${encodeURIComponent(env.openaiRealtimeModel())}`;
     const ws = new WebSocket(url, {
       headers: { Authorization: `Bearer ${env.openaiApiKey()}` },
@@ -92,7 +128,9 @@ export class CallBridge {
         type: "session.update",
         session: {
           type: "realtime",
-          instructions: buildInstructions({ handoffAvailable: Boolean(env.handoffNumber()) }),
+          instructions,
+          tools,
+          tool_choice: "auto",
           audio: {
             input: {
               format: { type: "audio/pcmu" },
@@ -101,7 +139,7 @@ export class CallBridge {
             },
             output: {
               format: { type: "audio/pcmu" },
-              voice: env.openaiVoice(),
+              voice: settings.voice,
             },
           },
         },
@@ -137,7 +175,7 @@ export class CallBridge {
         break;
       }
       case "response.output_audio.delta": {
-        if (!this.streamSid) break;
+        if (!this.streamSid || !msg.delta) break;
         this.sendTwilio({
           event: "media",
           streamSid: this.streamSid,
@@ -159,6 +197,37 @@ export class CallBridge {
         this.record("agent", msg.transcript);
         break;
       }
+      case "response.output_item.done": {
+        const item = msg.item;
+        if (item?.type === "function_call" && item.name === "transfer_to_human") {
+          let reason = "caller asked for a human";
+          try {
+            reason = (JSON.parse(item.arguments ?? "{}") as { reason?: string }).reason ?? reason;
+          } catch {
+            /* keep default */
+          }
+          this.pendingTransfer = { reason };
+          // Acknowledge the tool so the model can finish its sentence cleanly.
+          this.sendOpenAI({
+            type: "conversation.item.create",
+            item: {
+              type: "function_call_output",
+              call_id: item.call_id,
+              output: JSON.stringify({ status: "transferring" }),
+            },
+          });
+        }
+        break;
+      }
+      case "response.done": {
+        if (this.pendingTransfer) {
+          // Give Twilio a moment to play the trailing audio before we swap TwiML.
+          const { reason } = this.pendingTransfer;
+          this.pendingTransfer = null;
+          setTimeout(() => void this.executeTransfer(reason), 1200);
+        }
+        break;
+      }
       case "error": {
         console.error(`[${this.callSid}] openai error`, msg.error);
         break;
@@ -176,7 +245,20 @@ export class CallBridge {
 
   // ---- shared ------------------------------------------------------------
 
-  private record(role: "caller" | "agent", text: string | undefined) {
+  private async executeTransfer(reason: string) {
+    const to = env.handoffNumber();
+    if (!this.callSid || !to) return;
+    console.log(`[${this.callSid}] transferring to human: ${reason}`);
+    this.record("system", `Transferred to human (${reason}).`);
+    const ok = await transferToHuman(this.callSid, to);
+    if (ok) {
+      markTransferred(this.callSid, reason).catch((e) => console.error("markTransferred failed", e));
+    } else {
+      this.record("system", "Transfer failed; agent continues.");
+    }
+  }
+
+  private record(role: "caller" | "agent" | "system", text: string | undefined) {
     if (!this.callSid || !text) return;
     appendTurn(this.callSid, role, text).catch((e) => console.error("appendTurn failed", e));
   }
@@ -216,4 +298,5 @@ type OpenAIEvent = {
   delta?: string;
   transcript?: string;
   error?: unknown;
+  item?: { type?: string; name?: string; call_id?: string; arguments?: string };
 };

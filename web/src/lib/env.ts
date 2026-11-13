@@ -19,6 +19,12 @@ function required(name: string): string {
   return value;
 }
 
+function flag(name: string, fallback: boolean): boolean {
+  const v = optional(name)?.toLowerCase();
+  if (v === undefined) return fallback;
+  return v === "true" || v === "1" || v === "yes";
+}
+
 export const env = {
   /** Public HTTPS origin Twilio reaches us on, e.g. https://zol-support-xyz.a.run.app */
   publicBaseUrl: () => required("PUBLIC_BASE_URL").replace(/\/$/, ""),
@@ -37,6 +43,12 @@ export const env = {
   /** Number a caller is forwarded to when they ask for a human. Optional until set. */
   handoffNumber: () => optional("HANDOFF_PHONE_NUMBER"),
 
+  /** Record every call (default on). The agent discloses it in the greeting. */
+  recordCalls: () => flag("RECORD_CALLS", true),
+
+  /** Shared password that gates the dashboard. Unset = dashboard is open (dev only). */
+  dashboardPassword: () => optional("DASHBOARD_PASSWORD"),
+
   /** Set to "true" to skip Twilio signature checks (local tunnels only). */
-  skipTwilioSignature: () => optional("SKIP_TWILIO_SIGNATURE")?.toLowerCase() === "true",
+  skipTwilioSignature: () => flag("SKIP_TWILIO_SIGNATURE", false),
 };
