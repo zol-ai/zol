@@ -70,15 +70,19 @@ web/
 
 ## Deploy (Cloud Run)
 
+One-time provisioning, then deploys, both from a laptop after `gcloud auth login`:
+
 ```
-gcloud run deploy zol-support --source web --region us-west1 \
-  --session-affinity --timeout 3600 --min-instances 1 \
-  --set-env-vars PUBLIC_BASE_URL=https://<service-url>,TWILIO_PHONE_NUMBER=... \
-  --set-secrets TWILIO_ACCOUNT_SID=...,TWILIO_AUTH_TOKEN=...,OPENAI_API_KEY=...,DATABASE_URL=...
+powershell -ExecutionPolicy Bypass -File infra/gcp-setup.ps1   # SA, DB on zol-pg, secrets from web/.env.local
+powershell -ExecutionPolicy Bypass -File infra/deploy.ps1      # build, deploy, migrate, pin PUBLIC_BASE_URL
 ```
 
-WebSockets need the long request timeout and benefit from `--min-instances 1`
-so the first caller does not hit a cold start.
+The service runs as `zol-support-runtime@zol-ai`, reaches Postgres through the
+Cloud SQL socket on the existing `zol-pg` instance (database `zol_support`), and
+reads every secret from Secret Manager. Migrations run as the Cloud Run job
+`zol-support-migrate` on the same image, so no laptop needs database access.
+WebSockets need the long request timeout and `--min-instances 1` keeps the
+first caller off a cold start.
 
 ## Relationship to the other Zol repos
 
