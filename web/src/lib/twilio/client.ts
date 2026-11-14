@@ -25,6 +25,22 @@ export async function startRecording(callSid: string): Promise<string | null> {
   }
 }
 
+/** Last resort when neither the agent nor a human is available. */
+export async function playApologyAndHangup(callSid: string): Promise<boolean> {
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Joanna">Sorry, our assistant is unavailable right now. Please call back shortly, or visit try zol dot com. Goodbye.</Say>
+  <Hangup/>
+</Response>`;
+  try {
+    await twilioClient().calls(callSid).update({ twiml });
+    return true;
+  } catch (err) {
+    console.error(`[${callSid}] playApologyAndHangup failed`, err);
+    return false;
+  }
+}
+
 /**
  * Pull the live call out of the media stream and dial the human. Twilio ends
  * the <Stream> when the call's TwiML is replaced, which closes our bridge.

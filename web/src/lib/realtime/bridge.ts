@@ -3,7 +3,7 @@ import { env } from "../env";
 import { operationalNotes } from "../agent/prompt";
 import { getAgentSettings } from "../settings";
 import { appendTurn, attachStream, markTransferred, saveRecordingSid } from "../calls";
-import { startRecording, transferToHuman } from "../twilio/client";
+import { playApologyAndHangup, startRecording, transferToHuman } from "../twilio/client";
 
 /**
  * One instance per phone call. Pipes Twilio Media Stream audio (G.711 mu-law,
@@ -147,11 +147,50 @@ export class CallBridge {
     });
 
     ws.on("message", (data) => this.onOpenAIMessage(data.toString()));
-    ws.on("close", () => this.teardown("openai closed"));
+    ws.on("close", () => this.onOpenAIGone("openai closed"));
     ws.on("error", (err) => {
       console.error("openai ws error", err);
-      this.teardown("openai error");
+      this.onOpenAIGone("openai error");
     });
+  }
+
+  /**
+   * OpenAI dropped (bad key, billing, outage). Rather than leaving the caller
+   * in silence, hand the call to a human if we have a number, otherwise play
+   * an apology. Only acts while the Twilio leg is still up.
+   */
+  private onOpenAIGone(reason: string) {
+    if (this.closed || this.twilio.readyState !== WebSocket.OPEN) {
+      this.teardown(reason);
+      return;
+    }
+    this.closed = true; // stop any further OpenAI handling
+    console.error(`[${this.callSid}] ${reason} before/while serving caller; falling back`);
+    if (!this.callSid) {
+      this.teardown(reason);
+      return;
+    }
+    const to = env.handoffNumber();
+    this.record("system", `Agent unavailable (${reason}); ${to ? "forwarded to human" : "played apology"}.`);
+    const done = () => {
+      try {
+        this.openai?.close();
+      } catch {
+        /* ignore */
+      }
+    };
+    if (to) {
+      const callSid = this.callSid;
+      transferToHuman(callSid, to)
+        .then(async (ok) => {
+          if (ok) await markTransferred(callSid, `agent unavailable: ${reason}`);
+          else await playApologyAndHangup(callSid);
+        })
+        .catch((e) => console.error("fallback failed", e))
+        .finally(done);
+    } else {
+      playApologyAndHangup(this.callSid).catch((e) => console.error("fallback failed", e)).finally(done);
+    }
   }
 
   private onOpenAIMessage(raw: string) {
