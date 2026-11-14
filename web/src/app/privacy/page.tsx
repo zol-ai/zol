@@ -5,7 +5,7 @@ import { LegalPage, LegalSection } from "@/components/site/legal-page";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Privacy policy",
+  title: { absolute: `Privacy Policy | ${site.name}` },
   description: `How ${site.company.legalName} collects, uses and protects information, including mobile numbers and text message opt-in data.`,
   alternates: { canonical: site.privacyPath },
 };
@@ -15,7 +15,7 @@ const { legalName, city, region } = site.company;
 export default function PrivacyPage() {
   return (
     <LegalPage
-      title="Privacy policy"
+      title="Privacy Policy"
       effective="November 3, 2026"
       intro={
         <p>
@@ -66,25 +66,45 @@ export default function PrivacyPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="3. Mobile numbers and text messaging">
+      <LegalSection title="3. Mobile numbers and text messaging (SMS)">
+        <p>
+          {legalName} sends text messages in two programs. In the <strong>ZOL support
+          program</strong>, {legalName} texts the shop owners and staff who are its customers:
+          replies to their support requests, onboarding help, service and maintenance notices,
+          and billing notices. In the <strong>shop program</strong>, a repair shop texts its own
+          customers about their vehicle and visit; that program is registered separately, per
+          shop.
+        </p>
+        <ul>
+          <li><strong>Message frequency varies.</strong> In the support program, typically a
+            few messages a month, more while you are being onboarded or have an open support
+            request.</li>
+          <li><strong>Msg &amp; data rates may apply.</strong> {legalName} does not charge for
+            text messages; your mobile carrier&rsquo;s rates apply.</li>
+          <li>Reply <strong>STOP</strong> to any message to opt out. You will receive one
+            confirmation and no further texts. Reply <strong>START</strong> to opt back in.</li>
+          <li>Reply <strong>HELP</strong> for help, or email{" "}
+            <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.</li>
+          <li>Consent to receive texts is not a condition of any purchase.</li>
+        </ul>
         <p>
           <strong>
-            We do not share, sell, rent or trade mobile phone numbers or text message
-            opt-in data and consent with any third parties or affiliates for marketing or
-            promotional purposes.
+            {legalName} does not sell or share your mobile number or SMS opt-in data with third
+            parties or affiliates for marketing or promotional purposes.
           </strong>{" "}
-          Text messaging originator opt-in data and consent will not be shared with any
-          third parties, except the service providers (such as our telecommunications
-          carrier and messaging provider) that deliver the messages on our behalf.
-        </p>
-        <p>
           We do not sell or share your SMS opt-in data or personal information with third
-          parties for marketing purposes.
+          parties for marketing purposes. Text messaging originator opt-in data and consent will
+          not be shared with any third parties, except the service providers (such as our
+          telecommunications carrier and messaging provider) that deliver the messages on our
+          behalf.
         </p>
         <p>
-          You can stop texts at any time by replying <strong>STOP</strong>. Reply{" "}
-          <strong>HELP</strong> for help. See the <Link href={site.smsTermsPath}>SMS terms</Link>{" "}
-          for details.
+          We keep a record of each opt-in and opt-out: the number, the consent wording and its
+          version, the date, the channel (web form, phone call or text keyword) and, for the web
+          form, the IP address and browser. See the{" "}
+          <Link href={site.smsOptInPath}>SMS opt-in page</Link>, the{" "}
+          <Link href={site.termsPath}>Terms</Link> and the{" "}
+          <Link href={site.smsTermsPath}>shop SMS terms</Link>.
         </p>
       </LegalSection>
 

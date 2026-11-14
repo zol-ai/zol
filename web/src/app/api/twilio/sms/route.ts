@@ -3,6 +3,13 @@ import { env } from "@/lib/env";
 import { recordMessage } from "@/lib/messaging/provider";
 import { notifyShop } from "@/lib/notifications";
 import { formatPhone, toE164 } from "@/lib/phone";
+import {
+  SMS_CALL_SCRIPT,
+  SMS_CONFIRMATION,
+  SMS_CONSENT_VERSION,
+  SMS_HELP,
+  SMS_STOP,
+} from "@/lib/sms-consent";
 import { handleTurn, startConversation } from "@/lib/receptionist/engine";
 import {
   isValidTwilioSignature,
@@ -32,6 +39,16 @@ export const dynamic = "force-dynamic";
  * this person on file. The customer opted out of the number; that is who
  * texts from it.
  *
+ * ZOL INC's own support line (ZOL_SUPPORT_NUMBER) is a different program
+ * from all of that: ZOL texting the shop owners and staff who are its
+ * customers. A keyword on it is answered with the ZOL support program's exact
+ * texts (lib/sms-consent.ts, the same words /sms-opt-in shows a carrier
+ * reviewer) and logged to sms_consent_events with the date and channel.
+ * Anything else on that line is for a person to answer, so it gets no
+ * automatic reply at all. Nothing on the support line touches a shop's
+ * customers, and the telephony flag does not gate it: an opt-out must be
+ * honoured whether or not the product is sending.
+ *
  * With ZOL_TELEPHONY_ENABLED off, everything that isn't STOP/HELP fails
  * closed (503). With it on, the text is threaded onto the customer's open SMS
  * conversation and answered by the same engine that runs the web chat.
@@ -59,6 +76,28 @@ async function shopForLine(to: string | null): Promise<{ id: string } | null> {
 function isPlatformLine(to: string | null): boolean {
   if (!to || !env.twilio.phoneNumber) return false;
   return to === toE164(env.twilio.phoneNumber);
+}
+
+/** Whether `To` is ZOL INC's own support line. */
+function isSupportLine(to: string | null): boolean {
+  if (!to || !env.twilio.supportNumber) return false;
+  return to === toE164(env.twilio.supportNumber);
+}
+
+/**
+ * A keyword on the support line, into the consent log. Append-only: the row
+ * is the evidence of when this number said stop or start, and by which
+ * channel. The consent text recorded on START is the call script, since by
+ * text the person has had no form to tick — the confirmation that goes back
+ * to them repeats the material terms.
+ */
+async function recordSupportConsent(phone: string, event: "opt_in" | "opt_out"): Promise<void> {
+  await query(
+    `INSERT INTO sms_consent_events
+       (phone, event, channel, consent_text_version, consent_text)
+     VALUES ($1, $2, 'sms', $3, $4)`,
+    [phone, event, SMS_CONSENT_VERSION, SMS_CALL_SCRIPT],
+  );
 }
 
 interface CustomerRow {
@@ -218,6 +257,26 @@ export async function POST(request: Request) {
   const keyword = text.toLowerCase();
   const from = toE164(params.From ?? "") ?? null;
   const to = toE164(params.To ?? "") ?? null;
+  /*
+    The support line first, and on its own. It is ZOL's number, not a
+    shop's, so the shop lookup and the customers table never come into it.
+  */
+  if (isSupportLine(to)) {
+    if (STOP_WORDS.has(keyword)) {
+      if (from) await recordSupportConsent(from, "opt_out");
+      return twimlResponse(`<Message>${xml(SMS_STOP)}</Message>`);
+    }
+    if (START_WORDS.has(keyword)) {
+      if (from) await recordSupportConsent(from, "opt_in");
+      return twimlResponse(`<Message>${xml(SMS_CONFIRMATION)}</Message>`);
+    }
+    if (HELP_WORDS.has(keyword)) {
+      return twimlResponse(`<Message>${xml(SMS_HELP)}</Message>`);
+    }
+    // A support request. A person answers it; nothing automatic goes back.
+    return twimlResponse("");
+  }
+
   const shop = await shopForLine(to);
   const platformLine = !shop && isPlatformLine(to);
 

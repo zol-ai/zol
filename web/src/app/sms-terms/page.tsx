@@ -5,8 +5,8 @@ import { LegalPage, LegalSection } from "@/components/site/legal-page";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "SMS terms",
-  description: `Terms for text messages sent by ${site.company.legalName} on behalf of auto repair shops: what they are for, how often, and how to stop them.`,
+  title: { absolute: `Shop SMS Terms | ${site.name}` },
+  description: `The shop texting program: terms for text messages an auto repair shop using ${site.name} sends to its own customers. Registered per shop, separately from ZOL INC's support texts.`,
   alternates: { canonical: site.smsTermsPath },
 };
 
@@ -15,14 +15,24 @@ const { legalName } = site.company;
 export default function SmsTermsPage() {
   return (
     <LegalPage
-      title="SMS terms"
+      title="SMS terms: shop texting program"
       effective="November 3, 2026"
       intro={
-        <p>
-          {legalName} (&ldquo;{site.name}&rdquo;) runs the phone and text line for
-          independent auto repair shops. These terms cover the text messages {site.name}{" "}
-          sends on a shop&rsquo;s behalf to that shop&rsquo;s customers.
-        </p>
+        <>
+          <p>
+            {legalName} (&ldquo;{site.name}&rdquo;) makes front-desk software for independent
+            auto repair shops. These terms cover the <strong>shop texting program</strong>: the
+            text messages a shop sends, using {site.name}, to that shop&rsquo;s own customers
+            about their vehicle and visit. Each shop registers this program for its own
+            number.
+          </p>
+          <p className="mt-4 rounded-md border border-line bg-paper-2 px-4 py-3 text-[0.875rem]">
+            Texts from {legalName} to its own customers (shop owners and staff) for support and
+            account purposes are a separate program, covered in the SMS section of our{" "}
+            <Link href={site.termsPath}>Terms &amp; Conditions</Link> and opted into at{" "}
+            <Link href={site.smsOptInPath}>{site.smsOptInPath}</Link>.
+          </p>
+        </>
       }
     >
       <LegalSection title="What the texts are for">
@@ -42,7 +52,8 @@ export default function SmsTermsPage() {
           You agree to receive these texts when you give the shop your mobile number and
           agree to text updates — at the counter, on a call answered by {site.name}, on the
           shop&rsquo;s booking page, or by texting the shop&rsquo;s line first. Consent is
-          not a condition of any purchase.
+          not a condition of any purchase. The process is shown step by step at{" "}
+          <Link href={site.shopSmsOptInPath}>{site.shopSmsOptInPath}</Link>.
         </p>
       </LegalSection>
 

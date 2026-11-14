@@ -63,6 +63,14 @@ export const env = {
     /** The shop-facing number, once a registered one exists. */
     phoneNumber: optional("TWILIO_PHONE_NUMBER"),
     /**
+     * ZOL INC's own support line: the number registered under the ZOL brand
+     * for texting shop owners and staff. Inbound STOP/START/HELP on it are
+     * answered with the ZOL support program's texts and recorded in
+     * sms_consent_events — never in a shop's customer table. Unset means no
+     * line is the support line.
+     */
+    supportNumber: optional("ZOL_SUPPORT_NUMBER"),
+    /**
      * WebSocket endpoint of the realtime media service that will hold a live
      * call. Unset until that service exists — the voice webhook takes a
      * voicemail instead. See docs/TELEPHONY.md.

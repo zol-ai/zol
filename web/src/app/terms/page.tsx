@@ -6,7 +6,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: { absolute: `Terms & Conditions | ${site.name}` },
-  description: `Terms and conditions for using ${site.company.legalName}'s website and software, including the terms for text messages sent on behalf of auto repair shops.`,
+  description: `Terms and conditions for using ${site.company.legalName}'s website and software, including the SMS terms for ZOL's customer support and account texts.`,
   alternates: { canonical: site.termsPath },
 };
 
@@ -94,36 +94,34 @@ export default function TermsPage() {
         <p>We may suspend or close accounts that break these rules.</p>
       </LegalSection>
 
-      <LegalSection title="6. SMS terms">
+      <LegalSection title="6. SMS Terms: ZOL Support Texts">
         <p>
-          <strong>Program description.</strong> {legalName} runs the phone and text line for
-          independent auto repair shops and sends text messages on a shop&rsquo;s behalf to
-          that shop&rsquo;s customers. Texts are about your own vehicle and your visit to the
-          shop: appointment confirmations and reminders, repair estimates and links to approve
-          or decline the work, inspection results, parts and repair status updates, invoices
-          and payment links, service follow-ups and maintenance reminders, and replies to
-          texts you send the shop.
+          <strong>Program description.</strong> {legalName} sends text messages to the auto
+          repair shop owners and staff who are its customers, for customer support and account
+          purposes: replies to your support requests, onboarding help, service and maintenance
+          notices, and billing notices. These texts come from {legalName} about your{" "}
+          {site.name} account. They are not marketing, and they are not texts to a
+          shop&rsquo;s own customers.
         </p>
         <p>
-          <strong>Opting in.</strong> You agree to receive these texts when you give the shop
-          your mobile number and agree to text updates &mdash; at the counter, on a call
-          answered by {site.name}, on the shop&rsquo;s booking page, or by texting the
-          shop&rsquo;s line first. Consent is not a condition of any purchase. How this works
-          is shown step by step on our{" "}
-          <Link href={site.smsOptInPath}>SMS opt-in page</Link>.
+          <strong>Opting in.</strong> You opt in by submitting the form on our{" "}
+          <Link href={site.smsOptInPath}>SMS opt-in page</Link> with the consent box ticked, or
+          by saying yes when a member of our team reads you the consent script on an onboarding
+          call. We record the date, the channel and the wording you agreed to. Consent is not a
+          condition of purchase.
         </p>
         <p>
-          <strong>Message frequency varies</strong> with your appointments and repairs,
-          typically a few messages per visit.
+          <strong>Message frequency varies.</strong> Typically a few messages a month, more
+          while you are being onboarded or have an open support request.
         </p>
         <p>
-          <strong>Msg &amp; data rates may apply.</strong> {site.name} and the shop do not
-          charge for text messages; your mobile carrier&rsquo;s rates apply.
+          <strong>Msg &amp; data rates may apply.</strong> {legalName} does not charge for text
+          messages; your mobile carrier&rsquo;s rates apply.
         </p>
         <p>
           <strong>Stop.</strong> Reply <strong>STOP</strong> to any message to unsubscribe. You
-          will get one message confirming you are unsubscribed and no further texts from
-          that shop line. Reply <strong>START</strong> to opt back in.
+          will get one message confirming you are unsubscribed and no further texts. Reply{" "}
+          <strong>START</strong> to resubscribe.
         </p>
         <p>
           <strong>Help.</strong> Reply <strong>HELP</strong> for help, or email{" "}
@@ -134,14 +132,25 @@ export default function TermsPage() {
           messages.
         </p>
         <p>
-          <strong>Privacy.</strong> We do not share or sell mobile numbers or text message
-          opt-in data to third parties for marketing. See our{" "}
-          <Link href={site.privacyPath}>privacy policy</Link> and the standalone{" "}
-          <Link href={site.smsTermsPath}>SMS terms</Link>.
+          <strong>Privacy.</strong> {legalName} does not sell or share your mobile number or
+          SMS opt-in data with third parties or affiliates for marketing or promotional
+          purposes. See our <Link href={site.privacyPath}>Privacy Policy</Link>.
         </p>
       </LegalSection>
 
-      <LegalSection title="7. Intellectual property">
+      <LegalSection title="7. Shop texting program">
+        <p>
+          Separately from the support texts above, a shop that uses {site.name} may text its
+          own customers about their vehicle and visit. That program is registered per shop,
+          the texts come from the shop, and its terms are set out on the{" "}
+          <Link href={site.smsTermsPath}>shop SMS terms</Link> page, with the opt-in process
+          shown at <Link href={site.shopSmsOptInPath}>{site.shopSmsOptInPath}</Link>. Nothing in
+          section 6 applies to those texts, and nothing on that page applies to texts from{" "}
+          {legalName} to its own customers.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="8. Intellectual property">
         <p>
           The Service, its software, design and content are owned by {legalName} and its
           licensors. We grant you a limited, non-exclusive, non-transferable right to use the
@@ -149,7 +158,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Disclaimers">
+      <LegalSection title="9. Disclaimers">
         <p>
           The Service is provided &ldquo;as is&rdquo; and &ldquo;as available.&rdquo; To the
           fullest extent permitted by law, we disclaim all warranties, express or implied,
@@ -161,7 +170,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Limitation of liability">
+      <LegalSection title="10. Limitation of liability">
         <p>
           To the fullest extent permitted by law, {legalName} will not be liable for any
           indirect, incidental, special, consequential or punitive damages, or for lost
@@ -173,7 +182,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="10. Termination">
+      <LegalSection title="11. Termination">
         <p>
           You may stop using the Service and close your account at any time. We may suspend
           or end your access if you break these terms, do not pay, or if we discontinue the
@@ -183,7 +192,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="11. Changes">
+      <LegalSection title="12. Changes">
         <p>
           We may update these terms. The date at the top shows when they last changed, and
           material changes will be posted here before they take effect. Continuing to use the
@@ -191,7 +200,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="12. Governing law">
+      <LegalSection title="13. Governing law">
         <p>
           These terms are governed by the laws of the State of Delaware, without regard to
           its conflict of laws rules. Any dispute that cannot be resolved informally will be
@@ -200,7 +209,7 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="13. Contact">
+      <LegalSection title="14. Contact">
         <p>
           {legalName}, {city}, {region}.{" "}
           <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>

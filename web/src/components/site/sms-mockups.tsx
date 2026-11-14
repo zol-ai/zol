@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/site";
 
 /*
-  Illustrations for the SMS opt-in page. Everything here is built from HTML
-  and CSS so it renders identically on the page and in the PNG exports
-  (public/sms-opt-in/*.png, screenshotted from these very elements). Shop
-  data is placeholder; no real customers, no real numbers.
+  Illustrations for the two SMS opt-in pages. Everything here is built from
+  HTML and CSS so it renders identically on the page and in the PNG exports
+  (public/sms-opt-in/*.png and public/shop-sms-opt-in/*.png, screenshotted
+  from these very elements). All data is placeholder; no real people, no real
+  numbers.
 
   `exportId` becomes a data attribute the export script selects on. The
   wrapper is sized and padded so the screenshot stands on its own.
@@ -16,10 +17,12 @@ export const EXAMPLE_LABEL = "Example of what customers see";
 
 export function MockupFrame({
   exportId,
+  label = EXAMPLE_LABEL,
   children,
   className = "",
 }: {
   exportId: string;
+  label?: string;
   children: ReactNode;
   className?: string;
 }) {
@@ -31,17 +34,17 @@ export function MockupFrame({
       >
         {children}
       </div>
-      <figcaption className="t-eyebrow mt-3 text-[0.625rem]">{EXAMPLE_LABEL}</figcaption>
+      <figcaption className="t-eyebrow mt-3 text-[0.625rem]">{label}</figcaption>
     </figure>
   );
 }
 
-type Bubble = { from: "shop" | "customer"; text: string };
+type Bubble = { from: "sender" | "customer"; text: string };
 
 /**
  * A phone, drawn with CSS: dark bezel, screen, status bar, the sender name
- * at the top and a thread of bubbles. Grey on the left is what the shop line
- * sent; the customer's own replies sit on the right.
+ * at the top and a thread of bubbles. Grey on the left is what the sender
+ * (ZOL, or a shop) sent; the customer's own replies sit on the right.
  */
 export function PhoneMockup({ sender, bubbles }: { sender: string; bubbles: Bubble[] }) {
   return (
@@ -49,7 +52,7 @@ export function PhoneMockup({ sender, bubbles }: { sender: string; bubbles: Bubb
       className="w-[272px] shrink-0 rounded-[2.25rem] bg-panel p-[10px] shadow-[0_18px_40px_-18px_rgb(25_23_20/0.45)]"
       role="img"
       aria-label={`Phone showing a text thread with ${sender}: ${bubbles
-        .map((b) => `${b.from === "shop" ? sender : "Customer"}: ${b.text}`)
+        .map((b) => `${b.from === "sender" ? sender : "Customer"}: ${b.text}`)
         .join(" ")}`}
     >
       <div className="flex min-h-[440px] flex-col overflow-hidden rounded-[1.75rem] bg-paper">
@@ -69,7 +72,7 @@ export function PhoneMockup({ sender, bubbles }: { sender: string; bubbles: Bubb
         <div className="flex flex-1 flex-col gap-2.5 px-3 py-4">
           <p className="t-data text-center text-[0.5625rem] text-ink-3">Today</p>
           {bubbles.map((b, i) =>
-            b.from === "shop" ? (
+            b.from === "sender" ? (
               <div
                 key={i}
                 className="max-w-[88%] self-start rounded-2xl rounded-bl-md bg-paper-4 px-3 py-2 text-[0.6875rem] leading-snug text-ink"
@@ -101,11 +104,21 @@ export function PhoneMockup({ sender, bubbles }: { sender: string; bubbles: Bubb
  * The consent conversation: the script a staff member or ZOL's phone
  * assistant reads word for word, and the customer saying yes.
  */
-export function ConsentCard({ script }: { script: string }) {
+export function ConsentCard({
+  script,
+  heading = "At the counter · On a call",
+  recorded = "Consent recorded · verbal · counter · 2026-11-14 09:41",
+  record = "Customer record · (555) 010-0100 · texting enabled",
+}: {
+  script: string;
+  heading?: string;
+  recorded?: string;
+  record?: string;
+}) {
   return (
     <div className="card w-full max-w-[440px] overflow-hidden">
       <div className="flex items-center justify-between border-b border-line bg-paper-2 px-4 py-2.5">
-        <span className="t-eyebrow text-[0.5625rem]">At the counter · On a call</span>
+        <span className="t-eyebrow text-[0.5625rem]">{heading}</span>
         <span className="t-data text-[0.625rem] text-ink-3">Consent script</span>
       </div>
       <div className="space-y-3 px-4 py-4">
@@ -128,11 +141,9 @@ export function ConsentCard({ script }: { script: string }) {
       </div>
       <div className="border-t border-line bg-emerald-wash px-4 py-2.5">
         <p className="t-data text-[0.625rem] text-emerald-deep">
-          ✓ Consent recorded · verbal · counter · 2026-11-14 09:41
+          ✓ {recorded}
         </p>
-        <p className="t-data mt-0.5 text-[0.625rem] text-ink-3">
-          Customer record · (555) 010-0100 · texting enabled
-        </p>
+        <p className="t-data mt-0.5 text-[0.625rem] text-ink-3">{record}</p>
       </div>
     </div>
   );

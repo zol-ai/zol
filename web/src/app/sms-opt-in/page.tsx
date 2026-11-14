@@ -5,32 +5,26 @@ import Link from "next/link";
 import { Footer } from "@/components/site/footer";
 import { Nav } from "@/components/site/nav";
 import { ConsentCard, MockupFrame, PhoneMockup } from "@/components/site/sms-mockups";
+import { SmsOptInForm } from "@/components/site/sms-opt-in-form";
 import { site } from "@/lib/site";
+import {
+  SMS_CALL_SCRIPT,
+  SMS_CONFIRMATION,
+  SMS_CONSENT_TEXT,
+  SMS_CONSENT_VERSION,
+  SMS_HELP,
+  SMS_SAMPLE_THREAD,
+  SMS_STOP,
+} from "@/lib/sms-consent";
 
 export const metadata: Metadata = {
   title: { absolute: `SMS Opt-In Process | ${site.name}` },
-  description: `How customers of auto repair shops using ${site.company.legalName} opt in to text messages, what they receive, and how they opt out.`,
+  description: `How auto repair shop owners and staff opt in to customer support and account text messages from ${site.company.legalName}, what they receive, and how they opt out.`,
   alternates: { canonical: site.smsOptInPath },
 };
 
 const { legalName } = site.company;
-
-/*
-  Every message below is the exact copy the product sends. If the wording
-  changes in the messaging code, change it here in the same commit: carrier
-  reviewers compare this page against live traffic.
-*/
-const CONSENT_SCRIPT =
-  "Can we text you appointment confirmations, estimates, repair updates and invoices for your vehicle at this number? Message frequency varies, msg and data rates may apply. Reply STOP to opt out or HELP for help. Do we have your permission?";
-
-const CONFIRMATION_TEXT = `${legalName}: You're now opted in to text updates about your vehicle from your repair shop. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to opt out.`;
-
-const UPDATE_TEXT =
-  "[Shop Name] via ZOL: Your estimate for the [Vehicle] is ready. Total: $[Amount]. Review and approve or decline here: [Estimate Link]. Questions? Call [Shop Phone]. Reply STOP to opt out.";
-
-const STOP_REPLY = `${legalName}: You've been unsubscribed and will receive no further texts from this number. Reply START to resubscribe.`;
-
-const HELP_REPLY = `${legalName}: For help with texts from your repair shop, email ${site.contactEmail}. Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out.`;
+const SENDER = "ZOL INC";
 
 const linkClass =
   "font-semibold text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink";
@@ -85,53 +79,96 @@ export default function SmsOptInPage() {
         <section className="band">
           <div className="shell">
             <div className="max-w-4xl">
-              <p className="t-eyebrow">Text messaging</p>
+              <p className="t-eyebrow">Text messaging · {legalName} support program</p>
               <h1 className="t-h2 mt-4 text-[2rem] sm:text-[2.625rem]">SMS opt-in process</h1>
               <p className="t-data mt-4 text-[0.8125rem] text-ink-3">
-                Last updated November 14, 2026 · {legalName}
+                Last updated November 14, 2026 · consent text v{SMS_CONSENT_VERSION}
               </p>
-              <div className="mt-6 max-w-3xl text-[1rem] leading-relaxed text-ink-2">
+              <div className="mt-6 max-w-3xl space-y-4 text-[1rem] leading-relaxed text-ink-2">
                 <p>
                   {legalName} provides front-desk software for independent auto repair shops.
-                  Shops using {site.name} text their customers about their own vehicle and
-                  visit. This page shows how customers opt in and how they opt out.
+                  This page covers the text messages {legalName} sends to its <strong>own
+                  customers</strong>: the shop owners and staff who use {site.name}. These are
+                  customer support and account messages, such as replies to support requests,
+                  onboarding help, service and maintenance notices, and billing notices. This
+                  page shows how those customers opt in, what they receive, and how they opt
+                  out.
+                </p>
+                <p className="rounded-md border border-line bg-paper-2 px-4 py-3 text-[0.875rem]">
+                  {legalName} does not text a shop&rsquo;s customers under this program. A shop
+                  texting its own vehicle owners is a separate program, registered per shop,
+                  described at{" "}
+                  <Link href={site.shopSmsOptInPath} className={linkClass}>
+                    {site.shopSmsOptInPath}
+                  </Link>
+                  .
                 </p>
               </div>
 
               <div className="mt-12 space-y-12">
-                <Section number="01" title="How customers opt in (verbal consent)">
+                <Section number="01" title="Opt in online">
                   <p>
-                    Consent is collected verbally when a customer gives their mobile number at
-                    the shop counter or on a phone call answered by {site.name} for the shop.
-                    Before saving the number, staff or {site.name}&rsquo;s phone assistant reads
-                    this script word for word:
+                    A shop owner or staff member opts in by filling in the form below and
+                    ticking the consent box, which is never pre-ticked. The form will not submit
+                    with the box clear. On submit, {legalName} stores the number, the name and
+                    shop given, the exact consent wording and its version, the date and time, the
+                    IP address and browser, and notifies {site.contactEmail}. No text message is
+                    sent at this step.
                   </p>
-                  <blockquote className="rounded-md border border-emerald-line bg-emerald-wash px-5 py-4 text-[1rem] leading-relaxed font-medium text-ink">
-                    &ldquo;{CONSENT_SCRIPT}&rdquo;
-                  </blockquote>
-                  <p>
-                    The number is saved for texting only if the customer says yes. The consent,
-                    date and channel are recorded on the customer&rsquo;s record. Consent is not
-                    a condition of any purchase.
+                  <div className="pt-2">
+                    <SmsOptInForm />
+                  </div>
+                  <p className="t-eyebrow text-[0.625rem]">
+                    This form is live. It records consent and sends no text.
                   </p>
                 </Section>
 
-                <Section number="02" title="Step-by-step">
+                <Section number="02" title="Opt in on an onboarding call (verbal consent)">
+                  <p>
+                    Consent may also be given verbally when a shop owner or staff member gives
+                    their mobile number on an onboarding or support call with a member of the{" "}
+                    {site.name} team. Before saving the number, the team member reads this script
+                    word for word:
+                  </p>
+                  <blockquote className="rounded-md border border-emerald-line bg-emerald-wash px-5 py-4 text-[1rem] leading-relaxed font-medium text-ink">
+                    &ldquo;{SMS_CALL_SCRIPT}&rdquo;
+                  </blockquote>
+                  <p>
+                    The number is saved for texting only if the person says yes. The consent,
+                    the date, the channel (call) and the script version are recorded against
+                    the number. Consent is not a condition of any purchase.
+                  </p>
+                  <MockupFrame exportId="call-script" className="pt-2">
+                    <ConsentCard
+                      script={SMS_CALL_SCRIPT}
+                      heading="Onboarding call · ZOL team"
+                      recorded="Consent recorded · verbal · call · 2026-11-14 09:41"
+                      record={`Consent log · (555) 010-0100 · text v${SMS_CONSENT_VERSION}`}
+                    />
+                  </MockupFrame>
+                </Section>
+
+                <Section number="03" title="Step-by-step">
                   <ol className="space-y-14 pt-2">
                     <Step
                       number="1"
-                      title="The customer is asked and says yes"
+                      title="The customer opts in"
                       figure={
                         <MockupFrame exportId="step-1">
-                          <ConsentCard script={CONSENT_SCRIPT} />
+                          <ConsentCard
+                            script={SMS_CONSENT_TEXT}
+                            heading="Web form · tryzol.com/sms-opt-in"
+                            recorded="Consent recorded · web form · 2026-11-14 09:41"
+                            record={`Consent log · (555) 010-0100 · text v${SMS_CONSENT_VERSION} · IP logged`}
+                          />
                         </MockupFrame>
                       }
                     >
                       <p>
-                        At the counter, or on a call answered by {site.name}, the customer gives
-                        a mobile number. The script above is read in full, and the number is
-                        saved for texting only on a clear yes. The consent, the date and the
-                        channel (counter or call) are written to the customer&rsquo;s record.
+                        Online, by ticking the consent box on the form above; or verbally, by
+                        saying yes to the script on a call. Either way the consent wording, its
+                        version, the date and the channel are written to {legalName}&rsquo;s
+                        consent log before the number can be texted.
                       </p>
                     </Step>
 
@@ -141,90 +178,108 @@ export default function SmsOptInPage() {
                       figure={
                         <MockupFrame exportId="step-2">
                           <PhoneMockup
-                            sender={legalName}
-                            bubbles={[{ from: "shop", text: CONFIRMATION_TEXT }]}
+                            sender={SENDER}
+                            bubbles={[{ from: "sender", text: SMS_CONFIRMATION }]}
                           />
                         </MockupFrame>
                       }
                     >
                       <p>
-                        Right after opting in, the customer gets one confirmation message. It
-                        names {legalName}, says what the texts are about, that message frequency
-                        varies and that message and data rates may apply, and repeats the HELP
-                        and STOP instructions.
+                        One confirmation message, sent from {legalName}&rsquo;s support number
+                        once the number is opted in. It names {legalName}, says what the texts
+                        are about, that message frequency varies and that message and data rates
+                        may apply, and repeats the HELP and STOP instructions.
                       </p>
                     </Step>
 
                     <Step
                       number="3"
-                      title="Updates about the customer's own vehicle"
+                      title="Support and account texts"
                       figure={
                         <MockupFrame exportId="step-3">
                           <PhoneMockup
-                            sender="[Shop Name]"
-                            bubbles={[{ from: "shop", text: UPDATE_TEXT }]}
+                            sender={`${SENDER} Support`}
+                            bubbles={SMS_SAMPLE_THREAD.map((b) => ({
+                              from: b.from === "zol" ? "sender" : "customer",
+                              text: b.text,
+                            }))}
                           />
                         </MockupFrame>
                       }
                     >
                       <p>
-                        From then on, texts are about the customer&rsquo;s own vehicle and visit:
-                        appointment confirmations, estimates to approve or decline, repair
-                        updates and invoices. Each one identifies the shop, is sent via{" "}
-                        {site.name}, and ends with the STOP instruction. Bracketed values are
-                        placeholders filled in per shop, vehicle and job.
+                        From then on, texts are about the customer&rsquo;s own {site.name}{" "}
+                        account: replies to their support requests, onboarding help, service and
+                        maintenance notices, and billing notices. A sample support exchange is
+                        shown. Every message identifies {legalName} and carries the STOP
+                        instruction.
                       </p>
                     </Step>
                   </ol>
                 </Section>
 
-                <Section number="03" title="Opting out and getting help">
+                <Section number="04" title="Opting out and getting help">
                   <p>
                     Every message accepts the standard keywords. Replying <strong>STOP</strong>{" "}
-                    unsubscribes the customer immediately and triggers one final confirmation;
-                    replying <strong>HELP</strong> returns contact information. Replying{" "}
-                    <strong>START</strong>, <strong>YES</strong> or <strong>UNSTOP</strong> opts
-                    the customer back in.
+                    unsubscribes the number immediately, records the opt-out with the date and
+                    channel, and triggers one final confirmation. Replying <strong>HELP</strong>{" "}
+                    returns contact information. Replying <strong>START</strong>,{" "}
+                    <strong>YES</strong> or <strong>UNSTOP</strong> opts the number back in and
+                    sends the confirmation text again.
                   </p>
                   <div className="grid gap-8 pt-2 sm:grid-cols-2">
                     <MockupFrame exportId="opt-out-stop">
                       <PhoneMockup
-                        sender={legalName}
+                        sender={SENDER}
                         bubbles={[
                           { from: "customer", text: "STOP" },
-                          { from: "shop", text: STOP_REPLY },
+                          { from: "sender", text: SMS_STOP },
                         ]}
                       />
                     </MockupFrame>
                     <MockupFrame exportId="help">
                       <PhoneMockup
-                        sender={legalName}
+                        sender={SENDER}
                         bubbles={[
                           { from: "customer", text: "HELP" },
-                          { from: "shop", text: HELP_REPLY },
+                          { from: "sender", text: SMS_HELP },
                         ]}
                       />
                     </MockupFrame>
                   </div>
                 </Section>
 
+                <Section number="05" title="How consent is recorded">
+                  <ul className="ml-5 list-disc space-y-1.5 pl-1">
+                    <li>Mobile number, in E.164 format.</li>
+                    <li>Name and shop name, as given.</li>
+                    <li>Channel: web form, phone call, or a START or STOP keyword by text.</li>
+                    <li>The exact consent wording shown or read, and its version
+                      (currently v{SMS_CONSENT_VERSION}).</li>
+                    <li>Date and time of the consent or the opt-out.</li>
+                    <li>For the web form, the IP address and browser of the submission.</li>
+                  </ul>
+                  <p>
+                    The log is append-only: an opt-out does not erase the opt-in, and a later
+                    opt-in does not erase the opt-out. The current state of a number is its most
+                    recent entry. Nothing is sent to a number whose most recent entry is an
+                    opt-out.
+                  </p>
+                </Section>
+
                 <section className="border-t border-line pt-8 text-[0.9375rem] leading-relaxed text-ink-2">
                   <p className="font-semibold text-ink">
-                    Mobile numbers and opt-in data are never shared or sold to third parties for
-                    marketing.
+                    {legalName} does not sell or share your mobile number or SMS opt-in data with
+                    third parties or affiliates for marketing or promotional purposes.
                   </p>
                   <p className="mt-3">
                     See the{" "}
                     <Link href={site.privacyPath} className={linkClass}>
-                      privacy policy
-                    </Link>
-                    , the{" "}
-                    <Link href={site.smsTermsPath} className={linkClass}>
-                      SMS terms
+                      Privacy Policy
                     </Link>{" "}
-                    and the{" "}
+                    and the SMS section of the{" "}
                     <Link href={site.termsPath} className={linkClass}>
-                      terms &amp; conditions
+                      Terms &amp; Conditions
                     </Link>
                     . Questions:{" "}
                     <a href={`mailto:${site.contactEmail}`} className={linkClass}>
@@ -233,8 +288,8 @@ export default function SmsOptInPage() {
                     .
                   </p>
                   <p className="t-data mt-4 text-[0.75rem] text-ink-3">
-                    All mockups on this page use placeholder shop data. No real customer names or
-                    numbers appear.
+                    All mockups on this page use placeholder data. No real names or numbers
+                    appear.
                   </p>
                 </section>
               </div>
