@@ -1,0 +1,11 @@
+# Project-level override of the organization's "domain restricted sharing"
+# policy so Cloud Run services in zol-ai can be invoked by allUsers.
+# Needed for zol-support: Twilio webhooks and the public dashboard URL.
+#
+#   gcloud org-policies set-policy infra/org-policy-allow-public.yaml
+#   gcloud run services add-iam-policy-binding zol-support --project=zol-ai \
+#     --region=us-west1 --member=allUsers --role=roles/run.invoker
+name: projects/zol-ai/policies/iam.allowedPolicyMemberDomains
+spec:
+  rules:
+    - allowAll: true
