@@ -15,6 +15,8 @@ const company = [
   { label: "Sign in", href: site.signinPath },
   { label: "Privacy policy", href: site.privacyPath },
   { label: "SMS terms", href: site.smsTermsPath },
+  { label: "SMS Opt-In", href: site.smsOptInPath },
+  { label: "Terms", href: site.termsPath },
 ] as const;
 
 export function Footer() {

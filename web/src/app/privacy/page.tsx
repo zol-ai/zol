@@ -78,6 +78,10 @@ export default function PrivacyPage() {
           carrier and messaging provider) that deliver the messages on our behalf.
         </p>
         <p>
+          We do not sell or share your SMS opt-in data or personal information with third
+          parties for marketing purposes.
+        </p>
+        <p>
           You can stop texts at any time by replying <strong>STOP</strong>. Reply{" "}
           <strong>HELP</strong> for help. See the <Link href={site.smsTermsPath}>SMS terms</Link>{" "}
           for details.

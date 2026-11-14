@@ -42,6 +42,14 @@ export const site = {
   */
   privacyPath: "/privacy",
   smsTermsPath: "/sms-terms",
+  termsPath: "/terms",
+  /*
+    The opt-in walkthrough: the consent script, the confirmation text and the
+    STOP/HELP replies, drawn as phone mockups. Twilio's A2P 10DLC campaign
+    review asks for exactly this; the PNGs under /sms-opt-in/ are the same
+    mockups exported for the application form.
+  */
+  smsOptInPath: "/sms-opt-in",
   /*
     The waitlist: a "Join waitlist" button in the nav, a link in the footer,
     the page in the sitemap and indexable. Flyers and ads point at it, and
