@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Push one value from web/.env.local to its Secret Manager secret and roll
+  Push one value from .env.local to its Secret Manager secret and roll
   Cloud Run so the new version is picked up.
 
     powershell -ExecutionPolicy Bypass -File infra/rotate-secret.ps1 -Var OPENAI_API_KEY
@@ -17,7 +17,7 @@ $ErrorActionPreference = 'Stop'
 
 if (-not $EnvFile) {
   $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-  $EnvFile = Join-Path $here '..\web\.env.local'
+  $EnvFile = Join-Path $here '..\.env.local'
 }
 if (-not (Test-Path $EnvFile)) { throw "Missing $EnvFile" }
 

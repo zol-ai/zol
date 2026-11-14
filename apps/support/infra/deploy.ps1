@@ -22,18 +22,18 @@ $ErrorActionPreference = 'Stop'
 function Step($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
 
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
-$web  = Join-Path $root 'web'
+$app  = $root
 $saEmail = "$ServiceAccount@$ProjectId.iam.gserviceaccount.com"
 $connectionName = "${ProjectId}:${Region}:${InstanceName}"
 
 if (-not $TwilioNumber) {
-  $envFile = Join-Path $web '.env.local'
+  $envFile = Join-Path $app '.env.local'
   if (Test-Path $envFile) {
     $line = Get-Content $envFile | Where-Object { $_ -match '^TWILIO_PHONE_NUMBER=' } | Select-Object -First 1
     if ($line) { $TwilioNumber = ($line -split '=', 2)[1].Trim() }
   }
 }
-if (-not $TwilioNumber) { throw 'Pass -TwilioNumber or set TWILIO_PHONE_NUMBER in web/.env.local' }
+if (-not $TwilioNumber) { throw 'Pass -TwilioNumber or set TWILIO_PHONE_NUMBER in .env.local' }
 
 $secrets = @(
   'DATABASE_URL=zol-support-database-url:latest',
@@ -44,7 +44,7 @@ $secrets = @(
 ) -join ','
 
 Step "Deploy $Service from source (Cloud Build)"
-gcloud run deploy $Service --source $web --project=$ProjectId --region=$Region `
+gcloud run deploy $Service --source $app --project=$ProjectId --region=$Region `
   --service-account=$saEmail `
   --add-cloudsql-instances=$connectionName `
   --set-secrets=$secrets `

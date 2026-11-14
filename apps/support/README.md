@@ -8,7 +8,7 @@ is logged to Postgres and shown in a small dashboard.
 caller ──▶ Twilio number
              │  POST /api/twilio/voice          (TwiML: <Connect><Stream>)
              ▼
-          web/server.ts  ──ws /media-stream──▶  CallBridge  ◀──ws──▶  OpenAI Realtime
+          server.ts  ──ws /media-stream──▶  CallBridge  ◀──ws──▶  OpenAI Realtime
              │                                     │
              │  POST /api/twilio/status            │  transcripts
              ▼                                     ▼
@@ -20,7 +20,7 @@ caller ──▶ Twilio number
 ## Layout
 
 ```
-web/
+apps/support/
   server.ts                      custom Node server: Next + WebSocket upgrade
   src/lib/realtime/bridge.ts     Twilio <-> OpenAI audio bridge, one per call
   src/lib/agent/prompt.ts        default instructions; live copy edited at /settings
@@ -42,7 +42,7 @@ web/
 
 ## Local development
 
-1. `cd web && cp .env.example .env.local`, fill in Twilio and OpenAI keys.
+1. `cp .env.example .env.local`, fill in Twilio and OpenAI keys.
 2. Start a tunnel: `ngrok http 3000` (or cloudflared). Put the https URL in
    `PUBLIC_BASE_URL`.
 3. `npm run db:migrate` against a Postgres you control.
@@ -73,7 +73,7 @@ web/
 One-time provisioning, then deploys, both from a laptop after `gcloud auth login`:
 
 ```
-powershell -ExecutionPolicy Bypass -File infra/gcp-setup.ps1   # SA, DB on zol-pg, secrets from web/.env.local
+powershell -ExecutionPolicy Bypass -File infra/gcp-setup.ps1   # SA, DB on zol-pg, secrets from .env.local
 powershell -ExecutionPolicy Bypass -File infra/deploy.ps1      # build, deploy, migrate, pin PUBLIC_BASE_URL
 ```
 
