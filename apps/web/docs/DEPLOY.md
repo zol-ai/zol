@@ -31,7 +31,7 @@ vercel login
 
 The second one matters and is easy to skip. `gcloud auth login` authorises the
 `gcloud` CLI; `application-default login` writes the credentials that *client
-libraries* read — which is what `web/scripts/load-schema.mjs` uses to reach
+libraries* read — which is what `apps/web/scripts/load-schema.mjs` uses to reach
 Cloud SQL from this machine.
 
 ---
@@ -77,7 +77,7 @@ pwsh ./infra/load-schema.ps1
 ```
 
 Pulls the password from Secret Manager and runs `db/schema.sql` through
-`web/scripts/load-schema.mjs`. The whole file goes in as one simple query, so
+`apps/web/scripts/load-schema.mjs`. The whole file goes in as one simple query, so
 it runs in a single implicit transaction — a failure rolls back completely
 instead of leaving half a schema behind.
 
@@ -87,7 +87,7 @@ something; the loader prints the offending line number.
 ## 3. Point Vercel at it
 
 ```bash
-cd web && vercel link
+cd apps/web && vercel link
 ```
 
 Project root is `web/`, framework preset Next.js. Then:
@@ -110,7 +110,7 @@ the service-account key if one isn't cached in `infra/.keys/` (gitignored).
 Then deploy and check:
 
 ```bash
-cd web && vercel --prod
+cd apps/web && vercel --prod
 ```
 
 ```bash
@@ -152,7 +152,7 @@ The realtime call service is not built yet. When it is, the same commit
 deploys:
 
 ```bash
-gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
+gcloud run deploy zol-web --source apps/web --region us-west1 --allow-unauthenticated
 ```
 
 On Cloud Run, attach the instance and drop the key:

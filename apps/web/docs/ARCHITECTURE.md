@@ -191,7 +191,7 @@ change later:
 ## Local development
 
 ```bash
-cd web && npm install && npm run dev
+cd apps/web && npm install && npm run dev
 ```
 
 Copy `.env.example` to `.env.local` inside `web/` and fill in what you need.
@@ -200,7 +200,7 @@ The site renders with no keys at all; only the app needs a database.
 Point `DATABASE_URL` at a Postgres 16 (a UTF-8 database), then:
 
 ```bash
-cd web && npm run db:load && npm run db:migrate && node scripts/seed-demo.mjs
+cd apps/web && npm run db:load && npm run db:migrate && node scripts/seed-demo.mjs
 ```
 
 `npm test` runs the unit tests (`node:test`); `npm run typecheck` runs `tsc`.
@@ -216,7 +216,7 @@ preview URL.
 **Cloud Run** — build context is `web/`:
 
 ```bash
-gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
+gcloud run deploy zol-web --source apps/web --region us-west1 --allow-unauthenticated
 ```
 
 Point Twilio's webhook URLs at the Cloud Run origin and set `ZOL_PUBLIC_URL`

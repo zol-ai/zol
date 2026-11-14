@@ -64,7 +64,7 @@ the upload controls simply don't render.
 `db/migrations/`, applied from a laptop rather than from CI:
 
 ```bash
-cd web && npm run db:migrate
+cd apps/web && npm run db:migrate
 ```
 
 A Vercel build has no reliable route to Cloud SQL, and migrating from CI
@@ -75,7 +75,7 @@ safe to apply ahead of the code that uses them.
 ## Run it
 
 ```bash
-cd web && npm install && npm run dev
+cd apps/web && npm install && npm run dev
 ```
 
 The landing page renders with no configuration. For the app, point
@@ -83,7 +83,7 @@ The landing page renders with no configuration. For the app, point
 demo shop to click around in:
 
 ```bash
-cd web && npm run db:load && npm run db:migrate && node scripts/seed-demo.mjs
+cd apps/web && npm run db:load && npm run db:migrate && node scripts/seed-demo.mjs
 ```
 
 Sign in as `owner@demo.zol` / `DemoShop2026!`. The seed refuses to run against
@@ -100,7 +100,7 @@ landing page, the app and the customer portal.
 **Cloud Run** — the same commit builds a container:
 
 ```bash
-gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
+gcloud run deploy zol-web --source apps/web --region us-west1 --allow-unauthenticated
 ```
 
 This is where the scheduled jobs run and where Twilio's webhooks point, because

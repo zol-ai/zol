@@ -73,11 +73,11 @@ route to Cloud SQL, and migrating from CI races every preview deploy against
 production's schema.
 
 ```bash
-cd web && npm run db:status
+cd apps/web && npm run db:status
 ```
 
 ```bash
-cd web && npm run db:migrate
+cd apps/web && npm run db:migrate
 ```
 
 > **The backfill is deliberate.** Existing rows are stamped
@@ -154,7 +154,7 @@ parsed.
 Then deploy:
 
 ```bash
-gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
+gcloud run deploy zol-web --source apps/web --region us-west1 --allow-unauthenticated
 ```
 
 ---
