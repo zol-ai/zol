@@ -26,6 +26,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # npm 10 (bundled with Node 22) crashes resolving this workspace;
+      # npm ci should be safe, but pin 11 so install behavior matches dev.
+      - run: npm install -g npm@11
       - run: npm ci
       - run: npm run lint --workspace apps/web
       - run: npm run typecheck --workspace apps/web

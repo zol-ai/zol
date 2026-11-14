@@ -23,11 +23,17 @@ container build context is the app directory alone.
 
 ## Running things
 
-Node 22+ and npm 10+. One install at the root covers all three workspaces:
+Node 22+ and **npm 11+**. One install at the root covers all three
+workspaces:
 
 ```bash
-npm install
+npx -y npm@11 install
 ```
+
+(npm 10.9, the version bundled with Node 22, crashes resolving this
+workspace — an arborist bug hit by vitest 4's peer set: `Cannot read
+properties of null (reading 'edgesOut')`. `npm ci` against the committed
+lockfile is unaffected; it is fresh resolution that crashes.)
 
 Per app (each reads `.env.local` from its own directory — copy that app's
 `.env.example` and fill it in):
