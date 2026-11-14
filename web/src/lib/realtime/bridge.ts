@@ -26,6 +26,8 @@ export class CallBridge {
   private closed = false;
   /** Set when the model asked to transfer; executed once its goodbye finishes. */
   private pendingTransfer: { reason: string } | null = null;
+  /** True between response.created and response.done, so cancels are only sent when meaningful. */
+  private responseActive = false;
 
   constructor(private readonly twilio: WebSocket) {
     twilio.on("message", (data) => this.onTwilioMessage(data.toString()));
@@ -222,10 +224,14 @@ export class CallBridge {
         });
         break;
       }
+      case "response.created": {
+        this.responseActive = true;
+        break;
+      }
       case "input_audio_buffer.speech_started": {
         // Caller interrupted: drop queued audio on Twilio and cancel the response.
         if (this.streamSid) this.sendTwilio({ event: "clear", streamSid: this.streamSid });
-        this.sendOpenAI({ type: "response.cancel" });
+        if (this.responseActive) this.sendOpenAI({ type: "response.cancel" });
         break;
       }
       case "conversation.item.input_audio_transcription.completed": {
@@ -259,6 +265,7 @@ export class CallBridge {
         break;
       }
       case "response.done": {
+        this.responseActive = false;
         if (this.pendingTransfer) {
           // Give Twilio a moment to play the trailing audio before we swap TwiML.
           const { reason } = this.pendingTransfer;
