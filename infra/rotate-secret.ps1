@@ -11,9 +11,15 @@ param(
   [string]$ProjectId = 'zol-ai',
   [string]$Region    = 'us-west1',
   [string]$Service   = 'zol-support',
-  [string]$EnvFile   = (Join-Path $PSScriptRoot '..\web\.env.local')
+  [string]$EnvFile   = ''
 )
 $ErrorActionPreference = 'Stop'
+
+if (-not $EnvFile) {
+  $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+  $EnvFile = Join-Path $here '..\web\.env.local'
+}
+if (-not (Test-Path $EnvFile)) { throw "Missing $EnvFile" }
 
 $secretName = @{
   OPENAI_API_KEY     = 'zol-support-openai-api-key'
