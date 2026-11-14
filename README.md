@@ -70,7 +70,11 @@ Deploys are manual `gcloud` commands, documented per app — see
 `apps/web/SETUP.md`, `apps/brain/README.md` + `apps/brain/SETUP.md`, and
 `apps/support/README.md`. The build/deploy sources are now:
 
-- tryzol.com: `gcloud run deploy zol-web --source apps/web --region us-west1`
+- tryzol.com (Cloud Run / telephony): `gcloud run deploy zol-web --source apps/web --region us-west1`
+- tryzol.com (Vercel, the web traffic): `cd apps/web && vercel --prod`, or
+  the `web deploy (Vercel)` workflow once its secrets are set — the Hobby
+  plan won't Git-integrate a private org repo, so the CLI replaces the
+  GitHub integration (see docs/deploy-cutover.md)
 - Company OS: `gcloud builds submit --config cloudbuild.yaml` **run from
   `apps/brain/`**, then the `gcloud run deploy company-os --image …` command
   in its README
