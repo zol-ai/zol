@@ -1,20 +1,17 @@
-# Secrets — never commit. Use .env.example as the tracked template.
+# Monorepo root. Each app under apps/ has its own .gitignore with
+# app-specific rules; these cover every workspace.
+
+# Secrets — never commit. Each app tracks a .env.example template.
 .env
 .env.*
 !.env.example
 
-# Dependencies
+# Dependencies and build output
 node_modules/
-
-# Build output
 .next/
 out/
 build/
 dist/
-
-# Vercel / GCP
-.vercel
-# (.gcloudignore is tracked — it defines the Cloud Build context)
 
 # Logs
 *.log
@@ -24,16 +21,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Large source recordings. The written transcript and the notes photo stay
-# tracked — they're the requirements this was built from.
-*.mp4
-*.m4a
-*.wav
-
 # TypeScript
 *.tsbuildinfo
 
-# Service-account keys minted by infra/vercel-env.ps1. Long-lived credentials
-# — they belong in the secret store, never in the repo.
-infra/.keys/
-*.json.key
+# Vercel
+.vercel

@@ -3,8 +3,8 @@
  Push the Cloud SQL connection details into a Vercel project.
 
    vercel login
-   cd web; vercel link          # once, to bind this directory to a project
-   ./infra/vercel-env.ps1
+   cd apps/web; vercel link          # once, to bind this directory to a project
+   ./apps/web/infra/vercel-env.ps1
 
  Creates a service-account key for zol-vercel if one isn't cached locally, and
  writes five environment variables to the chosen Vercel environment.
@@ -33,7 +33,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repo   = Split-Path -Parent $PSScriptRoot
+$app    = Split-Path -Parent $PSScriptRoot
 $keyDir = Join-Path $PSScriptRoot '.keys'
 $keyPath = Join-Path $keyDir "$ProjectId-zol-vercel.json"
 $sa = "zol-vercel@$ProjectId.iam.gserviceaccount.com"
@@ -71,7 +71,7 @@ $vars = [ordered]@{
   'GCP_SERVICE_ACCOUNT_JSON' = $keyJson
 }
 
-Push-Location (Join-Path $repo 'web')
+Push-Location $app
 try {
   foreach ($envName in $Environments) {
     Step "Writing $($vars.Count) variables to Vercel [$envName]"
@@ -88,6 +88,6 @@ try {
 }
 
 Write-Host "`nDone. Redeploy for these to take effect:" -ForegroundColor Green
-Write-Host "  cd web; vercel --prod"
+Write-Host "  cd apps/web; vercel --prod"
 Write-Host "`nThen verify:" -ForegroundColor Green
 Write-Host "  curl https://<your-deployment>/api/health/db"

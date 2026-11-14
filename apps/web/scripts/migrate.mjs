@@ -31,7 +31,7 @@ import {
 } from "@google-cloud/cloud-sql-connector";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dir = resolve(here, "../../db/migrations");
+const dir = resolve(here, "../db/migrations");
 const statusOnly = process.argv.includes("--status");
 
 const instance = process.env.INSTANCE_CONNECTION_NAME;

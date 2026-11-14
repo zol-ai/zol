@@ -27,7 +27,7 @@ import {
 } from "@google-cloud/cloud-sql-connector";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const schemaPath = resolve(here, "../../db/schema.sql");
+const schemaPath = resolve(here, "../db/schema.sql");
 
 const instance = process.env.INSTANCE_CONNECTION_NAME;
 const url = process.env.DATABASE_URL;

@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Merged from the old repo-root .gitignore after the monorepo move.
+!.env.example
+build/
+dist/
+Thumbs.db
+*.mp4
+*.m4a
+*.wav
+infra/.keys/
+*.json.key

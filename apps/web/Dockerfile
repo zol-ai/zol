@@ -1,8 +1,8 @@
 # =============================================================================
 # ZOL web — container image for Google Cloud Run
 #
-# Build context is the `web/` directory:
-#   gcloud run deploy zol-web --source web --region us-west1
+# Build context is the `apps/web/` directory:
+#   gcloud run deploy zol-web --source apps/web --region us-west1
 #
 # Vercel does not use this file. It exists so the same commit can run on Cloud
 # Run, which is where the telephony side has to live (Vercel's serverless

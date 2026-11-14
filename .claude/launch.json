@@ -5,7 +5,7 @@
       "name": "zol-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "web",
+      "cwd": "apps/web",
       "port": 3000
     }
   ]
