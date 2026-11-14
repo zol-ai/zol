@@ -1,0 +1,34 @@
+# CI for apps/brain (Company OS). Build and test only — the deploy is
+# `gcloud builds submit` + `gcloud run deploy`, documented in
+# apps/brain/README.md and docs/deploy-cutover.md.
+name: brain CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/brain/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/brain-ci.yml"
+  pull_request:
+    paths:
+      - "apps/brain/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/brain-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint --workspace apps/brain
+      - run: npm run typecheck --workspace apps/brain
+      - run: npm run build --workspace apps/brain
+      - run: npm run test --workspace apps/brain

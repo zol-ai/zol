@@ -1,0 +1,33 @@
+# CI for apps/web (tryzol.com). Build and test only — deploys are manual
+# gcloud commands, documented in apps/web/SETUP.md and docs/deploy-cutover.md.
+name: web CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint --workspace apps/web
+      - run: npm run typecheck --workspace apps/web
+      - run: npm run build --workspace apps/web
+      - run: npm run test --workspace apps/web
