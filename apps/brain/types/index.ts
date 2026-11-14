@@ -1,0 +1,322 @@
+export type TaskStatus = "todo" | "in_progress" | "completed";
+export type TaskPriority = "low" | "medium" | "high";
+export type ClientStatus = "lead" | "active" | "paused" | "closed";
+export type ClientColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+export type WorkCardColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+export type NoteColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+export type MarketingIdeaStatus = "idea" | "planned" | "creating" | "ready" | "posted";
+export type MarketingContentType =
+  | "video"
+  | "social_post"
+  | "blog"
+  | "email"
+  | "campaign"
+  | "other";
+export type MarketingChannel =
+  | "instagram"
+  | "linkedin"
+  | "youtube"
+  | "tiktok"
+  | "x"
+  | "email"
+  | "website"
+  | "other";
+
+export type TeamMember = {
+  id: string;
+  name: string;
+  email?: string;
+  role?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  assignedToId?: string;
+  assignedToName?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate?: string;
+  clientId?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string | null;
+};
+
+/**
+ * Where a client record came from. Immutable after creation: it records how the
+ * record arrived, which does not change because somebody later approved it. A
+ * promoted waitlist lead stays "waitlist" forever and becomes visible in the
+ * CRM because its status changed, not its source.
+ */
+export type ClientSource = "manual" | "waitlist";
+
+/**
+ * A CRM is a named pipeline — Clients, Investors, whatever the team needs
+ * next. Records carry a `crmId`; the CRM page shows one pipeline at a time.
+ *
+ * The default CRM has the fixed document ID "clients". Waitlist ingest always
+ * writes there, so inbound leads cannot land in (or merge across) any other
+ * pipeline.
+ */
+export type Crm = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** The fixed ID of the default CRM that waitlist ingest writes to. */
+export const DEFAULT_CRM_ID = "clients";
+
+/** One person attached to a client. The first one is also the top-level contact. */
+export type ClientContact = {
+  name?: string;
+  email?: string;
+  /**
+   * The bare event_id of the submission this person came from — not the
+   * `event_id:revision` delivery key. It points at the person's row, not at
+   * one delivery of it.
+   */
+  sourceEventId?: string;
+};
+
+/**
+ * A field where an inbound event disagreed with what is stored.
+ *
+ * Inbound events never overwrite a non-null value. When the form says one
+ * thing and the record says another, the record wins and the disagreement
+ * lands here for somebody to settle.
+ */
+export type PendingReviewEntry = {
+  /**
+   * The value awaiting a decision — always the one *not* currently stored, so
+   * accepting means adopting it and dismissing means keeping what is there.
+   * Which value that is depends on `reason`.
+   */
+  incoming: string;
+  /**
+   * "conflict" — the form disagreed with a stored value. The record won;
+   *   `incoming` is what the form said. Accept to take it.
+   *
+   * "replaced" — a phone correction matched this record through its history,
+   *   so the new number was written straight in. `incoming` is the number it
+   *   displaced. Accept to put the old one back, dismiss to keep the change.
+   *
+   * The mechanics are identical either way. Only the wording differs.
+   */
+  reason: "conflict" | "replaced";
+  sourceEventId?: string;
+  at: string;
+};
+
+export type Client = {
+  id: string;
+  name: string;
+  contactName?: string;
+  contactEmail?: string;
+  status: ClientStatus;
+  color: ClientColor;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+
+  /** E.164. The match key for inbound waitlist events. */
+  phone?: string;
+  zip?: string;
+  bays?: string;
+  /** Which pipeline this record belongs to. Absent means the default CRM. */
+  crmId?: string;
+  source: ClientSource;
+  contacts?: ClientContact[];
+  /** Consent to be called and texted, as captured by the waitlist form. */
+  consentAt?: string;
+  /** Last time an inbound event touched this record, whatever it changed. */
+  lastInboundAt?: string;
+  /** Keyed by field name. Empty or absent when there is nothing to settle. */
+  pendingReview?: Record<string, PendingReviewEntry>;
+};
+
+export type WorkCardTodo = {
+  id: string;
+  text: string;
+  done: boolean;
+};
+
+export type WorkCard = {
+  id: string;
+  title: string;
+  todos: WorkCardTodo[];
+  color: WorkCardColor;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkspaceNote = {
+  id: string;
+  title: string;
+  body: string;
+  color: NoteColor;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MarketingIdeaLink = {
+  id: string;
+  label: string;
+  url: string;
+};
+
+export type MarketingIdea = {
+  id: string;
+  title: string;
+  brief?: string;
+  hook?: string;
+  callToAction?: string;
+  contentType: MarketingContentType;
+  channel?: MarketingChannel;
+  ownerId?: string;
+  ownerName?: string;
+  targetDate?: string;
+  links: MarketingIdeaLink[];
+  status: MarketingIdeaStatus;
+  createdAt: string;
+  updatedAt: string;
+  postedAt?: string | null;
+};
+
+export type TeamMemberDocument = Omit<TeamMember, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type TaskDocument = Omit<
+  Task,
+  "id" | "createdAt" | "updatedAt" | "completedAt"
+> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+  completedAt?: FirebaseFirestore.Timestamp | null;
+};
+
+export type ClientDocument = Omit<Client, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type WorkCardDocument = Omit<WorkCard, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type WorkspaceNoteDocument = Omit<WorkspaceNote, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type MarketingIdeaDocument = Omit<
+  MarketingIdea,
+  "id" | "createdAt" | "updatedAt" | "postedAt"
+> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+  postedAt?: FirebaseFirestore.Timestamp | null;
+};
+
+export type ScheduleColor = "blue" | "green" | "amber" | "rose" | "violet" | "slate";
+
+/**
+ * One entry on the team schedule.
+ *
+ * Dates are calendar days (YYYY-MM-DD) and times are HH:MM in the company's
+ * local day. Nothing here is an instant: a 9am standup is 9am wherever the
+ * team happens to be reading it, which is what a shared calendar means.
+ */
+export type ScheduleEvent = {
+  id: string;
+  title: string;
+  description?: string;
+  /** First (or only) day. */
+  date: string;
+  /** Last day of a multi-day entry. Absent means the event is a single day. */
+  endDate?: string;
+  allDay: boolean;
+  /** Absent when allDay. */
+  startTime?: string;
+  endTime?: string;
+  assignedToId?: string;
+  assignedToName?: string;
+  color: ScheduleColor;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ScheduleEventDocument = Omit<ScheduleEvent, "id" | "createdAt" | "updatedAt"> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+/**
+ * A daily non-negotiable.
+ *
+ * The item is the *recurring definition*, not a to-do: it does not belong to a
+ * day and it is never "done". It simply exists, and every day each of its
+ * owners is expected to do it. What actually happened on a given day lives in
+ * ChecklistCompletion.
+ */
+export type ChecklistItem = {
+  id: string;
+  title: string;
+  detail?: string;
+  /** Team member IDs. Every owner gets their own box to tick, every day. */
+  ownerIds: string[];
+  order: number;
+  /**
+   * Retired items stop appearing without taking their history with them.
+   * Deleting is the other option and does throw the history away.
+   */
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * One person having done one item on one day.
+ *
+ * Presence is the entire record. There is no `done: false` — an unticked box
+ * is a document that does not exist, so a day nobody touched costs nothing and
+ * turning an item on does not have to pre-create anything.
+ */
+export type ChecklistCompletion = {
+  id: string;
+  date: string;
+  itemId: string;
+  ownerId: string;
+  doneAt: string;
+  /** Who ticked it, which is not necessarily the owner. */
+  doneByEmail?: string;
+};
+
+/** Everything the checklist page needs for one day, in one response. */
+export type ChecklistDay = {
+  date: string;
+  items: ChecklistItem[];
+  completions: ChecklistCompletion[];
+};
+
+export type ChecklistItemDocument = Omit<
+  ChecklistItem,
+  "id" | "createdAt" | "updatedAt"
+> & {
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+};
+
+export type ChecklistCompletionDocument = Omit<ChecklistCompletion, "id" | "doneAt"> & {
+  doneAt: FirebaseFirestore.Timestamp;
+};
