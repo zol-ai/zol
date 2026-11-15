@@ -1,132 +1,90 @@
-# ZOL
+# ZOL monorepo
 
-Shop management software that does the work instead of just recording it.
-ZOL answers the phone night and weekend, books the job, checks the car in,
-helps the tech diagnose and inspect it, texts the estimate, takes the approval
-from the customer's phone, tracks the parts, invoices, takes payment and
-follows up afterwards — one record from the first call to the next visit.
+Three apps, one repository. Each app was its own repo until November 2026 and
+was imported here with its full commit history (`git subtree`); each still
+builds, deploys, and runs on its own.
 
 ```
-zol/
-├── web/          Next.js 16 — landing page, the app, the customer portal, webhooks, jobs
-├── db/           PostgreSQL schema and migrations
-├── infra/        Scripts that provision Cloud SQL and wire Vercel
-├── docs/         Architecture, roadmap, deploy runbook, telephony
-└── .env.example  Every environment variable the app reads
+apps/
+├── web/       tryzol.com — marketing site, waitlist, and Shop OS
+│              Next.js + Postgres (Cloud SQL) · Cloud Run us-west1, also builds on Vercel
+│              formerly github.com/zol-ai/zol
+├── brain/     Company OS — internal dashboard; "Company Brain" is the agent inside it
+│              Next.js + Firestore · Cloud Run us-central1 (service: company-os)
+│              formerly github.com/zol-ai/company-brain
+└── support/   Phone support agent — Twilio voice ↔ OpenAI Realtime, calls dashboard
+│              Next.js (custom server.ts) + Postgres · Cloud Run
+│              formerly github.com/zol-ai/zol-customer-support
 ```
 
-## What's behind sign-in
+Each app directory is its own deployable root: `package.json`, `Dockerfile`,
+`.env.example`, and that app's `README.md`/`SETUP.md` live there, and the
+container build context is the app directory alone.
 
-A shop signs up at `/signup`, which creates the shop, its owner, a default week
-of opening hours and a public handle (`/talk/<slug>`, where its customers can
-reach the receptionist from the web). The owner invites advisors and techs from
-**Team** and hands over the link.
+## Running things
 
-| Section | What it does |
-| --- | --- |
-| Today | The day at a glance: appointments, what's in the shop, what needs a person, revenue, technician load |
-| Calls | Every conversation ZOL has had — transcript, what it extracted, what it booked. A test-call button runs the real pipeline on a scripted call |
-| Schedule | A day per bay, with technicians. Arrive → check-in → the ticket opens itself |
-| Repair orders | The board, and the workbench: diagnostics, digital inspection, lines and approvals, estimate, parts, invoice, conversation, history |
-| Inspections · Estimates · Parts · Invoices · Payments | Shop-wide views of the same records |
-| Technicians | Each tech's queue, with one-tap status moves |
-| Customers · Vehicles | The connected record: visits, messages, calls, declined work, lifetime value |
-| Messages | Every thread with a customer, texts and portal messages alike |
-| Follow-ups | The CRM: declined work, inspection recommendations, post-repair check-ins, birthdays, win-backs — drafted by ZOL, sent by the worker |
-| Ask ZOL | Questions about the shop answered from its own data, with links to the record |
-| Team · Settings | People, pricing, hours, the quote cap, and which integrations are live |
-
-The customer never signs in. Every estimate and invoice text carries a link to
-`/portal/<token>`: their car, its status, the inspection, the estimate to
-approve line by line, and the invoice to pay.
-
-Sessions are rows in Postgres, not signed tokens, so disabling somebody or
-signing out takes effect on the very next request. Passwords are scrypt from
-Node's standard library — no native module to fail at build time on Vercel.
-
-## What runs without keys, and what lights up with them
-
-Everything above works with only a database. Three integrations are seams
-with a labelled fallback behind each:
-
-| Integration | Without it | With it |
-| --- | --- | --- |
-| OpenAI (`OPENAI_API_KEY`) | Diagnostics, inspection summaries, estimate wording, follow-up drafts and the receptionist use deterministic, clearly labelled fallbacks | The same features answer through the model, validated against a schema before anything is stored |
-| Twilio (`ZOL_TELEPHONY_ENABLED` + credentials) | Customer messages land on the customer's portal page only; nothing leaves the building | The same queued messages go out as texts; inbound texts reach the receptionist; STOP is honoured either way |
-| Stripe (`STRIPE_SECRET_KEY`) | The portal records a clearly labelled demo payment so the paid → closed → follow-up chain can be exercised | Stripe Checkout, confirmed by webhook. ZOL never sees a card number |
-
-Photos on inspections need a Cloud Storage bucket (`GCS_BUCKET`); without one
-the upload controls simply don't render.
-
-## Changing the schema
-
-`db/schema.sql` is the baseline; everything after it is a numbered file in
-`db/migrations/`, applied from a laptop rather than from CI:
+Node 22+ and **npm 11+**. One install at the root covers all three
+workspaces:
 
 ```bash
-cd web && npm run db:migrate
+npx -y npm@11 install
 ```
 
-A Vercel build has no reliable route to Cloud SQL, and migrating from CI
-races every preview deployment against production's schema. `npm run
-db:status` lists what has and hasn't been applied. Migrations are additive and
-safe to apply ahead of the code that uses them.
+(npm 10.9, the version bundled with Node 22, crashes resolving this
+workspace — an arborist bug hit by vitest 4's peer set: `Cannot read
+properties of null (reading 'edgesOut')`. `npm ci` against the committed
+lockfile is unaffected; it is fresh resolution that crashes.)
 
-## Run it
+Per app (each reads `.env.local` from its own directory — copy that app's
+`.env.example` and fill it in):
+
+| | dev | build | test |
+|---|---|---|---|
+| tryzol.com | `npm run dev:web` | `npm run build:web` | `npm test -w apps/web` |
+| Company OS | `npm run dev:brain` | `npm run build:brain` | `npm test -w apps/brain` |
+| support | `npm run dev:support` | `npm run build:support` | — |
+
+`npm run build` / `npm run typecheck` / `npm run lint` run across every
+workspace. The dev servers all default to port 3000 (`dev:brain` passes
+`-p 3001`), so run one at a time or pass `-- -p <port>`.
+
+Database migrations stay per app: `npm run db:migrate:web` and
+`npm run db:migrate:support`, run from a laptop, never from CI.
+
+## Lockfiles — read before changing dependencies
+
+Every app keeps **its own `package-lock.json`** because every deploy builds
+from the app directory alone (Cloud Run / Docker never see the repo root).
+The root `package-lock.json` only serves the root `npm install` and CI.
+
+After changing any app's dependencies, refresh both:
 
 ```bash
-cd web && npm install && npm run dev
+npm install                                   # root lockfile
+cd apps/<app> && npm install --workspaces=false   # that app's lockfile
 ```
 
-The landing page renders with no configuration. For the app, point
-`DATABASE_URL` at a Postgres 16, load the schema and migrations, and seed a
-demo shop to click around in:
+## Deploys
 
-```bash
-cd web && npm run db:load && npm run db:migrate && node scripts/seed-demo.mjs
-```
+Deploys are manual `gcloud` commands, documented per app — see
+`apps/web/SETUP.md`, `apps/brain/README.md` + `apps/brain/SETUP.md`, and
+`apps/support/README.md`. The build/deploy sources are now:
 
-Sign in as `owner@demo.zol` / `DemoShop2026!`. The seed refuses to run against
-Cloud SQL. Unit tests: `npm test`. Types: `npm run typecheck`.
+- tryzol.com (Cloud Run / telephony): `gcloud run deploy zol-web --source apps/web --region us-west1`
+- tryzol.com (Vercel, the web traffic): auto-deploys via the Vercel Git
+  integration (Root Directory `apps/web`); `cd apps/web && vercel --prod`
+  and the inert `web deploy (Vercel)` workflow exist as fallbacks (see
+  docs/deploy-cutover.md)
+- Company OS: `gcloud builds submit --config cloudbuild.yaml` **run from
+  `apps/brain/`**, then the `gcloud run deploy company-os --image …` command
+  in its README
+- support: `apps/support/infra/deploy.ps1` (builds with `--source` = the app)
 
-## Deploy
+The cutover from the old three-repo deploys is written up in
+[docs/deploy-cutover.md](docs/deploy-cutover.md).
 
-Full runbook in [docs/DEPLOY.md](docs/DEPLOY.md); the Cloud Scheduler jobs
-(waitlist sweep, follow-up worker) are in [SETUP.md](SETUP.md).
+## CI
 
-**Vercel** — project root `web/`, deploys from `main`. This is tryzol.com: the
-landing page, the app and the customer portal.
-
-**Cloud Run** — the same commit builds a container:
-
-```bash
-gcloud run deploy zol-web --source web --region us-west1 --allow-unauthenticated
-```
-
-This is where the scheduled jobs run and where Twilio's webhooks point, because
-a phone call needs a socket held open longer than a serverless function lives.
-
-## Telephony is deliberately switched off
-
-`ZOL_TELEPHONY_ENABLED` defaults to `false`, and every Twilio webhook fails
-closed while it is. Twilio's carrier registration (A2P 10DLC) hasn't cleared
-yet, and running an unregistered number gets messages filtered and numbers
-blocked — with the damage landing on the shop's phone number.
-
-Signature verification, STOP/HELP handling, the receptionist engine and the
-messaging seam all work today. Flipping the flag is the go-live step for
-texting; the voice path additionally needs the realtime media service
-described in [docs/TELEPHONY.md](docs/TELEPHONY.md).
-
-## Documentation
-
-- [Deploy](docs/DEPLOY.md) — the three cloud connections and how to make them
-- [Architecture](docs/ARCHITECTURE.md) — how the pieces fit, and the seams
-  the integrations plug into
-- [Telephony](docs/TELEPHONY.md) — what the flag flips on, and what the
-  realtime service must call
-- [Roadmap](docs/ROADMAP.md) — what's built, what's next, what the risks are
-
-## Book a demo
-
-https://calendar.app.google/Q262bp3TVLBRcedm9
+GitHub Actions workflows under `.github/workflows/` are path-filtered: a push
+or PR only builds the app whose files changed. They build and test only —
+nothing in CI deploys.

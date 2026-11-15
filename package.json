@@ -1,0 +1,23 @@
+{
+  "name": "zol-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/brain",
+    "apps/support"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:brain": "npm run dev --workspace apps/brain",
+    "dev:support": "npm run dev --workspace apps/support",
+    "build": "npm run build --workspaces",
+    "build:web": "npm run build --workspace apps/web",
+    "build:brain": "npm run build --workspace apps/brain",
+    "build:support": "npm run build --workspace apps/support",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate:web": "npm run db:migrate --workspace apps/web",
+    "db:migrate:support": "npm run db:migrate --workspace apps/support"
+  }
+}

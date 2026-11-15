@@ -1,0 +1,33 @@
+steps:
+  - name: bash
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        test -n "${_FIREBASE_API_KEY}" || { echo "Missing _FIREBASE_API_KEY substitution"; exit 1; }
+        test -n "${_FIREBASE_AUTH_DOMAIN}" || { echo "Missing _FIREBASE_AUTH_DOMAIN substitution"; exit 1; }
+        test -n "${_FIREBASE_APP_ID}" || { echo "Missing _FIREBASE_APP_ID substitution"; exit 1; }
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - NEXT_PUBLIC_FIREBASE_API_KEY=${_FIREBASE_API_KEY}
+      - --build-arg
+      - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_FIREBASE_AUTH_DOMAIN}
+      - --build-arg
+      - NEXT_PUBLIC_FIREBASE_PROJECT_ID=$PROJECT_ID
+      - --build-arg
+      - NEXT_PUBLIC_FIREBASE_APP_ID=${_FIREBASE_APP_ID}
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/company-os:$BUILD_ID
+      - .
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/company-os:$BUILD_ID
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: company-os
+  _FIREBASE_API_KEY: ""
+  _FIREBASE_AUTH_DOMAIN: ""
+  _FIREBASE_APP_ID: ""
+options:
+  logging: CLOUD_LOGGING_ONLY

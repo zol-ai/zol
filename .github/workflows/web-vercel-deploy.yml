@@ -1,0 +1,64 @@
+# Deploys apps/web to Vercel production on pushes to main that touch it.
+#
+# Why this exists: Vercel's Hobby plan refuses the Git integration for
+# private ORG repos, so the GitHub app cannot auto-deploy this repo. The
+# CLI has no such restriction. This workflow is the Git integration's
+# replacement; disconnect the repo in the Vercel project's Git settings.
+#
+# It is INERT until three repo secrets exist (see docs/deploy-cutover.md):
+#   VERCEL_TOKEN       an account token (vercel.com → Account Settings → Tokens)
+#   VERCEL_ORG_ID      "orgId" from apps/web/.vercel/project.json after `vercel link`
+#   VERCEL_PROJECT_ID  "projectId" from the same file
+# Until then the job runs one step, says it is skipping, and exits green.
+name: web deploy (Vercel)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/web-vercel-deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: web-vercel-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - id: gate
+        env:
+          HAS_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
+        run: |
+          echo "run=$HAS_TOKEN" >> "$GITHUB_OUTPUT"
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "VERCEL_TOKEN is not set — skipping deploy. See docs/deploy-cutover.md."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 22
+      - if: steps.gate.outputs.run == 'true'
+        run: npm install -g vercel
+      - if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

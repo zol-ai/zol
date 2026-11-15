@@ -5,7 +5,21 @@
       "name": "zol-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "web",
+      "cwd": "apps/web",
+      "port": 3000
+    },
+    {
+      "name": "company-os",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "-p", "3001"],
+      "cwd": "apps/brain",
+      "port": 3001
+    },
+    {
+      "name": "support",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "apps/support",
       "port": 3000
     }
   ]

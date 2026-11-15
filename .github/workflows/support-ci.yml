@@ -1,0 +1,35 @@
+# CI for apps/support (phone support agent). Build only — the deploy is
+# apps/support/infra/deploy.ps1, documented in docs/deploy-cutover.md.
+name: support CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/support/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/support-ci.yml"
+  pull_request:
+    paths:
+      - "apps/support/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/support-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # npm 10 (bundled with Node 22) crashes resolving this workspace;
+      # npm ci should be safe, but pin 11 so install behavior matches dev.
+      - run: npm install -g npm@11
+      - run: npm ci
+      - run: npm run lint --workspace apps/support
+      - run: npm run typecheck --workspace apps/support
+      - run: npm run build --workspace apps/support
