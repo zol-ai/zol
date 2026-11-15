@@ -5,10 +5,11 @@ of `zol-ai/zol`. **Nothing in this document has been changed for you** — the
 monorepo PR touches no deploy settings, no secrets, and no env vars. Until
 you make the changes below, the old repos keep deploying exactly as before.
 
-The one global change already made: `zol-ai/zol` is now **private** (it
-carries the code of two formerly private repos). GitHub-side there was
-nothing else to move — none of the three repos had Actions secrets, Actions
-variables, webhooks, or (accessible) branch-protection rules.
+Repo visibility: `zol-ai/zol` went private during the merge (it absorbed
+two private repos), then **public again** by decision on 2026-11-14 — see
+the Vercel section. GitHub-side there was nothing else to move — none of
+the three repos had Actions secrets, Actions variables, webhooks, or
+(accessible) branch-protection rules.
 
 Secret **values** are never listed here. Names only, with where each lives.
 
@@ -49,43 +50,32 @@ All already set on the service; a `--source` deploy does not clear them.
 
 ### Vercel — serves tryzol.com's web traffic
 
-Vercel's Hobby plan refuses the **Git integration** for private *org*
-repos (its bot says so on the PR), so auto-deploy-from-GitHub cannot work
-against this repo without upgrading. Decision (2026-11-14): keep the repo
-private under zol-ai and deploy through the **Vercel CLI** instead — the
-CLI uploads builds directly and has no repo-visibility restriction.
+History of this decision: the repo went private during the merge, which
+broke Vercel Hobby's Git integration (it refuses private *org* repos).
+On 2026-11-14 the repo was made **public again** by decision — no
+proprietary-code concern, and a full-history sweep (filenames and every
+blob on every branch, all three imported histories) found no committed
+secrets, only `.env.example` templates. With a public repo the Git
+integration works on Hobby, so it stays the primary deploy path.
 
-In the Vercel project settings, once the monorepo is live:
+In the Vercel project settings:
 
-1. **Git:** disconnect the connected repository (Settings → Git →
-   Disconnect). This stops the failed-deployment comments; the project,
-   its domains, and its env vars are untouched.
-2. **Build & Development Settings → Root Directory:** clear it (leave
-   empty). CLI deploys run from inside `apps/web`, so the project must not
-   prepend another directory.
+1. **Git:** stays connected to `zol-ai/zol`.
+2. **At merge time — Build & Development Settings → Root Directory:**
+   set to **`apps/web`**. The PR's red "Vercel" check is this setting
+   still pointing at the old layout; it clears after the merge once the
+   root directory is flipped. Do not flip early: pre-merge `main` still
+   builds from the old layout.
 3. Env vars stay exactly as they are.
 
-Deploying, either way:
-
-- **From a laptop:** `cd apps/web && vercel link` once (writes the
-  gitignored `.vercel/project.json`), then `vercel --prod`.
-- **Automatically:** the `web deploy (Vercel)` workflow deploys production
-  on every push to `main` that touches `apps/web/**`, once three repo
-  secrets exist. Create a token (vercel.com → Account Settings → Tokens),
-  run `cd apps/web && vercel link`, read `orgId` and `projectId` out of
-  `apps/web/.vercel/project.json`, then run each of these and paste the
-  value at the prompt (so values never touch shell history):
-
-  ```
-  gh secret set VERCEL_TOKEN --repo zol-ai/zol
-  gh secret set VERCEL_ORG_ID --repo zol-ai/zol
-  gh secret set VERCEL_PROJECT_ID --repo zol-ai/zol
-  ```
-
-  Until the secrets exist, the workflow no-ops green.
-
-Per-PR preview deployments go away with the Git integration; `vercel`
-without `--prod`, run from `apps/web`, still creates a preview on demand.
+Kept as a fallback (e.g. if the repo ever goes private again): the
+`web deploy (Vercel)` workflow deploys production via the Vercel CLI on
+pushes to `main` touching `apps/web/**`. It no-ops green until
+`VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` repo secrets
+exist (token from vercel.com → Account Settings → Tokens; the IDs from
+`apps/web/.vercel/project.json` after `cd apps/web && vercel link`; set
+each with `gh secret set <NAME> --repo zol-ai/zol`, pasting the value at
+the prompt). A laptop `cd apps/web && vercel --prod` works too.
 
 **Env vars on Vercel (pushed by `apps/web/infra/vercel-env.ps1`):**
 `INSTANCE_CONNECTION_NAME`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`,
